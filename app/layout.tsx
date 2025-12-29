@@ -21,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className={jetbrainsMono.variable}>
+    <html lang="pt-BR" className={jetbrainsMono.variable} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -37,7 +37,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <SidebarProvider>
           <AppSidebar />
           <SidebarInset>
