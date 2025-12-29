@@ -25,6 +25,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import {
   Collapsible,
@@ -47,6 +48,7 @@ const settingsItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { toggleSidebar } = useSidebar();
 
   const isActive = (href: string) => pathname === href;
   const isSettingsActive = pathname.startsWith('/settings');
@@ -54,7 +56,18 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex h-12 items-center px-4 font-semibold">Northstar</div>
+        {/* Expanded state: show full text */}
+        <div className="flex h-12 items-center px-4 font-semibold group-data-[collapsible=icon]:hidden">
+          Northstar
+        </div>
+        {/* Collapsed state: show clickable icon */}
+        <SidebarMenu className="hidden group-data-[collapsible=icon]:flex">
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={toggleSidebar} tooltip="Expand sidebar">
+              <HugeiconsIcon icon={SparklesIcon} />
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
 
       <SidebarContent>
