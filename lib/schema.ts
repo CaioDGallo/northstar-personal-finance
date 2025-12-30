@@ -1,35 +1,37 @@
-import { sql } from 'drizzle-orm';
-import { integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
+import { date, integer, pgEnum, pgTable, serial, text, timestamp, unique } from 'drizzle-orm/pg-core';
+
+// Enum for account types
+export const accountTypeEnum = pgEnum('account_type', ['credit_card', 'checking', 'savings', 'cash']);
 
 // Accounts table
-export const accounts = sqliteTable('accounts', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const accounts = pgTable('accounts', {
+  id: serial('id').primaryKey(),
   name: text('name').notNull(),
-  type: text('type', { enum: ['credit_card', 'checking', 'savings', 'cash'] }).notNull(),
+  type: accountTypeEnum('type').notNull(),
   currency: text('currency').default('BRL'),
-  createdAt: text('created_at').default(sql`(datetime('now'))`),
+  createdAt: timestamp('created_at').defaultNow(),
 });
 
 // Categories table
-export const categories = sqliteTable('categories', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const categories = pgTable('categories', {
+  id: serial('id').primaryKey(),
   name: text('name').notNull(),
   color: text('color').notNull().default('#6b7280'),
   icon: text('icon'),
-  createdAt: text('created_at').default(sql`(datetime('now'))`),
+  createdAt: timestamp('created_at').defaultNow(),
 });
 
 // Budgets table
-export const budgets = sqliteTable(
+export const budgets = pgTable(
   'budgets',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: serial('id').primaryKey(),
     categoryId: integer('category_id')
       .notNull()
       .references(() => categories.id, { onDelete: 'cascade' }),
     yearMonth: text('year_month').notNull(), // '2024-01'
     amount: integer('amount').notNull(), // cents
-    createdAt: text('created_at').default(sql`(datetime('now'))`),
+    createdAt: timestamp('created_at').defaultNow(),
   },
   (table) => ({
     uniqueCategoryMonth: unique().on(table.categoryId, table.yearMonth),
@@ -37,20 +39,20 @@ export const budgets = sqliteTable(
 );
 
 // Transactions table (parent for installments)
-export const transactions = sqliteTable('transactions', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const transactions = pgTable('transactions', {
+  id: serial('id').primaryKey(),
   description: text('description').notNull(),
   totalAmount: integer('total_amount').notNull(), // cents
   totalInstallments: integer('total_installments').notNull().default(1),
   categoryId: integer('category_id')
     .notNull()
     .references(() => categories.id, { onDelete: 'restrict' }),
-  createdAt: text('created_at').default(sql`(datetime('now'))`),
+  createdAt: timestamp('created_at').defaultNow(),
 });
 
 // Entries table (actual monthly charges)
-export const entries = sqliteTable('entries', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const entries = pgTable('entries', {
+  id: serial('id').primaryKey(),
   transactionId: integer('transaction_id')
     .notNull()
     .references(() => transactions.id, { onDelete: 'cascade' }),
@@ -58,10 +60,10 @@ export const entries = sqliteTable('entries', {
     .notNull()
     .references(() => accounts.id),
   amount: integer('amount').notNull(), // cents
-  dueDate: text('due_date').notNull(), // 'YYYY-MM-DD'
-  paidAt: text('paid_at'), // null = pending, date = paid
+  dueDate: date('due_date').notNull(), // DATE type
+  paidAt: timestamp('paid_at'), // null = pending, timestamp = paid
   installmentNumber: integer('installment_number').notNull().default(1),
-  createdAt: text('created_at').default(sql`(datetime('now'))`),
+  createdAt: timestamp('created_at').defaultNow(),
 });
 
 // Type exports for TypeScript

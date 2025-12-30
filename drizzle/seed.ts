@@ -1,8 +1,4 @@
-import { config } from 'dotenv';
-import { resolve } from 'path';
-
-// Load environment variables from .env.local
-config({ path: resolve(__dirname, '../.env.local') });
+import 'dotenv/config';
 
 import { db } from '../lib/db';
 import { accounts, categories, budgets, transactions, entries } from '../lib/schema';
@@ -80,64 +76,106 @@ type TransactionSeed = {
 
 const transactionsData: TransactionSeed[] = [
   // ALIMENTAÇÃO - Over budget (~R$ 950 vs R$ 800)
-  { description: 'iFood mensal', totalAmount: 35000, categoryName: 'Alimentação',
-    accountName: 'Nubank', startMonth: 0, installments: 1, startDay: 5, paid: false },
-  { description: 'Mercado Extra', totalAmount: 28000, categoryName: 'Alimentação',
-    accountName: 'Itaú Corrente', startMonth: 0, installments: 1, startDay: 8, paid: true },
-  { description: 'Padaria Zé', totalAmount: 4500, categoryName: 'Alimentação',
-    accountName: 'Carteira', startMonth: 0, installments: 1, startDay: 12, paid: true },
-  { description: 'Restaurante Família', totalAmount: 18000, categoryName: 'Alimentação',
-    accountName: 'Nubank', startMonth: 0, installments: 1, startDay: 15, paid: false },
-  { description: 'Supermercado Dia', totalAmount: 9500, categoryName: 'Alimentação',
-    accountName: 'Carteira', startMonth: 0, installments: 1, startDay: 20, paid: true },
+  {
+    description: 'iFood mensal', totalAmount: 35000, categoryName: 'Alimentação',
+    accountName: 'Nubank', startMonth: 0, installments: 1, startDay: 5, paid: false
+  },
+  {
+    description: 'Mercado Extra', totalAmount: 28000, categoryName: 'Alimentação',
+    accountName: 'Itaú Corrente', startMonth: 0, installments: 1, startDay: 8, paid: true
+  },
+  {
+    description: 'Padaria Zé', totalAmount: 4500, categoryName: 'Alimentação',
+    accountName: 'Carteira', startMonth: 0, installments: 1, startDay: 12, paid: true
+  },
+  {
+    description: 'Restaurante Família', totalAmount: 18000, categoryName: 'Alimentação',
+    accountName: 'Nubank', startMonth: 0, installments: 1, startDay: 15, paid: false
+  },
+  {
+    description: 'Supermercado Dia', totalAmount: 9500, categoryName: 'Alimentação',
+    accountName: 'Carteira', startMonth: 0, installments: 1, startDay: 20, paid: true
+  },
 
   // TRANSPORTE - Warning zone (~R$ 425 vs R$ 500)
-  { description: 'Uber mensal', totalAmount: 22000, categoryName: 'Transporte',
-    accountName: 'Nubank', startMonth: 0, installments: 1, startDay: 3, paid: false },
-  { description: 'Gasolina Shell', totalAmount: 18000, categoryName: 'Transporte',
-    accountName: 'Itaú Corrente', startMonth: 0, installments: 1, startDay: 10, paid: true },
-  { description: 'Estacionamento', totalAmount: 2500, categoryName: 'Transporte',
-    accountName: 'Carteira', startMonth: 0, installments: 1, startDay: 14, paid: true },
+  {
+    description: 'Uber mensal', totalAmount: 22000, categoryName: 'Transporte',
+    accountName: 'Nubank', startMonth: 0, installments: 1, startDay: 3, paid: false
+  },
+  {
+    description: 'Gasolina Shell', totalAmount: 18000, categoryName: 'Transporte',
+    accountName: 'Itaú Corrente', startMonth: 0, installments: 1, startDay: 10, paid: true
+  },
+  {
+    description: 'Estacionamento', totalAmount: 2500, categoryName: 'Transporte',
+    accountName: 'Carteira', startMonth: 0, installments: 1, startDay: 14, paid: true
+  },
 
   // ENTRETENIMENTO - Under budget (~R$ 120 vs R$ 300)
-  { description: 'Netflix', totalAmount: 4500, categoryName: 'Entretenimento',
-    accountName: 'Nubank', startMonth: 0, installments: 1, startDay: 1, paid: true },
-  { description: 'Cinema Ingresso', totalAmount: 7500, categoryName: 'Entretenimento',
-    accountName: 'Nubank', startMonth: 0, installments: 1, startDay: 18, paid: false },
+  {
+    description: 'Netflix', totalAmount: 4500, categoryName: 'Entretenimento',
+    accountName: 'Nubank', startMonth: 0, installments: 1, startDay: 1, paid: true
+  },
+  {
+    description: 'Cinema Ingresso', totalAmount: 7500, categoryName: 'Entretenimento',
+    accountName: 'Nubank', startMonth: 0, installments: 1, startDay: 18, paid: false
+  },
 
   // COMPRAS - Multi-installment examples
-  { description: 'Cadeira Gamer', totalAmount: 120000, categoryName: 'Compras',
-    accountName: 'Nubank', startMonth: -2, installments: 6, startDay: 15, paid: 'partial' },
-  { description: 'Fone Bluetooth', totalAmount: 45000, categoryName: 'Compras',
-    accountName: 'Nubank', startMonth: -1, installments: 3, startDay: 10, paid: 'partial' },
+  {
+    description: 'Cadeira Gamer', totalAmount: 120000, categoryName: 'Compras',
+    accountName: 'Nubank', startMonth: -2, installments: 6, startDay: 15, paid: 'partial'
+  },
+  {
+    description: 'Fone Bluetooth', totalAmount: 45000, categoryName: 'Compras',
+    accountName: 'Nubank', startMonth: -1, installments: 3, startDay: 10, paid: 'partial'
+  },
 
   // CONTAS - Fixed bills (~R$ 870 vs R$ 1200)
-  { description: 'Aluguel', totalAmount: 65000, categoryName: 'Contas',
-    accountName: 'Itaú Corrente', startMonth: 0, installments: 1, startDay: 5, paid: true },
-  { description: 'Conta de Luz', totalAmount: 12000, categoryName: 'Contas',
-    accountName: 'Itaú Corrente', startMonth: 0, installments: 1, startDay: 10, paid: true },
-  { description: 'Internet', totalAmount: 10000, categoryName: 'Contas',
-    accountName: 'Itaú Corrente', startMonth: 0, installments: 1, startDay: 15, paid: false },
+  {
+    description: 'Aluguel', totalAmount: 65000, categoryName: 'Contas',
+    accountName: 'Itaú Corrente', startMonth: 0, installments: 1, startDay: 5, paid: true
+  },
+  {
+    description: 'Conta de Luz', totalAmount: 12000, categoryName: 'Contas',
+    accountName: 'Itaú Corrente', startMonth: 0, installments: 1, startDay: 10, paid: true
+  },
+  {
+    description: 'Internet', totalAmount: 10000, categoryName: 'Contas',
+    accountName: 'Itaú Corrente', startMonth: 0, installments: 1, startDay: 15, paid: false
+  },
 
   // EDUCAÇÃO - Under budget (~R$ 60 vs R$ 200)
-  { description: 'Curso Udemy', totalAmount: 6000, categoryName: 'Educação',
-    accountName: 'Nubank', startMonth: 0, installments: 1, startDay: 2, paid: true },
+  {
+    description: 'Curso Udemy', totalAmount: 6000, categoryName: 'Educação',
+    accountName: 'Nubank', startMonth: 0, installments: 1, startDay: 2, paid: true
+  },
 
   // SAÚDE - Zero spending (has budget, no transactions in current month)
 
   // HISTORICAL DATA - Previous month (mostly paid)
-  { description: 'iFood', totalAmount: 32000, categoryName: 'Alimentação',
-    accountName: 'Nubank', startMonth: -1, installments: 1, startDay: 8, paid: true },
-  { description: 'Mercado', totalAmount: 25000, categoryName: 'Alimentação',
-    accountName: 'Itaú Corrente', startMonth: -1, installments: 1, startDay: 12, paid: true },
-  { description: 'Consulta Médica', totalAmount: 35000, categoryName: 'Saúde',
-    accountName: 'Nubank', startMonth: -1, installments: 1, startDay: 20, paid: true },
+  {
+    description: 'iFood', totalAmount: 32000, categoryName: 'Alimentação',
+    accountName: 'Nubank', startMonth: -1, installments: 1, startDay: 8, paid: true
+  },
+  {
+    description: 'Mercado', totalAmount: 25000, categoryName: 'Alimentação',
+    accountName: 'Itaú Corrente', startMonth: -1, installments: 1, startDay: 12, paid: true
+  },
+  {
+    description: 'Consulta Médica', totalAmount: 35000, categoryName: 'Saúde',
+    accountName: 'Nubank', startMonth: -1, installments: 1, startDay: 20, paid: true
+  },
 
   // 2 MONTHS AGO - Sparse data
-  { description: 'Aluguel', totalAmount: 65000, categoryName: 'Contas',
-    accountName: 'Itaú Corrente', startMonth: -2, installments: 1, startDay: 5, paid: true },
-  { description: 'Curso Online', totalAmount: 18000, categoryName: 'Educação',
-    accountName: 'Nubank', startMonth: -2, installments: 3, startDay: 1, paid: true },
+  {
+    description: 'Aluguel', totalAmount: 65000, categoryName: 'Contas',
+    accountName: 'Itaú Corrente', startMonth: -2, installments: 1, startDay: 5, paid: true
+  },
+  {
+    description: 'Curso Online', totalAmount: 18000, categoryName: 'Educação',
+    accountName: 'Nubank', startMonth: -2, installments: 3, startDay: 1, paid: true
+  },
 ];
 
 function generateEntries(
@@ -152,14 +190,14 @@ function generateEntries(
     const monthOffset = txData.startMonth + i;
     const dueDate = getRelativeDate(monthOffset, txData.startDay);
 
-    // Determine paid status
-    let paidAt: string | null = null;
+    // Determine paid status - PostgreSQL timestamp needs Date object
+    let paidAt: Date | null = null;
     if (txData.paid === true) {
-      paidAt = dueDate; // Paid on due date
+      paidAt = new Date(dueDate); // Paid on due date
     } else if (txData.paid === 'partial') {
       // Past installments are paid, current/future are pending
       const isPastMonth = monthOffset < 0;
-      if (isPastMonth) paidAt = dueDate;
+      if (isPastMonth) paidAt = new Date(dueDate);
     }
     // txData.paid === false means all pending
 
@@ -172,8 +210,8 @@ function generateEntries(
       transactionId,
       accountId: accountMap[txData.accountName],
       amount,
-      dueDate,
-      paidAt,
+      dueDate, // date type accepts string 'YYYY-MM-DD'
+      paidAt,  // timestamp type needs Date object
       installmentNumber: i + 1,
     });
   }
@@ -182,7 +220,7 @@ function generateEntries(
 }
 
 async function seed() {
-  const dbUrl = process.env.TURSO_DATABASE_URL || process.env.DATABASE_URL || 'file:./local.db';
+  const dbUrl = process.env.DATABASE_URL!;
   console.log('🌱 Seeding database...');
   console.log(`📍 Target: ${dbUrl}\n`);
 

@@ -135,7 +135,7 @@ export async function getExpenses(filters: ExpenseFilters = {}) {
 
   // Filter by month using SQL to extract year-month from dueDate
   if (yearMonth) {
-    conditions.push(sql`strftime('%Y-%m', ${entries.dueDate}) = ${yearMonth}`);
+    conditions.push(sql`to_char(${entries.dueDate}, 'YYYY-MM') = ${yearMonth}`);
   }
 
   if (categoryId) {
