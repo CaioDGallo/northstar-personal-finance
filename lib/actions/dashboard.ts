@@ -1,5 +1,6 @@
 'use server';
 
+import { cache } from 'react';
 import { db } from '@/lib/db';
 import { entries, transactions, categories, budgets, accounts, income } from '@/lib/schema';
 import { eq, and, gte, lte, sql, desc } from 'drizzle-orm';
@@ -39,7 +40,7 @@ export type DashboardData = {
   }[];
 };
 
-export async function getDashboardData(yearMonth: string): Promise<DashboardData> {
+export const getDashboardData = cache(async (yearMonth: string): Promise<DashboardData> => {
   // Parse year-month to get start/end dates
   const [year, month] = yearMonth.split('-').map(Number);
   const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
@@ -146,4 +147,4 @@ export async function getDashboardData(yearMonth: string): Promise<DashboardData
     recentExpenses,
     recentIncome,
   };
-}
+});

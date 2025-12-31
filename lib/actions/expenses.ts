@@ -1,5 +1,6 @@
 'use server';
 
+import { cache } from 'react';
 import { db } from '@/lib/db';
 import { transactions, entries, accounts, categories, type NewEntry } from '@/lib/schema';
 import { eq, and, isNull, isNotNull, desc, sql, inArray } from 'drizzle-orm';
@@ -190,7 +191,7 @@ export type ExpenseFilters = {
   status?: 'all' | 'paid' | 'pending';
 };
 
-export async function getExpenses(filters: ExpenseFilters = {}) {
+export const getExpenses = cache(async (filters: ExpenseFilters = {}) => {
   const { yearMonth, categoryId, accountId, status = 'all' } = filters;
 
   const conditions = [];
@@ -239,7 +240,7 @@ export async function getExpenses(filters: ExpenseFilters = {}) {
     .orderBy(desc(entries.dueDate));
 
   return results;
-}
+});
 
 export async function markEntryPaid(entryId: number) {
   if (!Number.isInteger(entryId) || entryId <= 0) {

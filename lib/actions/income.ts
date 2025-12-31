@@ -1,5 +1,6 @@
 'use server';
 
+import { cache } from 'react';
 import { db } from '@/lib/db';
 import { income, categories, accounts } from '@/lib/schema';
 import { eq, and, gte, lte, desc, isNull, isNotNull, sql, inArray } from 'drizzle-orm';
@@ -112,7 +113,7 @@ export type IncomeFilters = {
   status?: 'all' | 'received' | 'pending';
 };
 
-export async function getIncome(filters: IncomeFilters = {}) {
+export const getIncome = cache(async (filters: IncomeFilters = {}) => {
   const conditions = [];
 
   // Filter by month
@@ -164,7 +165,7 @@ export async function getIncome(filters: IncomeFilters = {}) {
     .orderBy(desc(income.receivedDate), desc(income.createdAt));
 
   return results;
-}
+});
 
 export async function markIncomeReceived(incomeId: number) {
   if (!Number.isInteger(incomeId) || incomeId <= 0) {

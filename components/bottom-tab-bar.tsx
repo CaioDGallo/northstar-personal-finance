@@ -78,7 +78,7 @@ function TabButton({ title, href, icon, active, onClick }: TabButtonProps) {
   }
 
   return (
-    <Link href={href!} className="relative">
+    <Link href={href!} prefetch={true} className="relative">
       {content}
     </Link>
   );

@@ -2,8 +2,11 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { FAB } from '@/components/fab';
 import { BottomTabBar } from '@/components/bottom-tab-bar';
-import { getAccounts } from '@/lib/actions/accounts';
-import { getCategories } from '@/lib/actions/categories';
+import {
+  getCachedAccounts,
+  getCachedExpenseCategories,
+  getCachedIncomeCategories
+} from '@/lib/actions/cached-layout-data';
 
 export default async function AppLayout({
   children,
@@ -11,9 +14,9 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const [accounts, expenseCategories, incomeCategories] = await Promise.all([
-    getAccounts(),
-    getCategories('expense'),
-    getCategories('income'),
+    getCachedAccounts(),
+    getCachedExpenseCategories(),
+    getCachedIncomeCategories(),
   ]);
 
   return (

@@ -1,5 +1,6 @@
 'use server';
 
+import { cache } from 'react';
 import { db } from '@/lib/db';
 import { budgets, categories, entries, transactions, monthlyBudgets } from '@/lib/schema';
 import { eq, and, gte, lte, sql } from 'drizzle-orm';
@@ -136,7 +137,7 @@ export type BudgetsPageData = {
   budgets: BudgetWithSpending[];
 };
 
-export async function getBudgetsWithSpending(yearMonth: string): Promise<BudgetsPageData> {
+export const getBudgetsWithSpending = cache(async (yearMonth: string): Promise<BudgetsPageData> => {
   // Validate year-month format
   if (!/^\d{4}-\d{2}$/.test(yearMonth)) {
     throw new Error('Invalid year-month format (expected YYYY-MM)');
@@ -205,7 +206,7 @@ export async function getBudgetsWithSpending(yearMonth: string): Promise<Budgets
     console.error('Failed to get budgets with spending:', error);
     throw new Error('Failed to load budget data. Please try again.');
   }
-}
+});
 
 export type CopyBudgetsResult = {
   copied: number;

@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ArrowLeft01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
+import { useEffect } from 'react';
 
 type MonthPickerProps = {
   currentMonth: string;
@@ -13,6 +14,14 @@ type MonthPickerProps = {
 export function MonthPicker({ currentMonth }: MonthPickerProps) {
   const router = useRouter();
   const pathname = usePathname();
+
+  // Prefetch adjacent months for instant navigation
+  useEffect(() => {
+    const prevMonth = addMonths(currentMonth, -1);
+    const nextMonth = addMonths(currentMonth, 1);
+    router.prefetch(`${pathname}?month=${prevMonth}`);
+    router.prefetch(`${pathname}?month=${nextMonth}`);
+  }, [currentMonth, pathname, router]);
 
   function navigate(direction: -1 | 1) {
     const newMonth = addMonths(currentMonth, direction);

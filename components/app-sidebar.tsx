@@ -79,7 +79,7 @@ export function AppSidebar() {
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton asChild isActive={isActive(item.href)}>
-                    <Link href={item.href}>
+                    <Link href={item.href} prefetch={true}>
                       <HugeiconsIcon icon={item.icon} />
                       <span>{item.title}</span>
                     </Link>
@@ -104,7 +104,7 @@ export function AppSidebar() {
                       {settingsItems.map((item) => (
                         <SidebarMenuSubItem key={item.href}>
                           <SidebarMenuSubButton asChild isActive={isActive(item.href)}>
-                            <Link href={item.href}>
+                            <Link href={item.href} prefetch={true}>
                               <HugeiconsIcon icon={item.icon} />
                               <span>{item.title}</span>
                             </Link>
