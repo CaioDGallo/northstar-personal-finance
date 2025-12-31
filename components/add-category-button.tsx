@@ -11,19 +11,26 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
-export function AddCategoryButton() {
+type AddCategoryButtonProps = {
+  type?: 'expense' | 'income';
+  children?: React.ReactNode;
+};
+
+export function AddCategoryButton({ type = 'expense', children }: AddCategoryButtonProps) {
   const [open, setOpen] = useState(false);
+
+  const title = type === 'expense' ? 'Add Expense Category' : 'Add Income Category';
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant={'hollow'}>Add Category</Button>
+        <Button variant={'hollow'}>{children || 'Add Category'}</Button>
       </AlertDialogTrigger>
       <AlertDialogContent closeOnBackdropClick>
         <AlertDialogHeader>
-          <AlertDialogTitle>Add Category</AlertDialogTitle>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
         </AlertDialogHeader>
-        <CategoryForm onSuccess={() => setOpen(false)} />
+        <CategoryForm type={type} onSuccess={() => setOpen(false)} />
       </AlertDialogContent>
     </AlertDialog>
   );

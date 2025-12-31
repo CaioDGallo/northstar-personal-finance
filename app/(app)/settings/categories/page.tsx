@@ -10,15 +10,17 @@ export default async function CategoriesPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6">
         <h1 className="text-2xl font-bold">Categories</h1>
-        <AddCategoryButton />
       </div>
 
       <div className="space-y-8">
         {/* Expense Categories */}
         <div>
-          <h2 className="mb-3 text-sm font-medium text-gray-500">Expense Categories</h2>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-medium text-gray-500">Expense Categories</h2>
+            <AddCategoryButton type="expense">Add</AddCategoryButton>
+          </div>
           {expenseCategories.length === 0 ? (
             <p className="text-sm text-gray-500">No expense categories yet.</p>
           ) : (
@@ -32,7 +34,10 @@ export default async function CategoriesPage() {
 
         {/* Income Categories */}
         <div>
-          <h2 className="mb-3 text-sm font-medium text-gray-500">Income Categories</h2>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-medium text-gray-500">Income Categories</h2>
+            <AddCategoryButton type="income">Add</AddCategoryButton>
+          </div>
           {incomeCategories.length === 0 ? (
             <p className="text-sm text-gray-500">No income categories yet.</p>
           ) : (

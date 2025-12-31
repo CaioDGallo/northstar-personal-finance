@@ -60,7 +60,7 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
           type="button"
           onClick={() => onChange(name as IconName)}
           className={cn(
-            'flex h-10 w-10 items-center justify-center rounded-md border hover:bg-neutral-100',
+            'flex h-10 w-10 items-center justify-center rounded-md border dark:hover:bg-neutral-700 hover:bg-neutral-100',
             value === name && 'border-blue-500 bg-blue-50 ring-2 ring-blue-500'
           )}
         >

@@ -31,10 +31,11 @@ const COLORS = [
 
 type CategoryFormProps = {
   category?: Category;
+  type?: 'expense' | 'income';
   onSuccess?: () => void;
 };
 
-export function CategoryForm({ category, onSuccess }: CategoryFormProps) {
+export function CategoryForm({ category, type = 'expense', onSuccess }: CategoryFormProps) {
   const [name, setName] = useState(category?.name || '');
   const [color, setColor] = useState(category?.color || COLORS[0]);
   const [icon, setIcon] = useState<IconName | null>(() => {
@@ -52,7 +53,7 @@ export function CategoryForm({ category, onSuccess }: CategoryFormProps) {
     try {
       const result = category
         ? await updateCategory(category.id, { name, color, icon })
-        : await createCategory({ name, color, icon });
+        : await createCategory({ name, color, icon, type });
 
       if (!result.success) {
         setError(result.error);
