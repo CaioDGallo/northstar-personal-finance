@@ -31,28 +31,35 @@ export function IncomeList() {
 
   // Watch filter changes (clear selection when month changes)
   const prevYearMonthRef = useRef(filters.yearMonth);
+  const { exitSelectionMode } = selection;
 
   useEffect(() => {
     if (prevYearMonthRef.current !== filters.yearMonth) {
-      selection.exitSelectionMode();
+      exitSelectionMode();
     }
     prevYearMonthRef.current = filters.yearMonth;
-  }, [filters.yearMonth, selection]);
+  }, [filters.yearMonth, exitSelectionMode]);
 
   // Bulk category handler
   const handleBulkCategoryChange = async (categoryId: number) => {
     setBulkPickerOpen(false);
 
     // Filter out optimistic items (negative IDs)
-    const realIncomeIds = Array.from(selection.selectedIds).filter((id) => id > 0);
+    const realIncomeIds = selection.getSelectedIds().filter((id) => id > 0);
 
     if (realIncomeIds.length === 0) {
       toast.error('Cannot update pending items');
       return;
     }
 
-    await context.bulkUpdateCategory(realIncomeIds, categoryId);
-    selection.exitSelectionMode();
+    try {
+      await context.bulkUpdateCategory(realIncomeIds, categoryId);
+      selection.exitSelectionMode();
+    } catch (error) {
+      console.error('Bulk update failed:', error);
+      // Error already toasted by context
+      // Keep selection active so user can retry
+    }
   };
 
   if (income.length === 0) {
@@ -77,18 +84,29 @@ export function IncomeList() {
             })}
           </h2>
           <div className="space-y-2">
-            {groupedByDate[date].map((inc) => (
-              <IncomeCard
-                key={inc._tempId || inc.id}
-                income={inc}
-                categories={categories}
-                isOptimistic={inc._optimistic}
-                isSelected={selection.isSelected(inc.id)}
-                isSelectionMode={selection.isSelectionMode}
-                onLongPress={() => selection.enterSelectionMode(inc.id)}
-                onToggleSelection={() => selection.toggleSelection(inc.id)}
-              />
-            ))}
+            {groupedByDate[date].map((inc) =>
+              selection.isSelectionMode ? (
+                <IncomeCard
+                  key={inc._tempId || inc.id}
+                  income={inc}
+                  categories={categories}
+                  isOptimistic={inc._optimistic}
+                  selectionMode={true}
+                  isSelected={selection.isSelected(inc.id)}
+                  onLongPress={() => selection.enterSelectionMode(inc.id)}
+                  onToggleSelection={() => selection.toggleSelection(inc.id)}
+                />
+              ) : (
+                <IncomeCard
+                  key={inc._tempId || inc.id}
+                  income={inc}
+                  categories={categories}
+                  isOptimistic={inc._optimistic}
+                  selectionMode={false}
+                  onLongPress={() => selection.enterSelectionMode(inc.id)}
+                />
+              )
+            )}
           </div>
         </div>
       ))}

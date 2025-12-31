@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 
 type UseLongPressOptions = {
   onLongPress: () => void;
@@ -13,7 +13,7 @@ export function useLongPress({
   threshold = 500,
   disabled = false,
 }: UseLongPressOptions) {
-  const timerRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const timerRef = useRef<number | undefined>(undefined);
   const isLongPressRef = useRef(false);
 
   const start = useCallback(() => {
@@ -28,7 +28,7 @@ export function useLongPress({
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
         navigator.vibrate(50);
       }
-    }, threshold);
+    }, threshold) as unknown as number;
   }, [onLongPress, threshold, disabled]);
 
   const cancel = useCallback(() => {
@@ -39,11 +39,20 @@ export function useLongPress({
 
   const end = useCallback(() => {
     cancel();
-    // If not long press, treat as tap
-    if (!isLongPressRef.current && onTap) {
+    // If not long press and not disabled, treat as tap
+    if (!disabled && !isLongPressRef.current && onTap) {
       onTap();
     }
-  }, [cancel, onTap]);
+  }, [cancel, onTap, disabled]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
 
   return {
     onMouseDown: start,

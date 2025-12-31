@@ -31,36 +31,72 @@ export function ExpenseList() {
 
   // Watch filter changes (clear selection when month changes)
   const prevYearMonthRef = useRef(filters.yearMonth);
+  const { exitSelectionMode } = selection;
 
   useEffect(() => {
     if (prevYearMonthRef.current !== filters.yearMonth) {
-      selection.exitSelectionMode();
+      exitSelectionMode();
     }
     prevYearMonthRef.current = filters.yearMonth;
-  }, [filters.yearMonth, selection]);
+  }, [filters.yearMonth, exitSelectionMode]);
 
   // Bulk category handler
   const handleBulkCategoryChange = async (categoryId: number) => {
     setBulkPickerOpen(false);
 
-    // Filter out optimistic items (negative IDs) and map entry.id -> transactionId
-    const realTransactionIds = Array.from(selection.selectedIds)
-      .map((id) => {
-        const entry = expenses.find((e) => e.id === id);
-        return entry && entry.transactionId > 0 ? entry.transactionId : null;
-      })
-      .filter((id): id is number => id !== null);
+    // Validate and map entry IDs to transaction IDs with detailed tracking
+    const realTransactionIds: number[] = [];
+    const skippedCount = { optimistic: 0, notFound: 0, invalid: 0 };
 
-    // Get unique transaction IDs
+    selection.getSelectedIds().forEach((id) => {
+      if (id <= 0) {
+        skippedCount.optimistic++;
+        return;
+      }
+
+      const entry = expenses.find((e) => e.id === id);
+      if (!entry) {
+        skippedCount.notFound++;
+        console.warn('Selected entry not found:', id);
+        return;
+      }
+
+      if (!entry.transactionId || entry.transactionId <= 0) {
+        skippedCount.invalid++;
+        console.error('Entry has invalid transactionId:', { id, transactionId: entry.transactionId });
+        return;
+      }
+
+      realTransactionIds.push(entry.transactionId);
+    });
+
+    // Deduplicate transaction IDs (multiple entries can share same transaction)
     const uniqueTransactionIds = [...new Set(realTransactionIds)];
 
+    // Provide detailed feedback based on what was skipped
     if (uniqueTransactionIds.length === 0) {
-      toast.error('Cannot update pending items');
+      if (skippedCount.optimistic > 0) {
+        toast.error('Cannot update pending items');
+      } else {
+        toast.error('No valid items to update');
+        console.error('Selection failed:', skippedCount);
+      }
       return;
     }
 
-    await context.bulkUpdateCategory(uniqueTransactionIds, categoryId);
-    selection.exitSelectionMode();
+    if (skippedCount.notFound > 0 || skippedCount.invalid > 0) {
+      toast.warning(`Updating ${uniqueTransactionIds.length} items (${skippedCount.notFound + skippedCount.invalid} skipped)`);
+      console.warn('Some items skipped:', skippedCount);
+    }
+
+    try {
+      await context.bulkUpdateCategory(uniqueTransactionIds, categoryId);
+      selection.exitSelectionMode();
+    } catch (error) {
+      console.error('Bulk update failed:', error);
+      // Error already toasted by context
+      // Keep selection active so user can retry
+    }
   };
 
   if (expenses.length === 0) {
@@ -85,18 +121,29 @@ export function ExpenseList() {
             })}
           </h2>
           <div className="space-y-3">
-            {groupedByDate[date].map((expense) => (
-              <ExpenseCard
-                key={expense._tempId || expense.id}
-                entry={expense}
-                categories={categories}
-                isOptimistic={expense._optimistic}
-                isSelected={selection.isSelected(expense.id)}
-                isSelectionMode={selection.isSelectionMode}
-                onLongPress={() => selection.enterSelectionMode(expense.id)}
-                onToggleSelection={() => selection.toggleSelection(expense.id)}
-              />
-            ))}
+            {groupedByDate[date].map((expense) =>
+              selection.isSelectionMode ? (
+                <ExpenseCard
+                  key={expense._tempId || expense.id}
+                  entry={expense}
+                  categories={categories}
+                  isOptimistic={expense._optimistic}
+                  selectionMode={true}
+                  isSelected={selection.isSelected(expense.id)}
+                  onLongPress={() => selection.enterSelectionMode(expense.id)}
+                  onToggleSelection={() => selection.toggleSelection(expense.id)}
+                />
+              ) : (
+                <ExpenseCard
+                  key={expense._tempId || expense.id}
+                  entry={expense}
+                  categories={categories}
+                  isOptimistic={expense._optimistic}
+                  selectionMode={false}
+                  onLongPress={() => selection.enterSelectionMode(expense.id)}
+                />
+              )
+            )}
           </div>
         </div>
       ))}

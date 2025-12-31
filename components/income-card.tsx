@@ -31,7 +31,7 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react';
 import { MoreVerticalIcon, Tick02Icon, Clock01Icon } from '@hugeicons/core-free-icons';
 
-type IncomeCardProps = {
+type IncomeCardBaseProps = {
   income: {
     id: number;
     description: string;
@@ -46,21 +46,24 @@ type IncomeCardProps = {
   };
   categories: Category[];
   isOptimistic?: boolean;
-  isSelected?: boolean;
-  isSelectionMode?: boolean;
-  onLongPress?: () => void;
-  onToggleSelection?: () => void;
 };
 
-export function IncomeCard({
-  income,
-  categories,
-  isOptimistic = false,
-  isSelected = false,
-  isSelectionMode = false,
-  onLongPress,
-  onToggleSelection,
-}: IncomeCardProps) {
+type IncomeCardProps =
+  | (IncomeCardBaseProps & {
+      selectionMode: false;
+      isSelected?: never;
+      onLongPress?: () => void;
+      onToggleSelection?: never;
+    })
+  | (IncomeCardBaseProps & {
+      selectionMode: true;
+      isSelected: boolean;
+      onLongPress: () => void;
+      onToggleSelection: () => void;
+    });
+
+export function IncomeCard(props: IncomeCardProps) {
+  const { income, categories, isOptimistic = false } = props;
   const isReceived = !!income.receivedAt;
   const [pickerOpen, setPickerOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -117,9 +120,9 @@ export function IncomeCard({
   };
 
   const longPressHandlers = useLongPress({
-    onLongPress: onLongPress || (() => {}),
-    onTap: isSelectionMode ? onToggleSelection : undefined,
-    disabled: !onLongPress && !isSelectionMode,
+    onLongPress: props.selectionMode ? props.onLongPress : (props.onLongPress || (() => {})),
+    onTap: props.selectionMode ? props.onToggleSelection : undefined,
+    disabled: !props.selectionMode && !props.onLongPress,
   });
 
   return (
@@ -127,19 +130,19 @@ export function IncomeCard({
       <Card className={cn(
         "py-0 relative",
         isOptimistic && "opacity-70 animate-pulse",
-        isSelectionMode && "cursor-pointer",
-        isSelected && "ring-2 ring-primary ring-offset-2"
+        props.selectionMode && "cursor-pointer",
+        props.selectionMode && props.isSelected && "ring-2 ring-primary ring-offset-2"
       )}>
         {/* Checkbox indicator - only shown in selection mode */}
-        {isSelectionMode && (
+        {props.selectionMode && (
           <div className="absolute -left-1 -top-1 z-10">
             <div className={cn(
               "size-6 rounded-full border-2 flex items-center justify-center transition-all",
-              isSelected
+              props.isSelected
                 ? "bg-primary border-primary"
                 : "bg-white border-gray-300"
             )}>
-              {isSelected && (
+              {props.isSelected && (
                 <HugeiconsIcon
                   icon={Tick02Icon}
                   className="size-4 text-white"
@@ -156,8 +159,8 @@ export function IncomeCard({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              if (isSelectionMode) {
-                onToggleSelection?.();
+              if (props.selectionMode) {
+                props.onToggleSelection();
               } else {
                 setPickerOpen(true);
               }

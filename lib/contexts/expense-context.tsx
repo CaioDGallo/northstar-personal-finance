@@ -250,7 +250,11 @@ export function ExpenseListProvider({
   const bulkUpdateCategory = useCallback(
     async (transactionIds: number[], categoryId: number) => {
       const category = categories.find((c) => c.id === categoryId);
-      if (!category) return;
+      if (!category) {
+        console.error('Category not found:', categoryId);
+        toast.error('Selected category not found. Please refresh and try again.');
+        return;
+      }
 
       startTransition(() => {
         dispatch({ type: 'bulkUpdateCategory', transactionIds, category });
@@ -259,9 +263,10 @@ export function ExpenseListProvider({
       try {
         await serverBulkUpdateTransactionCategories(transactionIds, categoryId);
         toast.success(`Updated ${transactionIds.length} item${transactionIds.length > 1 ? 's' : ''}`);
-      } catch {
+      } catch (error) {
+        console.error('Failed to bulk update categories:', error);
         toast.error('Failed to update categories');
-        throw new Error('Failed to update categories');
+        // Optimistic update will auto-revert on revalidation
       }
     },
     [categories, dispatch]
