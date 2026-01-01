@@ -63,3 +63,33 @@ export function addMonths(yearMonth: string, months: number): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   return `${year}-${month}`;
 }
+
+/**
+ * Parse "YYYY-MM-DD" date string as local time (not UTC)
+ *
+ * Fixes timezone bug where `new Date("2026-01-02")` is parsed as UTC midnight,
+ * which in GMT-3 is the previous day (Jan 1 at 21:00).
+ *
+ * @example parseLocalDate("2026-01-02") → Date at Jan 2, 00:00 local time
+ */
+export function parseLocalDate(dateString: string): Date {
+  return new Date(dateString + 'T00:00:00');
+}
+
+/**
+ * Format date for display (timezone-safe)
+ *
+ * Accepts either a "YYYY-MM-DD" string or a Date object.
+ * For strings, parses as local time to avoid timezone shifts.
+ *
+ * @example formatDate("2026-01-02") → "2 de janeiro de 2026"
+ * @example formatDate("2026-01-02", { weekday: 'long' }) → "quinta-feira, 2 de janeiro de 2026"
+ * @example formatDate(new Date()) → "1 de janeiro de 2026"
+ */
+export function formatDate(
+  date: string | Date,
+  options?: Intl.DateTimeFormatOptions
+): string {
+  const dateObj = typeof date === 'string' ? parseLocalDate(date) : date;
+  return dateObj.toLocaleDateString('pt-BR', options);
+}

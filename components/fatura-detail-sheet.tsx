@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { formatCurrency, cn } from '@/lib/utils';
+import { formatCurrency, formatDate, cn } from '@/lib/utils';
 import { formatFaturaMonth } from '@/lib/fatura-utils';
 import { getFaturaWithEntries, markFaturaUnpaid } from '@/lib/actions/faturas';
 import { PayFaturaDialog } from '@/components/pay-fatura-dialog';
@@ -110,13 +110,13 @@ export function FaturaDetailSheet({
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600">Vencimento:</span>
-                <span>{new Date(fatura.dueDate).toLocaleDateString('pt-BR')}</span>
+                <span>{formatDate(fatura.dueDate)}</span>
               </div>
               {isPaid && (
                 <div className="flex items-center justify-between text-sm mt-2">
                   <span className="text-gray-600">Pago em:</span>
                   <span className="text-green-600">
-                    {new Date(fatura.paidAt!).toLocaleDateString('pt-BR')}
+                    {formatDate(fatura.paidAt!)}
                   </span>
                 </div>
               )}
@@ -161,7 +161,7 @@ export function FaturaDetailSheet({
                               )}
                             </div>
                             <p className="text-xs text-gray-500">
-                              {new Date(entry.purchaseDate).toLocaleDateString('pt-BR')}
+                              {formatDate(entry.purchaseDate)}
                             </p>
                           </div>
 

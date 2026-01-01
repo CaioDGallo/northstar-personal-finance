@@ -38,9 +38,9 @@ export function getFaturaMonth(purchaseDate: Date, closingDay: number): string {
 /**
  * Calculates the payment due date for a fatura.
  *
- * Fatura payment is always due in the month AFTER the fatura month.
+ * The fatura month IS the payment month (not the closing month).
  *
- * Example: fatura "2025-01" with paymentDueDay = 5
+ * Example: fatura "2025-02" with paymentDueDay = 5
  * → Payment due: 2025-02-05
  *
  * @param faturaMonth - Fatura month in "YYYY-MM" format
@@ -49,8 +49,8 @@ export function getFaturaMonth(purchaseDate: Date, closingDay: number): string {
  */
 export function getFaturaPaymentDueDate(faturaMonth: string, paymentDueDay: number): string {
   const [year, month] = faturaMonth.split('-').map(Number);
-  // month is already 1-indexed from string, so we use it directly for next month
-  const paymentDate = new Date(year, month, paymentDueDay);
+  // month is 1-indexed from string, subtract 1 for JS Date (0-indexed)
+  const paymentDate = new Date(year, month - 1, paymentDueDay);
   return paymentDate.toISOString().split('T')[0];
 }
 

@@ -1,4 +1,4 @@
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { CategoryIcon } from '@/components/icon-picker';
 import Link from 'next/link';
@@ -64,7 +64,7 @@ export function RecentExpenses({ expenses }: RecentExpensesProps) {
             <div className="text-right">
               <div className="font-semibold">{formatCurrency(expense.amount)}</div>
               <div className="text-xs text-gray-500">
-                {new Date(expense.dueDate).toLocaleDateString('pt-BR', {
+                {formatDate(expense.dueDate, {
                   month: 'short',
                   day: 'numeric',
                 })}

@@ -4,7 +4,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CategoryIcon } from '@/components/icon-picker';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Tick02Icon, Clock01Icon } from '@hugeicons/core-free-icons';
 import type { ExpenseEntry } from '@/lib/contexts/expense-context';
@@ -91,7 +91,7 @@ export function TransactionDetailSheet({ expense, income, open, onOpenChange }: 
             {/* Date */}
             <DetailRow
               label={dateLabel}
-              value={new Date(dateValue || '').toLocaleDateString('pt-BR', {
+              value={formatDate(dateValue || '', {
                 day: '2-digit',
                 month: 'long',
                 year: 'numeric',
@@ -105,7 +105,7 @@ export function TransactionDetailSheet({ expense, income, open, onOpenChange }: 
                 {expense.purchaseDate !== expense.dueDate && (
                   <DetailRow
                     label="Purchase Date"
-                    value={new Date(expense.purchaseDate).toLocaleDateString('pt-BR', {
+                    value={formatDate(expense.purchaseDate, {
                       day: '2-digit',
                       month: 'long',
                       year: 'numeric',
@@ -116,7 +116,7 @@ export function TransactionDetailSheet({ expense, income, open, onOpenChange }: 
                 {/* Fatura Month */}
                 <DetailRow
                   label="Fatura"
-                  value={new Date(expense.faturaMonth + '-01').toLocaleDateString('pt-BR', {
+                  value={formatDate(expense.faturaMonth + '-01', {
                     month: 'long',
                     year: 'numeric',
                   })}

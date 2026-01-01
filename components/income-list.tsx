@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useIncomeContext, IncomeListProvider } from '@/lib/contexts/income-context';
 import { IncomeCard } from '@/components/income-card';
+import { formatDate } from '@/lib/utils';
 import { useSelection } from '@/lib/hooks/use-selection';
 import { SelectionActionBar } from '@/components/selection-action-bar';
 import { CategoryQuickPicker } from '@/components/category-quick-picker';
@@ -76,7 +77,7 @@ export function IncomeList() {
       {dates.map((date) => (
         <div key={date}>
           <h2 className="mb-3 text-sm font-medium text-gray-500">
-            {new Date(date).toLocaleDateString('pt-BR', {
+            {formatDate(date, {
               weekday: 'long',
               day: 'numeric',
               month: 'long',

@@ -1,5 +1,5 @@
 import type { ParseResult } from '@/lib/import/types';
-import { centsToDisplay } from '@/lib/utils';
+import { centsToDisplay, formatDate } from '@/lib/utils';
 
 type Props = {
   parseResult: ParseResult;
@@ -46,7 +46,7 @@ export function ImportPreview({ parseResult }: Props) {
                 {rows.slice(0, 100).map((row) => (
                   <tr key={row.rowIndex} className="border-t dark:border-gray-800">
                     <td className="px-4 py-2 text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                      {new Date(row.date).toLocaleDateString('pt-BR')}
+                      {formatDate(row.date)}
                     </td>
                     <td className="px-4 py-2">{row.description}</td>
                     <td className="px-4 py-2 text-right font-medium">{centsToDisplay(row.amountCents)}</td>

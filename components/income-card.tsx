@@ -2,7 +2,7 @@
 
 import { useState, useOptimistic, useTransition } from 'react';
 import { useLongPress } from '@/lib/hooks/use-long-press';
-import { formatCurrency, cn } from '@/lib/utils';
+import { formatCurrency, formatDate, cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CategoryIcon } from '@/components/icon-picker';
@@ -179,7 +179,7 @@ export function IncomeCard(props: IncomeCardProps) {
           <h3 className="font-medium text-sm truncate">{income.description}</h3>
           {/* Mobile only: short date */}
           <div className="text-xs text-gray-500 md:hidden">
-            {new Date(income.receivedDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+            {formatDate(income.receivedDate, { day: '2-digit', month: 'short' })}
           </div>
         </div>
 
@@ -190,7 +190,7 @@ export function IncomeCard(props: IncomeCardProps) {
 
         {/* Desktop only: Full date */}
         <div className="hidden md:block text-sm text-gray-500 shrink-0">
-          {new Date(income.receivedDate).toLocaleDateString('pt-BR')}
+          {formatDate(income.receivedDate)}
         </div>
 
         {/* Amount */}

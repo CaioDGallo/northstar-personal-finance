@@ -6,6 +6,7 @@ import { ExpenseCard } from '@/components/expense-card';
 import { useSelection } from '@/lib/hooks/use-selection';
 import { SelectionActionBar } from '@/components/selection-action-bar';
 import { CategoryQuickPicker } from '@/components/category-quick-picker';
+import { formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
 
 export { ExpenseListProvider };
@@ -19,7 +20,7 @@ export function ExpenseList() {
   // Group by date (same logic as original page)
   const groupedByDate = expenses.reduce(
     (acc, expense) => {
-      const date = expense.dueDate;
+      const date = expense.purchaseDate;
       if (!acc[date]) acc[date] = [];
       acc[date].push(expense);
       return acc;
@@ -113,7 +114,7 @@ export function ExpenseList() {
       {dates.map((date) => (
         <div key={date}>
           <h2 className="mb-3 text-sm font-medium text-gray-500">
-            {new Date(date).toLocaleDateString('pt-BR', {
+            {formatDate(date, {
               weekday: 'long',
               day: 'numeric',
               month: 'long',

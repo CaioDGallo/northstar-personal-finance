@@ -2,7 +2,7 @@
 
 import { useState, useOptimistic, useTransition } from 'react';
 import { useLongPress } from '@/lib/hooks/use-long-press';
-import { formatCurrency, cn } from '@/lib/utils';
+import { formatCurrency, formatDate, cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -58,17 +58,17 @@ type ExpenseCardBaseProps = {
 
 type ExpenseCardProps =
   | (ExpenseCardBaseProps & {
-      selectionMode: false;
-      isSelected?: never;
-      onLongPress?: () => void;
-      onToggleSelection?: never;
-    })
+    selectionMode: false;
+    isSelected?: never;
+    onLongPress?: () => void;
+    onToggleSelection?: never;
+  })
   | (ExpenseCardBaseProps & {
-      selectionMode: true;
-      isSelected: boolean;
-      onLongPress: () => void;
-      onToggleSelection: () => void;
-    });
+    selectionMode: true;
+    isSelected: boolean;
+    onLongPress: () => void;
+    onToggleSelection: () => void;
+  });
 
 export function ExpenseCard(props: ExpenseCardProps) {
   const { entry, categories, isOptimistic = false } = props;
@@ -129,8 +129,8 @@ export function ExpenseCard(props: ExpenseCardProps) {
   };
 
   const longPressHandlers = useLongPress({
-    onLongPress: props.selectionMode ? props.onLongPress : (props.onLongPress || (() => {})),
-    onTap: props.selectionMode ? props.onToggleSelection : () => setDetailOpen(true),
+    onLongPress: props.selectionMode ? props.onLongPress : (props.onLongPress || (() => { })),
+    onTap: props.selectionMode ? props.onToggleSelection : undefined,
     disabled: !props.selectionMode && !props.onLongPress,
   });
 
@@ -191,7 +191,7 @@ export function ExpenseCard(props: ExpenseCardProps) {
             </div>
             {/* Mobile only: short date */}
             <div className="text-xs text-gray-500 md:hidden">
-              {new Date(entry.dueDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+              {formatDate(entry.dueDate, { day: '2-digit', month: 'short' })}
             </div>
           </div>
 
@@ -202,7 +202,7 @@ export function ExpenseCard(props: ExpenseCardProps) {
 
           {/* Desktop only: Full date */}
           <div className="hidden md:block text-sm text-gray-500 shrink-0">
-            {new Date(entry.dueDate).toLocaleDateString('pt-BR')}
+            {formatDate(entry.dueDate)}
           </div>
 
           {/* Amount */}
@@ -231,6 +231,9 @@ export function ExpenseCard(props: ExpenseCardProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setDetailOpen(true)}>
+                View Details
+              </DropdownMenuItem>
               {isPaid ? (
                 <DropdownMenuItem onClick={handleMarkPending}>
                   Mark as Pending

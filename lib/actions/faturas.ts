@@ -253,3 +253,50 @@ export async function markFaturaUnpaid(faturaId: number): Promise<void> {
     throw new Error('Failed to mark fatura as unpaid. Please try again.');
   }
 }
+
+/**
+ * Backfills fatura records for existing credit card entries.
+ * Creates faturas for all distinct (accountId, faturaMonth) combinations
+ * where entries exist but no fatura record exists yet.
+ */
+export async function backfillFaturas(): Promise<{ created: number }> {
+  try {
+    // Get all distinct (accountId, faturaMonth) combinations from entries
+    // Only for credit card accounts
+    const distinctCombinations = await db
+      .selectDistinct({
+        accountId: entries.accountId,
+        faturaMonth: entries.faturaMonth,
+      })
+      .from(entries)
+      .innerJoin(accounts, eq(entries.accountId, accounts.id))
+      .where(eq(accounts.type, 'credit_card'));
+
+    let created = 0;
+
+    // For each combination, ensure fatura exists and update total
+    for (const combo of distinctCombinations) {
+      const existing = await db
+        .select()
+        .from(faturas)
+        .where(and(eq(faturas.accountId, combo.accountId), eq(faturas.yearMonth, combo.faturaMonth)))
+        .limit(1);
+
+      // Skip if fatura already exists
+      if (existing.length > 0) continue;
+
+      // Create fatura using existing utility
+      await ensureFaturaExists(combo.accountId, combo.faturaMonth);
+
+      // Update total amount
+      await updateFaturaTotal(combo.accountId, combo.faturaMonth);
+
+      created++;
+    }
+
+    return { created };
+  } catch (error) {
+    console.error('Failed to backfill faturas:', error);
+    throw error instanceof Error ? error : new Error('Failed to backfill faturas');
+  }
+}

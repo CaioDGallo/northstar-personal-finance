@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { formatCurrency, cn } from '@/lib/utils';
+import { formatCurrency, formatDate, cn } from '@/lib/utils';
 import { formatFaturaMonth } from '@/lib/fatura-utils';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { CreditCardIcon } from '@hugeicons/core-free-icons';
@@ -70,7 +70,7 @@ export function FaturaCard({ fatura, checkingAccounts }: FaturaCardProps) {
               {formatFaturaMonth(fatura.yearMonth)}
             </h3>
             <p className="text-xs text-gray-500">
-              Vence: {new Date(fatura.dueDate).toLocaleDateString('pt-BR')}
+              Vence: {formatDate(fatura.dueDate)}
             </p>
           </div>
 
