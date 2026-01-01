@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Home01Icon,
@@ -32,16 +33,16 @@ type BottomTabBarProps = {
 };
 
 type TabItem = {
-  title: string;
+  key: string;
   href: string | null;
   icon: typeof Home01Icon;
 };
 
 const tabs: TabItem[] = [
-  { title: 'Dashboard', href: '/dashboard', icon: Home01Icon },
-  { title: 'Budgets', href: '/budgets', icon: Invoice03Icon },
-  { title: 'Expenses', href: '/expenses', icon: Wallet01Icon },
-  { title: 'More', href: null, icon: MoreHorizontalIcon },
+  { key: 'dashboard', href: '/dashboard', icon: Home01Icon },
+  { key: 'budgets', href: '/budgets', icon: Invoice03Icon },
+  { key: 'expenses', href: '/expenses', icon: Wallet01Icon },
+  { key: 'more', href: null, icon: MoreHorizontalIcon },
 ];
 
 type TabButtonProps = {
@@ -90,6 +91,9 @@ type CenterFABProps = {
 };
 
 function CenterFAB({ onExpense, onIncome }: CenterFABProps) {
+  const t = useTranslations('expenses');
+  const tIncome = useTranslations('income');
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -112,11 +116,11 @@ function CenterFAB({ onExpense, onIncome }: CenterFABProps) {
       <DropdownMenuContent align="center" side="top" sideOffset={8}>
         <DropdownMenuItem onSelect={onExpense}>
           <HugeiconsIcon icon={Remove02Icon} strokeWidth={2} />
-          Add Expense
+          {t('addExpense')}
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={onIncome}>
           <HugeiconsIcon icon={ArrowUp01Icon} strokeWidth={2} />
-          Add Income
+          {tIncome('addIncome')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -128,6 +132,7 @@ export function BottomTabBar({
   expenseCategories,
   incomeCategories,
 }: BottomTabBarProps) {
+  const t = useTranslations('navigation');
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
   const [expenseOpen, setExpenseOpen] = useState(false);
@@ -148,10 +153,10 @@ export function BottomTabBar({
       >
         <div className="flex items-end justify-around h-16 px-2">
           {/* Dashboard tab */}
-          <TabButton {...tabs[0]} active={isActive(tabs[0].href)} />
+          <TabButton title={t(tabs[0].key)} {...tabs[0]} active={isActive(tabs[0].href)} />
 
           {/* Budgets tab */}
-          <TabButton {...tabs[1]} active={isActive(tabs[1].href)} />
+          <TabButton title={t(tabs[1].key)} {...tabs[1]} active={isActive(tabs[1].href)} />
 
           {/* Center FAB */}
           <CenterFAB
@@ -160,10 +165,11 @@ export function BottomTabBar({
           />
 
           {/* Expenses tab */}
-          <TabButton {...tabs[2]} active={isActive(tabs[2].href)} />
+          <TabButton title={t(tabs[2].key)} {...tabs[2]} active={isActive(tabs[2].href)} />
 
           {/* More tab */}
           <TabButton
+            title={t(tabs[3].key)}
             {...tabs[3]}
             active={isMoreActive}
             onClick={() => setMoreOpen(true)}

@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { getExpenses, type ExpenseFilters as ExpenseFiltersType } from '@/lib/actions/expenses';
 import { getAccounts } from '@/lib/actions/accounts';
 import { getCategories } from '@/lib/actions/categories';
@@ -19,6 +20,7 @@ type PageProps = {
 };
 
 export default async function ExpensesPage({ searchParams }: PageProps) {
+  const t = await getTranslations('expenses');
   const params = await searchParams;
   const currentMonth = params.month || getCurrentYearMonth();
 
@@ -38,14 +40,14 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Expenses</h1>
+        <h1 className="text-2xl font-bold">{t('title')}</h1>
         <ImportModal
           accounts={accounts}
           categories={categories}
           trigger={
             <Button variant="hollow" size="sm">
               <HugeiconsIcon icon={Upload02Icon} className="mr-2 size-4" />
-              Import
+              {t('import')}
             </Button>
           }
         />

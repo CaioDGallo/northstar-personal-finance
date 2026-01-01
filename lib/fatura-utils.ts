@@ -21,17 +21,18 @@
  * @returns Fatura month in "YYYY-MM" format
  */
 export function getFaturaMonth(purchaseDate: Date, closingDay: number): string {
-  const year = purchaseDate.getFullYear();
-  const month = purchaseDate.getMonth(); // 0-indexed
-  const day = purchaseDate.getDate();
+  // Use UTC methods to avoid timezone issues when parsing date-only strings from DB
+  const year = purchaseDate.getUTCFullYear();
+  const month = purchaseDate.getUTCMonth(); // 0-indexed
+  const day = purchaseDate.getUTCDate();
 
   if (day <= closingDay) {
     // Purchase on/before closing → belongs to current month's fatura
     return `${year}-${String(month + 1).padStart(2, '0')}`;
   } else {
     // Purchase after closing → belongs to next month's fatura
-    const nextMonth = new Date(year, month + 1, 1);
-    return `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}`;
+    const nextMonth = new Date(Date.UTC(year, month + 1, 1));
+    return `${nextMonth.getUTCFullYear()}-${String(nextMonth.getUTCMonth() + 1).padStart(2, '0')}`;
   }
 }
 
@@ -58,12 +59,26 @@ export function getFaturaPaymentDueDate(faturaMonth: string, paymentDueDay: numb
  * Formats a fatura month for display.
  *
  * @param yearMonth - Fatura month in "YYYY-MM" format
- * @returns Formatted string like "January 2025"
+ * @returns Formatted string like "janeiro de 2025"
+ * @deprecated Use formatFaturaMonthWithLocale instead
  */
 export function formatFaturaMonth(yearMonth: string): string {
   const [year, month] = yearMonth.split('-').map(Number);
   const date = new Date(year, month - 1, 1);
   return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+}
+
+/**
+ * Formats a fatura month for display with locale support.
+ *
+ * @param yearMonth - Fatura month in "YYYY-MM" format
+ * @param locale - Locale string (e.g., 'pt-BR', 'en')
+ * @returns Formatted string like "janeiro de 2025" or "January 2025"
+ */
+export function formatFaturaMonthWithLocale(yearMonth: string, locale: string): string {
+  const [year, month] = yearMonth.split('-').map(Number);
+  const date = new Date(year, month - 1, 1);
+  return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
 }
 
 /**

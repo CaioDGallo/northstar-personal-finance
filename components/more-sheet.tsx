@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Wallet01Icon,
@@ -21,11 +22,11 @@ import { ThemeToggleRow } from './theme-toggle-row';
 import type { Account, Category } from '@/lib/schema';
 
 const moreItems = [
-  { title: 'Faturas', href: '/faturas', icon: CreditCardIcon },
-  { title: 'Income', href: '/income', icon: ArrowUp01Icon },
-  { title: 'Accounts', href: '/settings/accounts', icon: Wallet01Icon },
-  { title: 'Categories', href: '/settings/categories', icon: SparklesIcon },
-  { title: 'Budget Settings', href: '/settings/budgets', icon: Invoice03Icon },
+  { key: 'faturas', href: '/faturas', icon: CreditCardIcon },
+  { key: 'income', href: '/income', icon: ArrowUp01Icon },
+  { key: 'accounts', href: '/settings/accounts', icon: Wallet01Icon },
+  { key: 'categories', href: '/settings/categories', icon: SparklesIcon },
+  { key: 'budgets', href: '/settings/budgets', icon: Invoice03Icon },
 ];
 
 type MoreSheetProps = {
@@ -43,6 +44,7 @@ export function MoreSheet({
   expenseCategories,
   incomeCategories,
 }: MoreSheetProps) {
+  const t = useTranslations('navigation');
   const pathname = usePathname();
 
   return (
@@ -55,7 +57,7 @@ export function MoreSheet({
         )}
       >
         <SheetHeader>
-          <SheetTitle>More</SheetTitle>
+          <SheetTitle>{t('more')}</SheetTitle>
         </SheetHeader>
 
         <nav className="flex flex-col gap-1 py-4">
@@ -71,7 +73,7 @@ export function MoreSheet({
               )}
             >
               <HugeiconsIcon icon={item.icon} className="size-5" />
-              <span>{item.title}</span>
+              <span>{t(item.key)}</span>
             </Link>
           ))}
         </nav>

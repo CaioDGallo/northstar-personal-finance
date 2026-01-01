@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { getDashboardData } from '@/lib/actions/dashboard';
 import { getCurrentYearMonth } from '@/lib/utils';
 import { MonthPicker } from '@/components/month-picker';
@@ -12,6 +13,7 @@ type PageProps = {
 };
 
 export default async function DashboardPage({ searchParams }: PageProps) {
+  const t = await getTranslations('dashboard');
   const params = await searchParams;
   const yearMonth = params.month || getCurrentYearMonth();
   const data = await getDashboardData(yearMonth);
@@ -21,21 +23,21 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   return (
     <div>
       <div className="mb-6 flex flex-col md:flex-row space-y-4 md:space-y-0 items-center justify-between">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <h1 className="text-2xl font-bold">{t('title')}</h1>
         <MonthPicker currentMonth={yearMonth} />
       </div>
 
       {hasNoBudgets ? (
         <div className="rounded-none border border-gray-200 p-12 text-center">
-          <h2 className="mb-2 text-xl font-semibold">No budgets set for this month</h2>
+          <h2 className="mb-2 text-xl font-semibold">{t('noBudgets')}</h2>
           <p className="mb-6 text-gray-600">
-            Set up your monthly budgets to start tracking your spending.
+            {t('noBudgetsDescription')}
           </p>
           <Link
             href="/settings/budgets"
             className="inline-block rounded-none bg-blue-600 px-6 py-3 text-sm text-white hover:bg-blue-700"
           >
-            Set Budgets
+            {t('setBudgets')}
           </Link>
         </div>
       ) : (
@@ -53,7 +55,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
           {/* Right column - Category breakdown */}
           <div className="lg:col-span-2">
-            <h2 className="mb-4 text-lg font-semibold">Budget by Category</h2>
+            <h2 className="mb-4 text-lg font-semibold">{t('budgetByCategory')}</h2>
             <div className="space-y-4">
               {data.categoryBreakdown.map((category) => (
                 <BudgetProgress

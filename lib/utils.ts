@@ -24,9 +24,22 @@ export function displayToCents(value: string): number {
 /**
  * Format cents as Brazilian Real
  * @example formatCurrency(10050) → "R$ 100,50"
+ * @deprecated Use formatCurrencyWithLocale or useFormat hook instead
  */
 export function formatCurrency(cents: number): string {
   return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(cents / 100);
+}
+
+/**
+ * Format cents as Brazilian Real with locale support
+ * @example formatCurrencyWithLocale(10050, 'pt-BR') → "R$ 100,50"
+ * @example formatCurrencyWithLocale(10050, 'en') → "BRL 100.50"
+ */
+export function formatCurrencyWithLocale(cents: number, locale: string): string {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'BRL',
   }).format(cents / 100);
@@ -85,6 +98,7 @@ export function parseLocalDate(dateString: string): Date {
  * @example formatDate("2026-01-02") → "2 de janeiro de 2026"
  * @example formatDate("2026-01-02", { weekday: 'long' }) → "quinta-feira, 2 de janeiro de 2026"
  * @example formatDate(new Date()) → "1 de janeiro de 2026"
+ * @deprecated Use formatDateWithLocale or useFormat hook instead
  */
 export function formatDate(
   date: string | Date,
@@ -92,4 +106,22 @@ export function formatDate(
 ): string {
   const dateObj = typeof date === 'string' ? parseLocalDate(date) : date;
   return dateObj.toLocaleDateString('pt-BR', options);
+}
+
+/**
+ * Format date for display with locale support (timezone-safe)
+ *
+ * Accepts either a "YYYY-MM-DD" string or a Date object.
+ * For strings, parses as local time to avoid timezone shifts.
+ *
+ * @example formatDateWithLocale("2026-01-02", 'pt-BR') → "2 de janeiro de 2026"
+ * @example formatDateWithLocale("2026-01-02", 'en') → "January 2, 2026"
+ */
+export function formatDateWithLocale(
+  date: string | Date,
+  locale: string,
+  options?: Intl.DateTimeFormatOptions
+): string {
+  const dateObj = typeof date === 'string' ? parseLocalDate(date) : date;
+  return dateObj.toLocaleDateString(locale, options);
 }

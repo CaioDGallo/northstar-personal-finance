@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { getFaturasByMonth } from '@/lib/actions/faturas';
 import { getAccounts } from '@/lib/actions/accounts';
 import { getCurrentYearMonth } from '@/lib/utils';
@@ -9,6 +10,7 @@ type PageProps = {
 };
 
 export default async function FaturasPage({ searchParams }: PageProps) {
+  const t = await getTranslations('faturas');
   const params = await searchParams;
   const yearMonth = params.month || getCurrentYearMonth();
 
@@ -19,7 +21,7 @@ export default async function FaturasPage({ searchParams }: PageProps) {
   return (
     <div>
       <div className="mb-6 flex flex-col md:flex-row space-y-4 md:space-y-0 items-center justify-between">
-        <h1 className="text-2xl font-bold">Faturas</h1>
+        <h1 className="text-2xl font-bold">{t('title')}</h1>
         <MonthPicker currentMonth={yearMonth} />
       </div>
 

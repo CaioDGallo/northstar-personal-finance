@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { getIncome, type IncomeFilters as IncomeFiltersType } from '@/lib/actions/income';
 import { getAccounts } from '@/lib/actions/accounts';
 import { getCategories } from '@/lib/actions/categories';
@@ -15,6 +16,7 @@ type PageProps = {
 };
 
 export default async function IncomePage({ searchParams }: PageProps) {
+  const t = await getTranslations('income');
   const params = await searchParams;
   const currentMonth = params.month || getCurrentYearMonth();
 
@@ -34,7 +36,7 @@ export default async function IncomePage({ searchParams }: PageProps) {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Income</h1>
+        <h1 className="text-2xl font-bold">{t('title')}</h1>
       </div>
 
       <IncomeFilters

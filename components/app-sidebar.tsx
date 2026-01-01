@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Home01Icon,
@@ -36,20 +37,21 @@ import {
 import { ThemeToggle } from '@/components/theme-toggle';
 
 const navItems = [
-  { title: 'Dashboard', href: '/dashboard', icon: Home01Icon },
-  { title: 'Budgets', href: '/budgets', icon: Invoice03Icon },
-  { title: 'Expenses', href: '/expenses', icon: Wallet01Icon },
-  { title: 'Faturas', href: '/faturas', icon: CreditCardIcon },
-  { title: 'Income', href: '/income', icon: Wallet01Icon },
+  { key: 'dashboard', href: '/dashboard', icon: Home01Icon },
+  { key: 'budgets', href: '/budgets', icon: Invoice03Icon },
+  { key: 'expenses', href: '/expenses', icon: Wallet01Icon },
+  { key: 'faturas', href: '/faturas', icon: CreditCardIcon },
+  { key: 'income', href: '/income', icon: Wallet01Icon },
 ];
 
 const settingsItems = [
-  { title: 'Accounts', href: '/settings/accounts', icon: Wallet01Icon },
-  { title: 'Categories', href: '/settings/categories', icon: SparklesIcon },
-  { title: 'Budgets', href: '/settings/budgets', icon: Invoice03Icon },
+  { key: 'accounts', href: '/settings/accounts', icon: Wallet01Icon },
+  { key: 'categories', href: '/settings/categories', icon: SparklesIcon },
+  { key: 'budgets', href: '/settings/budgets', icon: Invoice03Icon },
 ];
 
 export function AppSidebar() {
+  const t = useTranslations('navigation');
   const pathname = usePathname();
   const { toggleSidebar } = useSidebar();
 
@@ -61,12 +63,12 @@ export function AppSidebar() {
       <SidebarHeader>
         {/* Expanded state: show full text */}
         <div className="flex h-12 items-center px-4 font-semibold group-data-[collapsible=icon]:hidden">
-          Northstar
+          {t('northstar')}
         </div>
         {/* Collapsed state: show clickable icon */}
         <SidebarMenu className="hidden group-data-[collapsible=icon]:flex">
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={toggleSidebar} tooltip="Expand sidebar">
+            <SidebarMenuButton onClick={toggleSidebar} tooltip={t('expandSidebar')}>
               <HugeiconsIcon icon={SparklesIcon} />
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -75,7 +77,7 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('navigation')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => (
@@ -83,7 +85,7 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild isActive={isActive(item.href)}>
                     <Link href={item.href} prefetch={true}>
                       <HugeiconsIcon icon={item.icon} />
-                      <span>{item.title}</span>
+                      <span>{t(item.key)}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -94,7 +96,7 @@ export function AppSidebar() {
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton isActive={isSettingsActive}>
                       <HugeiconsIcon icon={Settings01Icon} />
-                      <span>Settings</span>
+                      <span>{t('settings')}</span>
                       <HugeiconsIcon
                         icon={ArrowRight01Icon}
                         className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90"
@@ -108,7 +110,7 @@ export function AppSidebar() {
                           <SidebarMenuSubButton asChild isActive={isActive(item.href)}>
                             <Link href={item.href} prefetch={true}>
                               <HugeiconsIcon icon={item.icon} />
-                              <span>{item.title}</span>
+                              <span>{t(item.key)}</span>
                             </Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
