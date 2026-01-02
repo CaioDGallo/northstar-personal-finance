@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { JetBrains_Mono } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
+import { Analytics } from "@vercel/analytics/next"
 import { getLocale, getMessages } from 'next-intl/server';
 import { Toaster } from 'sonner';
 import './globals.css';
@@ -49,6 +50,7 @@ export default async function RootLayout({
           {children}
         </NextIntlClientProvider>
         <Toaster />
+        <Analytics />
       </body>
     </html>
   );
