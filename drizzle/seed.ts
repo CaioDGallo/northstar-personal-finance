@@ -1,8 +1,9 @@
 import 'dotenv/config';
 
 import { db } from '../lib/db';
-import { accounts, categories, budgets, transactions, entries, income } from '../lib/schema';
+import { accounts, categories, budgets, transactions, entries, income, faturas } from '../lib/schema';
 import { getCurrentYearMonth, addMonths } from '../lib/utils';
+import { getFaturaMonth, getFaturaPaymentDueDate } from '../lib/fatura-utils';
 
 // Production safety check
 if (process.env.NODE_ENV === 'production') {
@@ -26,7 +27,7 @@ function getRelativeDate(monthOffset: number, day: number): string {
 
 // Seed data constants
 const accountsData = [
-  { name: 'Nubank', type: 'credit_card' as const },
+  { name: 'Nubank', type: 'credit_card' as const, closingDay: 1, paymentDueDay: 8 },
   { name: 'Itaú Corrente', type: 'checking' as const },
   { name: 'Nubank Rendimento', type: 'savings' as const },
   { name: 'Carteira', type: 'cash' as const },
@@ -259,23 +260,40 @@ const incomeData: IncomeSeed[] = [
 function generateEntries(
   transactionId: number,
   txData: TransactionSeed,
-  accountMap: Record<string, number>
+  accountMap: Record<string, number>,
+  accountsById: Record<number, typeof accountsData[0]>
 ) {
   const amountPerInstallment = Math.round(txData.totalAmount / txData.installments);
   const result = [];
+  const accountId = accountMap[txData.accountName];
+  const account = accountsById[accountId];
 
   for (let i = 0; i < txData.installments; i++) {
     const monthOffset = txData.startMonth + i;
-    const dueDate = getRelativeDate(monthOffset, txData.startDay);
+    const purchaseDate = getRelativeDate(monthOffset, txData.startDay);
+
+    // For credit cards, compute fatura month and due date using billing cycle
+    let faturaMonth: string;
+    let dueDate: string;
+
+    if (account.type === 'credit_card' && account.closingDay && account.paymentDueDay) {
+      const purchaseDateObj = new Date(purchaseDate + 'T00:00:00Z');
+      faturaMonth = getFaturaMonth(purchaseDateObj, account.closingDay);
+      dueDate = getFaturaPaymentDueDate(faturaMonth, account.paymentDueDay, account.closingDay);
+    } else {
+      // For non-credit-card accounts, fatura month = purchase month, due date = purchase date
+      faturaMonth = purchaseDate.slice(0, 7);
+      dueDate = purchaseDate;
+    }
 
     // Determine paid status - PostgreSQL timestamp needs Date object
     let paidAt: Date | null = null;
     if (txData.paid === true) {
-      paidAt = new Date(dueDate); // Paid on due date
+      paidAt = new Date(purchaseDate); // Paid on purchase date
     } else if (txData.paid === 'partial') {
       // Past installments are paid, current/future are pending
       const isPastMonth = monthOffset < 0;
-      if (isPastMonth) paidAt = new Date(dueDate);
+      if (isPastMonth) paidAt = new Date(purchaseDate);
     }
     // txData.paid === false means all pending
 
@@ -286,12 +304,12 @@ function generateEntries(
 
     result.push({
       transactionId,
-      accountId: accountMap[txData.accountName],
+      accountId,
       amount,
-      purchaseDate: dueDate, // For seed data, use dueDate as purchaseDate
-      faturaMonth: dueDate.slice(0, 7), // Extract YYYY-MM
-      dueDate, // date type accepts string 'YYYY-MM-DD'
-      paidAt,  // timestamp type needs Date object
+      purchaseDate,
+      faturaMonth,
+      dueDate,
+      paidAt,
       installmentNumber: i + 1,
     });
   }
