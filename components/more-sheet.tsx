@@ -20,6 +20,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ThemeToggleRow } from './theme-toggle-row';
+import { LanguageToggleRow } from './language-toggle-row';
 
 const moreItems = [
   { key: 'faturas', href: '/faturas', icon: CreditCardIcon },
@@ -76,8 +77,9 @@ export function MoreSheet({
         </nav>
 
         {/* Theme toggle at bottom */}
-        <div className="border-t pt-4 mt-2">
+        <div className="border-t pt-4 pb-3 mt-2">
           <ThemeToggleRow />
+          <LanguageToggleRow />
         </div>
       </SheetContent>
     </Sheet>

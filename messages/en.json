@@ -267,6 +267,11 @@
     "light": "Light",
     "dark": "Dark"
   },
+  "language": {
+    "label": "Language",
+    "portuguese": "Português",
+    "english": "English"
+  },
   "filters": {
     "allCategories": "All Categories",
     "allAccounts": "All Accounts",

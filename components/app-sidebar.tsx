@@ -35,6 +35,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { LanguageToggleSidebar } from '@/components/language-toggle-sidebar';
 
 const navItems = [
   { key: 'dashboard', href: '/dashboard', icon: Home01Icon },
@@ -128,6 +129,9 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <ThemeToggle />
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <LanguageToggleSidebar />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
