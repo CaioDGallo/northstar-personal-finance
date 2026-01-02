@@ -41,6 +41,7 @@ async function fixFaturaDueDates(): Promise<UpdateStats> {
       yearMonth: faturas.yearMonth,
       currentDueDate: faturas.dueDate,
       paymentDueDay: accounts.paymentDueDay,
+      closingDay: accounts.closingDay,
     })
     .from(faturas)
     .innerJoin(accounts, eq(faturas.accountId, accounts.id));
@@ -48,7 +49,8 @@ async function fixFaturaDueDates(): Promise<UpdateStats> {
   for (const fatura of allFaturas) {
     const correctDueDate = getFaturaPaymentDueDate(
       fatura.yearMonth,
-      fatura.paymentDueDay || 7
+      fatura.paymentDueDay || 7,
+      fatura.closingDay || 1
     );
 
     if (fatura.currentDueDate !== correctDueDate) {
@@ -85,7 +87,8 @@ async function fixFaturaDueDates(): Promise<UpdateStats> {
     for (const entry of accountEntries) {
       const correctDueDate = getFaturaPaymentDueDate(
         entry.faturaMonth,
-        account.paymentDueDay || 7
+        account.paymentDueDay || 7,
+        account.closingDay || 1
       );
 
       if (entry.currentDueDate !== correctDueDate) {
@@ -133,7 +136,8 @@ async function fixFaturaDueDates(): Promise<UpdateStats> {
         .limit(1);
 
       const paymentDueDay = account[0].paymentDueDay || 7;
-      const dueDate = getFaturaPaymentDueDate(combo.faturaMonth, paymentDueDay);
+      const closingDay = account[0].closingDay || 1;
+      const dueDate = getFaturaPaymentDueDate(combo.faturaMonth, paymentDueDay, closingDay);
 
       await db.insert(faturas).values({
         accountId: combo.accountId,

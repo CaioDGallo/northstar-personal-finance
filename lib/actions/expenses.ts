@@ -83,7 +83,7 @@ export async function createExpense(data: CreateExpenseData) {
       if (hasBillingConfig) {
         // Credit card with billing config: compute fatura month and due date
         faturaMonth = getFaturaMonth(installmentPurchaseDate, account[0].closingDay!);
-        dueDate = getFaturaPaymentDueDate(faturaMonth, account[0].paymentDueDay!);
+        dueDate = getFaturaPaymentDueDate(faturaMonth, account[0].paymentDueDay!, account[0].closingDay!);
         affectedFaturas.add(faturaMonth);
       } else {
         // Non-credit card or card without config: fatura = purchase month
@@ -216,7 +216,7 @@ export async function updateExpense(transactionId: number, data: CreateExpenseDa
 
       if (hasBillingConfig) {
         faturaMonth = getFaturaMonth(installmentPurchaseDate, account[0].closingDay!);
-        dueDate = getFaturaPaymentDueDate(faturaMonth, account[0].paymentDueDay!);
+        dueDate = getFaturaPaymentDueDate(faturaMonth, account[0].paymentDueDay!, account[0].closingDay!);
         newFaturas.add(faturaMonth);
       } else {
         faturaMonth = installmentPurchaseDate.toISOString().slice(0, 7);

@@ -70,7 +70,7 @@ export async function importExpenses(data: ImportExpenseData): Promise<ImportRes
           // Credit card with billing config: compute fatura month and due date
           const purchaseDate = new Date(row.date + 'T00:00:00Z');
           faturaMonth = getFaturaMonth(purchaseDate, account[0].closingDay!);
-          dueDate = getFaturaPaymentDueDate(faturaMonth, account[0].paymentDueDay!);
+          dueDate = getFaturaPaymentDueDate(faturaMonth, account[0].paymentDueDay!, account[0].closingDay!);
           affectedFaturas.add(faturaMonth);
         } else {
           // Non-credit card or card without config: fatura = purchase month

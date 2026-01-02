@@ -39,20 +39,40 @@ export function getFaturaMonth(purchaseDate: Date, closingDay: number): string {
 /**
  * Calculates the payment due date for a fatura.
  *
- * The fatura month IS the payment month (not the closing month).
+ * The payment is due in the month AFTER the fatura month if paymentDueDay
+ * is on or before closingDay (can't pay before seeing the bill).
+ * Otherwise, payment is in the same month as the fatura.
  *
- * Example: fatura "2025-02" with paymentDueDay = 5
- * → Payment due: 2025-02-05
+ * Example: fatura "2025-01" with closingDay=15, paymentDueDay=5
+ * → Payment due: 2025-02-05 (next month, since 5 <= 15)
+ *
+ * Example: fatura "2025-01" with closingDay=5, paymentDueDay=12
+ * → Payment due: 2025-01-12 (same month, since 12 > 5)
  *
  * @param faturaMonth - Fatura month in "YYYY-MM" format
  * @param paymentDueDay - Day of month when payment is due (1-28)
+ * @param closingDay - Day of month when statement closes (1-28)
  * @returns Due date in "YYYY-MM-DD" format
  */
-export function getFaturaPaymentDueDate(faturaMonth: string, paymentDueDay: number): string {
+export function getFaturaPaymentDueDate(
+  faturaMonth: string,
+  paymentDueDay: number,
+  closingDay: number
+): string {
   const [year, month] = faturaMonth.split('-').map(Number);
-  // month is 1-indexed from string, subtract 1 for JS Date (0-indexed)
-  const paymentDate = new Date(year, month - 1, paymentDueDay);
-  return paymentDate.toISOString().split('T')[0];
+
+  // If payment due day is on/before closing day, payment must be next month
+  // (can't pay before the statement closes)
+  if (paymentDueDay <= closingDay) {
+    // month is 1-indexed from string, JS Date uses 0-indexed months
+    // so using month directly gives us next month
+    const paymentDate = new Date(year, month, paymentDueDay);
+    return paymentDate.toISOString().split('T')[0];
+  } else {
+    // Payment is in same month as fatura
+    const paymentDate = new Date(year, month - 1, paymentDueDay);
+    return paymentDate.toISOString().split('T')[0];
+  }
 }
 
 /**

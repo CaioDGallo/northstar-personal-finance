@@ -50,7 +50,8 @@ async function fixFaturaMonths(): Promise<MigrationStats> {
       const correctFaturaMonth = getFaturaMonth(purchaseDate, account.closingDay || 1);
       const correctDueDate = getFaturaPaymentDueDate(
         correctFaturaMonth,
-        account.paymentDueDay || 7
+        account.paymentDueDay || 7,
+        account.closingDay || 1
       );
 
       if (entry.faturaMonth !== correctFaturaMonth || entry.dueDate !== correctDueDate) {
@@ -105,7 +106,8 @@ async function fixFaturaMonths(): Promise<MigrationStats> {
         .limit(1);
 
       const paymentDueDay = account[0].paymentDueDay || 7;
-      const dueDate = getFaturaPaymentDueDate(combo.faturaMonth, paymentDueDay);
+      const closingDay = account[0].closingDay || 1;
+      const dueDate = getFaturaPaymentDueDate(combo.faturaMonth, paymentDueDay, closingDay);
 
       await db.insert(faturas).values({
         accountId: combo.accountId,

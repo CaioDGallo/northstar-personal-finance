@@ -32,7 +32,8 @@ export async function ensureFaturaExists(accountId: number, yearMonth: string): 
 
   // For non-credit cards or cards without billing config, use first day of next month
   const paymentDueDay = account[0].paymentDueDay || 1;
-  const paymentDueDate = getFaturaPaymentDueDate(yearMonth, paymentDueDay);
+  const closingDay = account[0].closingDay || 1;
+  const paymentDueDate = getFaturaPaymentDueDate(yearMonth, paymentDueDay, closingDay);
 
   // Create fatura
   const [fatura] = await db
