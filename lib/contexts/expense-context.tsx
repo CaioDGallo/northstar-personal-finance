@@ -136,12 +136,12 @@ function generateOptimisticEntries(
 ): OptimisticExpenseEntry[] {
   const entries: OptimisticExpenseEntry[] = [];
   const amountPerInstallment = Math.round(input.totalAmount / input.installments);
-  const baseDate = new Date(input.purchaseDate);
+  const baseDate = new Date(input.purchaseDate + 'T00:00:00Z');
   const tempTransactionId = -Date.now();
 
   for (let i = 0; i < input.installments; i++) {
     const installmentDate = new Date(baseDate);
-    installmentDate.setMonth(installmentDate.getMonth() + i);
+    installmentDate.setUTCMonth(installmentDate.getUTCMonth() + i);
 
     const amount =
       i === input.installments - 1

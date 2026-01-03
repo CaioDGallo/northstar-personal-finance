@@ -62,14 +62,14 @@ export async function createExpense(data: CreateExpenseData) {
 
     // 3. Generate entries for each installment
     const amountPerInstallment = Math.round(data.totalAmount / data.installments);
-    const basePurchaseDate = new Date(data.purchaseDate);
+    const basePurchaseDate = new Date(data.purchaseDate + 'T00:00:00Z');
 
     const entriesToInsert: NewEntry[] = [];
     const affectedFaturas = new Set<string>();
 
     for (let i = 0; i < data.installments; i++) {
       const installmentPurchaseDate = new Date(basePurchaseDate);
-      installmentPurchaseDate.setMonth(installmentPurchaseDate.getMonth() + i);
+      installmentPurchaseDate.setUTCMonth(installmentPurchaseDate.getUTCMonth() + i);
 
       // Adjust for last installment (rounding differences)
       const amount =
@@ -197,14 +197,14 @@ export async function updateExpense(transactionId: number, data: CreateExpenseDa
 
     // 5. Regenerate entries (same logic as create)
     const amountPerInstallment = Math.round(data.totalAmount / data.installments);
-    const basePurchaseDate = new Date(data.purchaseDate);
+    const basePurchaseDate = new Date(data.purchaseDate + 'T00:00:00Z');
 
     const entriesToInsert: NewEntry[] = [];
     const newFaturas = new Set<string>();
 
     for (let i = 0; i < data.installments; i++) {
       const installmentPurchaseDate = new Date(basePurchaseDate);
-      installmentPurchaseDate.setMonth(installmentPurchaseDate.getMonth() + i);
+      installmentPurchaseDate.setUTCMonth(installmentPurchaseDate.getUTCMonth() + i);
 
       const amount =
         i === data.installments - 1
