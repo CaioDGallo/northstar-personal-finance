@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useOptimistic, useTransition } from 'react';
+import { useTranslations } from 'next-intl';
 import { useLongPress } from '@/lib/hooks/use-long-press';
 import { formatCurrency, formatDate, cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,8 +10,9 @@ import { CategoryIcon } from '@/components/icon-picker';
 import { markIncomeReceived, markIncomePending, deleteIncome, updateIncomeCategory } from '@/lib/actions/income';
 import { CategoryQuickPicker } from '@/components/category-quick-picker';
 import { TransactionDetailSheet } from '@/components/transaction-detail-sheet';
+import { EditTransactionDialog } from '@/components/edit-transaction-dialog';
 import { useIncomeContextOptional } from '@/lib/contexts/income-context';
-import type { Category } from '@/lib/schema';
+import type { Category, Account } from '@/lib/schema';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -47,6 +49,7 @@ type IncomeCardBaseProps = {
     accountName: string;
   };
   categories: Category[];
+  accounts: Account[];
   isOptimistic?: boolean;
 };
 
@@ -65,12 +68,15 @@ type IncomeCardProps =
     });
 
 export function IncomeCard(props: IncomeCardProps) {
-  const { income, categories, isOptimistic = false } = props;
+  const { income, categories, accounts, isOptimistic = false } = props;
   const isReceived = !!income.receivedAt;
   const [pickerOpen, setPickerOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const context = useIncomeContextOptional();
+
+  const tCommon = useTranslations('common');
 
   const [optimisticCategory, setOptimisticCategory] = useOptimistic(
     { id: income.categoryId, color: income.categoryColor, icon: income.categoryIcon, name: income.categoryName },
@@ -228,6 +234,9 @@ export function IncomeCard(props: IncomeCardProps) {
                 Mark as Received
               </DropdownMenuItem>
             )}
+            <DropdownMenuItem onClick={() => setEditOpen(true)}>
+              {tCommon('edit')}
+            </DropdownMenuItem>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
@@ -263,8 +272,19 @@ export function IncomeCard(props: IncomeCardProps) {
 
       <TransactionDetailSheet
         income={income}
+        accounts={accounts}
+        categories={categories}
         open={detailOpen}
         onOpenChange={setDetailOpen}
+      />
+
+      <EditTransactionDialog
+        mode="income"
+        income={income}
+        accounts={accounts}
+        categories={categories}
+        open={editOpen}
+        onOpenChange={setEditOpen}
       />
     </>
   );

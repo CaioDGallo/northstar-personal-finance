@@ -37,7 +37,7 @@ type TransactionFormProps = {
   accounts: Account[];
   categories: Category[];
   transaction?: Transaction & { entries: Entry[] };
-  income?: Income;
+  income?: Pick<Income, 'id' | 'description' | 'amount' | 'categoryId' | 'accountId' | 'receivedDate'>;
   trigger?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;

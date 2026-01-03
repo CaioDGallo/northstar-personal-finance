@@ -1,23 +1,29 @@
 'use client';
 
+import { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CategoryIcon } from '@/components/icon-picker';
+import { EditTransactionDialog } from '@/components/edit-transaction-dialog';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Tick02Icon, Clock01Icon } from '@hugeicons/core-free-icons';
 import type { ExpenseEntry } from '@/lib/contexts/expense-context';
 import type { IncomeEntry } from '@/lib/contexts/income-context';
+import type { Account, Category } from '@/lib/schema';
 
 type TransactionDetailSheetProps = {
   expense?: ExpenseEntry;
   income?: IncomeEntry;
+  accounts?: Account[];
+  categories?: Category[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-export function TransactionDetailSheet({ expense, income, open, onOpenChange }: TransactionDetailSheetProps) {
+export function TransactionDetailSheet({ expense, income, accounts, categories, open, onOpenChange }: TransactionDetailSheetProps) {
+  const [editOpen, setEditOpen] = useState(false);
   const isExpense = !!expense;
   const data = expense || income;
 
@@ -32,6 +38,7 @@ export function TransactionDetailSheet({ expense, income, open, onOpenChange }: 
   const dateValue = isExpense ? expense.dueDate : income?.receivedDate;
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="max-h-[70vh] flex flex-col">
         <SheetHeader className="pb-4">
@@ -155,19 +162,34 @@ export function TransactionDetailSheet({ expense, income, open, onOpenChange }: 
           )}
 
           {/* Edit button */}
-          <Button
-            variant="default"
-            className="w-full"
-            onClick={() => {
-              // TODO: Open edit form
-              console.log('Edit transaction:', data);
-            }}
-          >
-            Edit
-          </Button>
+          {accounts && categories && (
+            <Button
+              variant="default"
+              className="w-full"
+              onClick={() => {
+                onOpenChange(false);
+                setEditOpen(true);
+              }}
+            >
+              Edit
+            </Button>
+          )}
         </SheetFooter>
       </SheetContent>
     </Sheet>
+
+    {accounts && categories && (
+      <EditTransactionDialog
+        mode={isExpense ? 'expense' : 'income'}
+        transactionId={isExpense ? expense?.transactionId : undefined}
+        income={!isExpense ? income : undefined}
+        accounts={accounts}
+        categories={categories}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
+    )}
+  </>
   );
 }
 

@@ -13,7 +13,7 @@ export { ExpenseListProvider };
 
 export function ExpenseList() {
   const context = useExpenseContext();
-  const { expenses, categories, filters } = context;
+  const { expenses, accounts, categories, filters } = context;
   const selection = useSelection();
   const [bulkPickerOpen, setBulkPickerOpen] = useState(false);
 
@@ -128,6 +128,7 @@ export function ExpenseList() {
                   key={expense._tempId || expense.id}
                   entry={expense}
                   categories={categories}
+                  accounts={accounts}
                   isOptimistic={expense._optimistic}
                   selectionMode={true}
                   isSelected={selection.isSelected(expense.id)}
@@ -139,6 +140,7 @@ export function ExpenseList() {
                   key={expense._tempId || expense.id}
                   entry={expense}
                   categories={categories}
+                  accounts={accounts}
                   isOptimistic={expense._optimistic}
                   selectionMode={false}
                   onLongPress={() => selection.enterSelectionMode(expense.id)}

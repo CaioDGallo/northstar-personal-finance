@@ -13,7 +13,7 @@ export { IncomeListProvider };
 
 export function IncomeList() {
   const context = useIncomeContext();
-  const { income, categories, filters } = context;
+  const { income, accounts, categories, filters } = context;
   const selection = useSelection();
   const [bulkPickerOpen, setBulkPickerOpen] = useState(false);
 
@@ -91,6 +91,7 @@ export function IncomeList() {
                   key={inc._tempId || inc.id}
                   income={inc}
                   categories={categories}
+                  accounts={accounts}
                   isOptimistic={inc._optimistic}
                   selectionMode={true}
                   isSelected={selection.isSelected(inc.id)}
@@ -102,6 +103,7 @@ export function IncomeList() {
                   key={inc._tempId || inc.id}
                   income={inc}
                   categories={categories}
+                  accounts={accounts}
                   isOptimistic={inc._optimistic}
                   selectionMode={false}
                   onLongPress={() => selection.enterSelectionMode(inc.id)}

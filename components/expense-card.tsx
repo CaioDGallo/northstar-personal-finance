@@ -11,8 +11,9 @@ import { CategoryIcon } from '@/components/icon-picker';
 import { markEntryPaid, markEntryPending, deleteExpense, updateTransactionCategory } from '@/lib/actions/expenses';
 import { CategoryQuickPicker } from '@/components/category-quick-picker';
 import { TransactionDetailSheet } from '@/components/transaction-detail-sheet';
+import { EditTransactionDialog } from '@/components/edit-transaction-dialog';
 import { useExpenseContextOptional } from '@/lib/contexts/expense-context';
-import type { Category } from '@/lib/schema';
+import type { Category, Account } from '@/lib/schema';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -54,6 +55,7 @@ type ExpenseCardBaseProps = {
     accountName: string;
   };
   categories: Category[];
+  accounts: Account[];
   isOptimistic?: boolean;
 };
 
@@ -72,10 +74,11 @@ type ExpenseCardProps =
   });
 
 export function ExpenseCard(props: ExpenseCardProps) {
-  const { entry, categories, isOptimistic = false } = props;
+  const { entry, categories, accounts, isOptimistic = false } = props;
   const isPaid = !!entry.paidAt;
   const [pickerOpen, setPickerOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const context = useExpenseContextOptional();
 
@@ -239,6 +242,9 @@ export function ExpenseCard(props: ExpenseCardProps) {
               <DropdownMenuItem onClick={() => setDetailOpen(true)}>
                 {t('viewDetails')}
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                {tCommon('edit')}
+              </DropdownMenuItem>
               {isPaid ? (
                 <DropdownMenuItem onClick={handleMarkPending}>
                   {t('markAsPending')}
@@ -283,8 +289,19 @@ export function ExpenseCard(props: ExpenseCardProps) {
 
       <TransactionDetailSheet
         expense={entry}
+        accounts={accounts}
+        categories={categories}
         open={detailOpen}
         onOpenChange={setDetailOpen}
+      />
+
+      <EditTransactionDialog
+        mode="expense"
+        transactionId={entry.transactionId}
+        accounts={accounts}
+        categories={categories}
+        open={editOpen}
+        onOpenChange={setEditOpen}
       />
     </>
   );
