@@ -12,7 +12,7 @@ type PageProps = {
 export default async function FaturasPage({ searchParams }: PageProps) {
   const t = await getTranslations('faturas');
   const params = await searchParams;
-  const yearMonth = params.month || getCurrentYearMonth();
+  const yearMonth = params.month || getCurrentYearMonth(true);
 
   const faturas = await getFaturasByMonth(yearMonth);
   const accounts = await getAccounts();
