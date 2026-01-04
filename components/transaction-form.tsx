@@ -97,7 +97,11 @@ export function TransactionForm({
 
   useEffect(() => {
     if (open) {
-      amountInputRef.current?.focus();
+      // Small delay to ensure modal animation completes
+      const timer = setTimeout(() => {
+        amountInputRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
     }
   }, [open]);
 
@@ -196,8 +200,8 @@ export function TransactionForm({
       ? tExpenses('editExpense')
       : tIncome('editIncome')
     : mode === 'expense'
-    ? tExpenses('addExpense')
-    : tIncome('addIncome');
+      ? tExpenses('addExpense')
+      : tIncome('addIncome');
 
   const dateLabel = mode === 'expense' ? t('purchaseDate') : t('receivedDate');
   const descriptionPlaceholder = mode === 'expense'
