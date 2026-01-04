@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { MoreVerticalIcon, Tick02Icon, Clock01Icon } from '@hugeicons/core-free-icons';
+import { accountTypeConfig } from '@/lib/account-type-config';
 
 type ExpenseCardBaseProps = {
   entry: {
@@ -53,6 +54,7 @@ type ExpenseCardBaseProps = {
     categoryIcon: string | null;
     accountId: number;
     accountName: string;
+    accountType: 'credit_card' | 'checking' | 'savings' | 'cash';
   };
   categories: Category[];
   accounts: Account[];
@@ -215,22 +217,32 @@ export function ExpenseCard(props: ExpenseCardProps) {
             {formatDate(entry.dueDate)}
           </div>
 
-          {/* Amount */}
-          <div className="text-sm font-semibold shrink-0">
-            {formatCurrency(entry.amount)}
-          </div>
-
-          {/* Status: icon always, text on desktop */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            <HugeiconsIcon
-              icon={isPaid ? Tick02Icon : Clock01Icon}
-              className={isPaid ? 'text-green-600' : 'text-gray-400'}
-              size={18}
-              strokeWidth={2}
-            />
-            <span className={`hidden md:inline text-sm ${isPaid ? 'text-green-600' : 'text-gray-500'}`}>
-              {isPaid ? t('paid') : t('pending')}
-            </span>
+          {/* Amount + Icons column */}
+          <div className="flex flex-col items-end gap-0.5 shrink-0">
+            <div className="text-sm font-semibold">{formatCurrency(entry.amount)}</div>
+            <div className="flex items-center gap-1.5">
+              {/* Status icon */}
+              <HugeiconsIcon
+                icon={isPaid ? Tick02Icon : Clock01Icon}
+                className={isPaid ? 'text-green-600' : 'text-gray-400'}
+                size={14}
+                strokeWidth={2}
+              />
+              {/* Account type icon */}
+              <div
+                className="size-4 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: accountTypeConfig[entry.accountType].color }}
+              >
+                <HugeiconsIcon
+                  icon={accountTypeConfig[entry.accountType].icon}
+                  size={10}
+                  className="text-white"
+                  strokeWidth={2}
+                />
+              </div>
+              {/* Placeholder for third icon */}
+              <div className="size-4 rounded-full bg-gray-200" />
+            </div>
           </div>
 
           {/* Actions dropdown */}

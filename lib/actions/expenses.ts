@@ -360,6 +360,7 @@ export const getExpenses = cache(async (filters: ExpenseFilters = {}) => {
       categoryIcon: categories.icon,
       accountId: accounts.id,
       accountName: accounts.name,
+      accountType: accounts.type,
     })
     .from(entries)
     .innerJoin(transactions, eq(entries.transactionId, transactions.id))

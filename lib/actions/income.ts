@@ -166,6 +166,7 @@ export const getIncome = cache(async (filters: IncomeFilters = {}) => {
       categoryIcon: categories.icon,
       accountId: accounts.id,
       accountName: accounts.name,
+      accountType: accounts.type,
     })
     .from(income)
     .innerJoin(categories, eq(income.categoryId, categories.id))

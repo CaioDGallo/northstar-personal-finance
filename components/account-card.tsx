@@ -24,40 +24,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { HugeiconsIcon } from '@hugeicons/react';
-import {
-  MoreVerticalIcon,
-  CreditCardIcon,
-  BankIcon,
-  PiggyBankIcon,
-  Money01Icon
-} from '@hugeicons/core-free-icons';
+import { MoreVerticalIcon } from '@hugeicons/core-free-icons';
+import { accountTypeConfig } from '@/lib/account-type-config';
 
 type AccountCardProps = {
   account: Account;
-};
-
-// Map account types to icons and colors
-const accountTypeConfig = {
-  credit_card: {
-    icon: CreditCardIcon,
-    color: '#EF4444',
-    label: 'Credit Card'
-  },
-  checking: {
-    icon: BankIcon,
-    color: '#3B82F6',
-    label: 'Checking'
-  },
-  savings: {
-    icon: PiggyBankIcon,
-    color: '#22C55E',
-    label: 'Savings'
-  },
-  cash: {
-    icon: Money01Icon,
-    color: '#F59E0B',
-    label: 'Cash'
-  },
 };
 
 export function AccountCard({ account }: AccountCardProps) {

@@ -141,6 +141,7 @@ export function TransactionForm({
               categoryColor: category?.color || '#000000',
               categoryIcon: category?.icon || null,
               accountName: account?.name || '',
+              accountType: account?.type || 'checking',
             });
           } else {
             await createExpense(data);
@@ -169,6 +170,7 @@ export function TransactionForm({
               categoryColor: category?.color || '#000000',
               categoryIcon: category?.icon || null,
               accountName: account?.name || '',
+              accountType: account?.type || 'checking',
             });
           } else {
             await createIncome(data);

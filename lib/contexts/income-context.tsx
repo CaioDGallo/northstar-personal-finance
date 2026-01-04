@@ -25,6 +25,7 @@ export type IncomeEntry = {
   categoryIcon: string | null;
   accountId: number;
   accountName: string;
+  accountType: 'credit_card' | 'checking' | 'savings' | 'cash';
 };
 
 // Optimistic item wrapper
@@ -45,6 +46,7 @@ export type CreateIncomeInput = {
   categoryColor: string;
   categoryIcon: string | null;
   accountName: string;
+  accountType: 'credit_card' | 'checking' | 'savings' | 'cash';
 };
 
 // Reducer actions
@@ -137,6 +139,7 @@ function generateOptimisticIncome(input: CreateIncomeInput, tempId: string): Opt
     categoryIcon: input.categoryIcon,
     accountId: input.accountId,
     accountName: input.accountName,
+    accountType: input.accountType,
     _optimistic: true,
     _tempId: tempId,
   };
