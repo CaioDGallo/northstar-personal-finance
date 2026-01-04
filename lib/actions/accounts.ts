@@ -12,6 +12,11 @@ export const getAccounts = cache(async () => {
   return await db.select().from(accounts).where(eq(accounts.userId, userId)).orderBy(accounts.name);
 });
 
+// Internal function for use by cached helpers (can't call getCurrentUserId inside unstable_cache)
+export async function getAccountsByUser(userId: string) {
+  return await db.select().from(accounts).where(eq(accounts.userId, userId)).orderBy(accounts.name);
+}
+
 export async function createAccount(data: Omit<NewAccount, 'id' | 'userId' | 'createdAt'>) {
   const userId = await getCurrentUserId();
   await db.insert(accounts).values({ ...data, userId });

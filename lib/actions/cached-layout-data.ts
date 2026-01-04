@@ -1,16 +1,15 @@
 'use server';
 
 import { unstable_cache } from 'next/cache';
-import { getAccounts } from './accounts';
-import { getCategories } from './categories';
-import { getCurrentUserId } from '@/lib/auth';
+import { getAccountsByUser } from './accounts';
+import { getCategoriesByUser } from './categories';
 
 // Cache accounts for 5 minutes (300 seconds)
 // Revalidated via 'accounts' tag when mutations occur
-export async function getCachedAccounts() {
-  const userId = await getCurrentUserId();
+// NOTE: userId must come from caller (getCurrentUserId) - can't call cookies() inside unstable_cache
+export async function getCachedAccounts(userId: string) {
   return unstable_cache(
-    async () => getAccounts(),
+    async () => getAccountsByUser(userId),
     ['layout-accounts', userId],
     {
       revalidate: 300,
@@ -21,10 +20,10 @@ export async function getCachedAccounts() {
 
 // Cache expense categories for 5 minutes
 // Revalidated via category-specific tags
-export async function getCachedExpenseCategories() {
-  const userId = await getCurrentUserId();
+// NOTE: userId must come from caller (getCurrentUserId) - can't call cookies() inside unstable_cache
+export async function getCachedExpenseCategories(userId: string) {
   return unstable_cache(
-    async () => getCategories('expense'),
+    async () => getCategoriesByUser(userId, 'expense'),
     ['layout-expense-categories', userId],
     {
       revalidate: 300,
@@ -35,10 +34,10 @@ export async function getCachedExpenseCategories() {
 
 // Cache income categories for 5 minutes
 // Revalidated via category-specific tags
-export async function getCachedIncomeCategories() {
-  const userId = await getCurrentUserId();
+// NOTE: userId must come from caller (getCurrentUserId) - can't call cookies() inside unstable_cache
+export async function getCachedIncomeCategories(userId: string) {
   return unstable_cache(
-    async () => getCategories('income'),
+    async () => getCategoriesByUser(userId, 'income'),
     ['layout-income-categories', userId],
     {
       revalidate: 300,
