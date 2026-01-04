@@ -57,17 +57,17 @@ type IncomeCardBaseProps = {
 
 type IncomeCardProps =
   | (IncomeCardBaseProps & {
-      selectionMode: false;
-      isSelected?: never;
-      onLongPress?: () => void;
-      onToggleSelection?: never;
-    })
+    selectionMode: false;
+    isSelected?: never;
+    onLongPress?: () => void;
+    onToggleSelection?: never;
+  })
   | (IncomeCardBaseProps & {
-      selectionMode: true;
-      isSelected: boolean;
-      onLongPress: () => void;
-      onToggleSelection: () => void;
-    });
+    selectionMode: true;
+    isSelected: boolean;
+    onLongPress: () => void;
+    onToggleSelection: () => void;
+  });
 
 export function IncomeCard(props: IncomeCardProps) {
   const { income, categories, accounts, isOptimistic = false } = props;
@@ -131,7 +131,7 @@ export function IncomeCard(props: IncomeCardProps) {
   };
 
   const longPressHandlers = useLongPress({
-    onLongPress: props.selectionMode ? props.onLongPress : (props.onLongPress || (() => {})),
+    onLongPress: props.selectionMode ? props.onLongPress : (props.onLongPress || (() => { })),
     onTap: props.selectionMode ? props.onToggleSelection : () => setDetailOpen(true),
     disabled: !props.selectionMode && !props.onLongPress,
   });
@@ -182,98 +182,96 @@ export function IncomeCard(props: IncomeCardProps) {
             <CategoryIcon icon={optimisticCategory.icon} />
           </button>
 
-        {/* Description + mobile date */}
-        <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-sm truncate">{income.description}</h3>
-          {/* Mobile only: short date */}
-          <div className="text-xs text-gray-500 md:hidden">
-            {formatDate(income.receivedDate, { day: '2-digit', month: 'short' })}
+          {/* Description + mobile date */}
+          <div className="flex-1 min-w-0">
+            <h3 className="font-medium text-sm truncate">{income.description}</h3>
+            {/* Mobile only: short date */}
+            <div className="text-xs text-gray-500 md:hidden">
+              {formatDate(income.receivedDate, { day: '2-digit', month: 'short' })}
+            </div>
           </div>
-        </div>
 
-        {/* Desktop only: Category + Account */}
-        <div className="hidden md:block text-sm text-gray-500 shrink-0">
-          {optimisticCategory.name} • {income.accountName}
-        </div>
-
-        {/* Desktop only: Full date */}
-        <div className="hidden md:block text-sm text-gray-500 shrink-0">
-          {formatDate(income.receivedDate)}
-        </div>
-
-        {/* Amount + Icons column */}
-        <div className="flex flex-col items-end gap-0.5 shrink-0">
-          <div className="text-sm font-semibold text-green-600">
-            +{formatCurrency(income.amount)}
+          {/* Desktop only: Category + Account */}
+          <div className="hidden md:block text-sm text-gray-500 shrink-0">
+            {optimisticCategory.name} • {income.accountName}
           </div>
-          <div className="flex items-center gap-1.5">
-            {/* Status icon */}
-            <HugeiconsIcon
-              icon={isReceived ? Tick02Icon : Clock01Icon}
-              className={isReceived ? 'text-green-600' : 'text-gray-400'}
-              size={14}
-              strokeWidth={2}
-            />
-            {/* Account type icon */}
-            <div
-              className="size-4 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: accountTypeConfig[income.accountType].color }}
-            >
+
+          {/* Desktop only: Full date */}
+          <div className="hidden md:block text-sm text-gray-500 shrink-0">
+            {formatDate(income.receivedDate)}
+          </div>
+
+          {/* Amount + Icons column */}
+          <div className="flex flex-col items-end gap-0.5 shrink-0">
+            <div className="text-sm font-semibold text-green-600">
+              +{formatCurrency(income.amount)}
+            </div>
+            <div className="flex items-center w-full justify-end space-x-2">
+              {/* Status icon */}
               <HugeiconsIcon
-                icon={accountTypeConfig[income.accountType].icon}
-                size={10}
-                className="text-white"
+                icon={isReceived ? Tick02Icon : Clock01Icon}
+                className={isReceived ? 'text-green-600' : 'text-gray-400'}
+                size={14}
                 strokeWidth={2}
               />
+              {/* Account type icon */}
+              <div
+                className="size-4 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: accountTypeConfig[income.accountType].color }}
+              >
+                <HugeiconsIcon
+                  icon={accountTypeConfig[income.accountType].icon}
+                  size={10}
+                  className="text-white"
+                  strokeWidth={2}
+                />
+              </div>
             </div>
-            {/* Placeholder for third icon */}
-            <div className="size-4 rounded-full bg-gray-200" />
           </div>
-        </div>
 
-        {/* Actions dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="size-8">
-              <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} size={16} />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {isReceived ? (
-              <DropdownMenuItem onClick={handleMarkPending}>
-                Mark as Pending
-              </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem onClick={handleMarkReceived}>
-                Mark as Received
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem onClick={() => setEditOpen(true)}>
-              {tCommon('edit')}
-            </DropdownMenuItem>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  Delete Income
+          {/* Actions dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="size-8">
+                <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} size={16} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {isReceived ? (
+                <DropdownMenuItem onClick={handleMarkPending}>
+                  Mark as Pending
                 </DropdownMenuItem>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete income?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will delete &quot;{income.description}&quot;. This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </CardContent>
-    </Card>
+              ) : (
+                <DropdownMenuItem onClick={handleMarkReceived}>
+                  Mark as Received
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                {tCommon('edit')}
+              </DropdownMenuItem>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    Delete Income
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete income?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will delete &quot;{income.description}&quot;. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </CardContent>
+      </Card>
 
       <CategoryQuickPicker
         categories={categories}

@@ -220,7 +220,7 @@ export function ExpenseCard(props: ExpenseCardProps) {
           {/* Amount + Icons column */}
           <div className="flex flex-col items-end gap-0.5 shrink-0">
             <div className="text-sm font-semibold">{formatCurrency(entry.amount)}</div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center w-full justify-end space-x-2">
               {/* Status icon */}
               <HugeiconsIcon
                 icon={isPaid ? Tick02Icon : Clock01Icon}
@@ -240,8 +240,6 @@ export function ExpenseCard(props: ExpenseCardProps) {
                   strokeWidth={2}
                 />
               </div>
-              {/* Placeholder for third icon */}
-              <div className="size-4 rounded-full bg-gray-200" />
             </div>
           </div>
 
