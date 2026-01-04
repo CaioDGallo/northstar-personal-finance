@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { createExpense, updateExpense } from '@/lib/actions/expenses';
 import { createIncome, updateIncome } from '@/lib/actions/income';
@@ -94,16 +94,6 @@ export function TransactionForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const amountInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (open) {
-      // Small delay to ensure modal animation completes
-      const timer = setTimeout(() => {
-        amountInputRef.current?.focus();
-      }, 50);
-      return () => clearTimeout(timer);
-    }
-  }, [open]);
 
   const totalCents = amount ? displayToCents(amount) : 0;
   const perInstallment = installments > 0 ? totalCents / installments : 0;
@@ -213,7 +203,14 @@ export function TransactionForm({
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       {trigger && <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>}
-      <AlertDialogContent className="max-w-lg" closeOnBackdropClick>
+      <AlertDialogContent
+        className="max-w-lg"
+        closeOnBackdropClick
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          amountInputRef.current?.focus();
+        }}
+      >
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
         </AlertDialogHeader>
