@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { login } from '@/lib/actions/auth';
+import { Turnstile } from '@marsidev/react-turnstile';
 
 function LoginForm() {
   const router = useRouter();
@@ -15,6 +16,7 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   // Check for error parameter from OAuth callback
   useEffect(() => {
@@ -27,19 +29,27 @@ function LoginForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+
+    if (!captchaToken) {
+      setError('Please complete the captcha verification');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const result = await login(email, password);
+      const result = await login(email, password, captchaToken);
 
       if (result.error) {
         setError(result.error);
+        setCaptchaToken(null); // Reset captcha on error
       } else {
         router.push('/dashboard');
         router.refresh();
       }
     } catch {
       setError('An unexpected error occurred');
+      setCaptchaToken(null); // Reset captcha on error
     } finally {
       setLoading(false);
     }
@@ -83,13 +93,22 @@ function LoginForm() {
               />
             </div>
 
+            <div>
+              <Turnstile
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+                onSuccess={(token) => setCaptchaToken(token)}
+                onError={() => setCaptchaToken(null)}
+                onExpire={() => setCaptchaToken(null)}
+              />
+            </div>
+
             {error && (
               <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">
                 {error}
               </div>
             )}
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={loading || !captchaToken}>
               {loading ? 'Signing in...' : 'Sign in'}
             </Button>
           </form>
