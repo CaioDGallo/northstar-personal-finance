@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +13,7 @@ import { createClient } from '@/lib/supabase/client';
 
 function ResetPasswordForm() {
   const router = useRouter();
+  const t = useTranslations('resetPassword');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -43,15 +45,15 @@ function ResetPasswordForm() {
 
     // Client-side validation
     if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError(t('passwordTooShort'));
       return;
     }
     if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
-      setError('Password must contain letters and numbers');
+      setError(t('passwordRequirementsNotMet'));
       return;
     }
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('passwordsMismatch'));
       return;
     }
 
@@ -66,7 +68,7 @@ function ResetPasswordForm() {
         setSuccess(true);
       }
     } catch {
-      setError('An unexpected error occurred');
+      setError(t('unexpectedError'));
     } finally {
       setLoading(false);
     }
@@ -78,8 +80,8 @@ function ResetPasswordForm() {
         <Card className="w-full max-w-md">
           <CardContent className="p-6">
             <div className="mb-6">
-              <h1 className="text-2xl font-bold">Set new password</h1>
-              <p className="mt-1 text-sm text-muted-foreground">Verifying...</p>
+              <h1 className="text-2xl font-bold">{t('title')}</h1>
+              <p className="mt-1 text-sm text-muted-foreground">{t('verifying')}</p>
             </div>
           </CardContent>
         </Card>
@@ -93,13 +95,13 @@ function ResetPasswordForm() {
         <Card className="w-full max-w-md">
           <CardContent className="p-6">
             <div className="mb-6">
-              <h1 className="text-2xl font-bold">Password updated</h1>
+              <h1 className="text-2xl font-bold">{t('successTitle')}</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Your password has been reset successfully.
+                {t('successDescription')}
               </p>
             </div>
             <Link href="/dashboard">
-              <Button className="w-full">Continue to dashboard</Button>
+              <Button className="w-full">{t('continueToDashboard')}</Button>
             </Link>
           </CardContent>
         </Card>
@@ -112,13 +114,13 @@ function ResetPasswordForm() {
       <Card className="w-full max-w-md">
         <CardContent className="p-6">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold">Set new password</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Enter your new password below</p>
+            <h1 className="text-2xl font-bold">{t('title')}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{t('description')}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="password">New password</Label>
+              <Label htmlFor="password">{t('newPassword')}</Label>
               <Input
                 id="password"
                 type="password"
@@ -129,12 +131,12 @@ function ResetPasswordForm() {
                 placeholder="••••••••"
               />
               <p className="text-xs text-muted-foreground">
-                Min 8 characters with letters and numbers
+                {t('passwordRequirements')}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm password</Label>
+              <Label htmlFor="confirmPassword">{t('confirmPassword')}</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -151,7 +153,7 @@ function ResetPasswordForm() {
             )}
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Updating...' : 'Update password'}
+              {loading ? t('updating') : t('updatePassword')}
             </Button>
           </form>
         </CardContent>
@@ -162,21 +164,25 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
-          <Card className="w-full max-w-md">
-            <CardContent className="p-6">
-              <div className="mb-6">
-                <h1 className="text-2xl font-bold">Set new password</h1>
-                <p className="mt-1 text-sm text-muted-foreground">Loading...</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      }
-    >
+    <Suspense fallback={<ResetPasswordFallback />}>
       <ResetPasswordForm />
     </Suspense>
+  );
+}
+
+function ResetPasswordFallback() {
+  const t = useTranslations('resetPassword');
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
+      <Card className="w-full max-w-md">
+        <CardContent className="p-6">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold">{t('title')}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{t('loading')}</p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

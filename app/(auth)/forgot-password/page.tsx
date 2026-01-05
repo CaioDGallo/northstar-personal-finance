@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { forgotPassword } from '@/lib/actions/auth';
 
 function ForgotPasswordForm() {
+  const t = useTranslations('forgotPassword');
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -29,7 +31,7 @@ function ForgotPasswordForm() {
         setSuccess(true);
       }
     } catch {
-      setError('An unexpected error occurred');
+      setError(t('unexpectedError'));
     } finally {
       setLoading(false);
     }
@@ -41,14 +43,14 @@ function ForgotPasswordForm() {
         <Card className="w-full max-w-md">
           <CardContent className="p-6">
             <div className="mb-6">
-              <h1 className="text-2xl font-bold">Check your email</h1>
+              <h1 className="text-2xl font-bold">{t('checkYourEmail')}</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                If an account exists for {email}, you will receive a password reset link.
+                {t('checkEmailDescription', { email })}
               </p>
             </div>
             <Link href="/login">
               <Button variant="outline" className="w-full">
-                Back to login
+                {t('backToLogin')}
               </Button>
             </Link>
           </CardContent>
@@ -62,15 +64,15 @@ function ForgotPasswordForm() {
       <Card className="w-full max-w-md">
         <CardContent className="p-6">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold">Reset password</h1>
+            <h1 className="text-2xl font-bold">{t('title')}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Enter your email and we will send you a reset link
+              {t('description')}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('email')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -89,12 +91,12 @@ function ForgotPasswordForm() {
             )}
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Sending...' : 'Send reset link'}
+              {loading ? t('sending') : t('sendResetLink')}
             </Button>
 
             <div className="text-center text-sm">
               <Link href="/login" className="text-muted-foreground hover:underline">
-                Back to login
+                {t('backToLogin')}
               </Link>
             </div>
           </form>
@@ -106,21 +108,25 @@ function ForgotPasswordForm() {
 
 export default function ForgotPasswordPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
-          <Card className="w-full max-w-md">
-            <CardContent className="p-6">
-              <div className="mb-6">
-                <h1 className="text-2xl font-bold">Reset password</h1>
-                <p className="mt-1 text-sm text-muted-foreground">Loading...</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      }
-    >
+    <Suspense fallback={<ForgotPasswordFallback />}>
       <ForgotPasswordForm />
     </Suspense>
+  );
+}
+
+function ForgotPasswordFallback() {
+  const t = useTranslations('forgotPassword');
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
+      <Card className="w-full max-w-md">
+        <CardContent className="p-6">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold">{t('title')}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{t('loading')}</p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

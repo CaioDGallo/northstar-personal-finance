@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +14,8 @@ import { Turnstile } from '@marsidev/react-turnstile';
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useTranslations('login');
+  const tCommon = useTranslations('common');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -23,16 +26,16 @@ function LoginForm() {
   useEffect(() => {
     const errorParam = searchParams.get('error');
     if (errorParam === 'auth_failed') {
-      setError('Authentication failed. Please try again.');
+      setError(t('authenticationFailed'));
     }
-  }, [searchParams]);
+  }, [searchParams, t]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
 
     if (!captchaToken) {
-      setError('Please complete the captcha verification');
+      setError(t('captchaRequired'));
       return;
     }
 
@@ -49,7 +52,7 @@ function LoginForm() {
         router.refresh();
       }
     } catch {
-      setError('An unexpected error occurred');
+      setError(t('unexpectedError'));
       setCaptchaToken(null); // Reset captcha on error
     } finally {
       setLoading(false);
@@ -61,15 +64,15 @@ function LoginForm() {
       <Card className="w-full max-w-md">
         <CardContent className="p-6">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold">Login</h1>
+            <h1 className="text-2xl font-bold">{t('title')}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Enter your credentials to access your account
+              {t('description')}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('email')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -82,7 +85,7 @@ function LoginForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('password')}</Label>
               <Input
                 id="password"
                 type="password"
@@ -97,7 +100,7 @@ function LoginForm() {
                   href="/forgot-password"
                   className="text-xs text-muted-foreground hover:underline"
                 >
-                  Forgot password?
+                  {t('forgotPassword')}
                 </Link>
               </div>
             </div>
@@ -118,7 +121,7 @@ function LoginForm() {
             )}
 
             <Button type="submit" className="w-full" disabled={loading || !captchaToken}>
-              {loading ? 'Signing in...' : 'Sign in'}
+              {loading ? t('signingIn') : t('signIn')}
             </Button>
           </form>
         </CardContent>
@@ -129,19 +132,25 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-6">
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold">Login</h1>
-              <p className="mt-1 text-sm text-muted-foreground">Loading...</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    }>
+    <Suspense fallback={<LoginFallback />}>
       <LoginForm />
     </Suspense>
+  );
+}
+
+function LoginFallback() {
+  const t = useTranslations('login');
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
+      <Card className="w-full max-w-md">
+        <CardContent className="p-6">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold">{t('title')}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{t('loading')}</p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

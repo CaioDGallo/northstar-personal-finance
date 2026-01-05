@@ -41,10 +41,9 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-center flex-col md:flex-row space-y-4 md:space-y-0 justify-between">
         <h1 className="text-2xl font-bold">{t('title')}</h1>
-        <div className="flex gap-2">
-          <AddExpenseButton accounts={accounts} categories={categories} />
+        <div className="flex gap-2 w-full justify-end">
           <ImportModal
             accounts={accounts}
             categories={categories}
@@ -55,6 +54,7 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
               </Button>
             }
           />
+          <AddExpenseButton accounts={accounts} categories={categories} />
         </div>
       </div>
 

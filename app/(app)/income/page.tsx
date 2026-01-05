@@ -37,9 +37,11 @@ export default async function IncomePage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between flex-col md:flex-row space-y-4 md:space-y-0">
         <h1 className="text-2xl font-bold">{t('title')}</h1>
-        <AddIncomeButton accounts={accounts} categories={categories} />
+        <div className='w-full justify-end flex'>
+          <AddIncomeButton accounts={accounts} categories={categories} />
+        </div>
       </div>
 
       <IncomeFilters
