@@ -221,13 +221,21 @@
     "viewAll": "View all"
   },
   "transactionDetail": {
+    "amount": "Amount",
     "status": "Status",
     "category": "Category",
     "account": "Account",
+    "dueDate": "Due Date",
+    "receivedDate": "Received Date",
     "purchaseDate": "Purchase Date",
     "fatura": "Bill",
     "installment": "Installment",
-    "of": "of"
+    "of": "of",
+    "paid": "Paid",
+    "pending": "Pending",
+    "received": "Received",
+    "edit": "Edit",
+    "viewAllInstallments": "View All {count} Installments"
   },
   "faturas": {
     "title": "Bills",

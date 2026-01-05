@@ -221,13 +221,21 @@
     "viewAll": "Ver todas"
   },
   "transactionDetail": {
+    "amount": "Valor",
     "status": "Status",
     "category": "Categoria",
     "account": "Conta",
+    "dueDate": "Vencimento",
+    "receivedDate": "Data de Recebimento",
     "purchaseDate": "Data da Compra",
     "fatura": "Fatura",
     "installment": "Parcela",
-    "of": "de"
+    "of": "de",
+    "paid": "Pago",
+    "pending": "Pendente",
+    "received": "Recebido",
+    "edit": "Editar",
+    "viewAllInstallments": "Ver Todas as {count} Parcelas"
   },
   "faturas": {
     "title": "Faturas",
