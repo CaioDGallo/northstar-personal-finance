@@ -28,7 +28,7 @@ async function validateBillingDay(day: unknown, errorKey: string) {
   if (day === null || day === undefined) {
     return;
   }
-  if (!Number.isInteger(day) || day < 1 || day > 28) {
+  if (typeof day !== 'number' || !Number.isInteger(day) || day < 1 || day > 28) {
     throw new Error(await t(errorKey));
   }
 }

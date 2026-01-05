@@ -41,7 +41,7 @@ While doing a code review, keep track of it and note your findings in a dedicate
 
    ```bash
    pnpm lint # MUST NOT have errors from the current task, and the issues that might arrise corrected in the best possible way
-   pnpm build # MUST succeed, and the issues that might arrise corrected in the best possible way
+   pnpm build | pnpm build:clean # MUST succeed, and the issues that might arrise corrected in the best possible way
    git pull --rebase
    bd sync
    git push
