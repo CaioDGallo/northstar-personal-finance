@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 type Props = {
   onFileContent: (content: string) => void;
@@ -11,11 +12,12 @@ type Props = {
 export function FileDropzone({ onFileContent, accept = '.csv' }: Props) {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = useTranslations('fileDropzone');
 
   const handleFile = useCallback(
     (file: File) => {
       if (!file.name.endsWith('.csv')) {
-        setError('Please select a CSV file');
+        setError(t('invalidFileType'));
         return;
       }
 
@@ -25,10 +27,10 @@ export function FileDropzone({ onFileContent, accept = '.csv' }: Props) {
         onFileContent(content);
         setError(null);
       };
-      reader.onerror = () => setError('Failed to read file');
+      reader.onerror = () => setError(t('failedToRead'));
       reader.readAsText(file);
     },
-    [onFileContent]
+    [onFileContent, t]
   );
 
   const handleDrop = useCallback(
@@ -63,7 +65,7 @@ export function FileDropzone({ onFileContent, accept = '.csv' }: Props) {
       />
       <label htmlFor="file-input" className="cursor-pointer">
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Drag and drop CSV file here, or click to select
+          {t('dragAndDropText')}
         </p>
       </label>
       {error && <p className="text-red-500 text-xs mt-2">{error}</p>}

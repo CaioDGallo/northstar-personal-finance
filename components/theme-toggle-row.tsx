@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Sun03Icon, SunCloudLittleRain01Icon } from '@hugeicons/core-free-icons';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -13,6 +14,7 @@ export function ThemeToggleRow() {
     return (localStorage.getItem('theme') as Theme | null) || 'system';
   });
   const mounted = useRef(false);
+  const t = useTranslations('theme');
 
   useEffect(() => {
     mounted.current = true;
@@ -55,8 +57,6 @@ export function ThemeToggleRow() {
     });
   };
 
-  const label = theme === 'system' ? 'System' : theme === 'light' ? 'Light' : 'Dark';
-
   return (
     <button
       onClick={cycleTheme}
@@ -67,7 +67,7 @@ export function ThemeToggleRow() {
       )}
     >
       <HugeiconsIcon icon={theme === 'light' ? Sun03Icon : SunCloudLittleRain01Icon} className="size-5" />
-      <span>Theme: {label}</span>
+      <span>Theme: {t(theme)}</span>
     </button>
   );
 }

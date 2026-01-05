@@ -26,6 +26,7 @@ import {
 import { CategoryIcon } from '@/components/icon-picker';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { MoreVerticalIcon } from '@hugeicons/core-free-icons';
+import { useTranslations } from 'next-intl';
 
 type CategoryCardProps = {
   category: Category;
@@ -36,6 +37,8 @@ export function CategoryCard({ category }: CategoryCardProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const t = useTranslations('categories');
+  const tCommon = useTranslations('common');
 
   async function handleDelete() {
     setIsDeleting(true);
@@ -52,7 +55,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
       setDeleteOpen(false);
     } catch (err) {
       console.error('[CategoryCard] Delete failed:', err);
-      setDeleteError('An unexpected error occurred. Please try again.');
+      setDeleteError(tCommon('unexpectedError'));
     } finally {
       setIsDeleting(false);
     }
@@ -85,12 +88,12 @@ export function CategoryCard({ category }: CategoryCardProps) {
             <AlertDialog open={editOpen} onOpenChange={setEditOpen}>
               <AlertDialogTrigger asChild>
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  Edit Category
+                  {tCommon('edit')} {t('title')}
                 </DropdownMenuItem>
               </AlertDialogTrigger>
               <AlertDialogContent closeOnBackdropClick>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Edit Category</AlertDialogTitle>
+                  <AlertDialogTitle>{tCommon('edit')} {t('title')}</AlertDialogTitle>
                 </AlertDialogHeader>
                 <CategoryForm
                   category={category}
@@ -102,14 +105,14 @@ export function CategoryCard({ category }: CategoryCardProps) {
             <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
               <AlertDialogTrigger asChild>
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  Delete Category
+                  {tCommon('delete')} {t('title')}
                 </DropdownMenuItem>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete category?</AlertDialogTitle>
+                  <AlertDialogTitle>{tCommon('delete')} {t('title')}?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action cannot be undone.
+                    {tCommon('actionCannotBeUndone')}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
 
@@ -120,12 +123,12 @@ export function CategoryCard({ category }: CategoryCardProps) {
                 )}
 
                 <AlertDialogFooter>
-                  <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel disabled={isDeleting}>{tCommon('cancel')}</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleDelete}
                     disabled={isDeleting}
                   >
-                    {isDeleting ? 'Deleting...' : 'Delete'}
+                    {isDeleting ? tCommon('deleting') : tCommon('delete')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

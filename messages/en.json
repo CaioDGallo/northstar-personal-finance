@@ -15,7 +15,8 @@
     "reverting": "Reverting...",
     "updating": "Updating...",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "actionCannotBeUndone": "This action cannot be undone."
   },
   "errors": {
     "descriptionRequired": "Description is required",

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { AlertDialogCancel, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { IconPicker, isValidIconName, type IconName } from '@/components/icon-picker';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 const COLORS = [
   '#ef4444', // red
@@ -44,6 +45,8 @@ export function CategoryForm({ category, type = 'expense', onSuccess }: Category
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = useTranslations('categoryForm');
+  const tCommon = useTranslations('common');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -63,7 +66,7 @@ export function CategoryForm({ category, type = 'expense', onSuccess }: Category
       onSuccess?.();
     } catch (err) {
       console.error('[CategoryForm] Submit failed:', err);
-      setError('An unexpected error occurred. Please try again.');
+      setError(tCommon('unexpectedError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -73,7 +76,7 @@ export function CategoryForm({ category, type = 'expense', onSuccess }: Category
     <form onSubmit={handleSubmit}>
       <FieldGroup>
         <Field>
-          <FieldLabel htmlFor="name">Name</FieldLabel>
+          <FieldLabel htmlFor="name">{t('name')}</FieldLabel>
           <Input
             type="text"
             id="name"
@@ -85,7 +88,7 @@ export function CategoryForm({ category, type = 'expense', onSuccess }: Category
         </Field>
 
         <Field>
-          <FieldLabel>Color</FieldLabel>
+          <FieldLabel>{t('color')}</FieldLabel>
           <div className="grid grid-cols-8 gap-2">
             {COLORS.map((c) => (
               <button
@@ -103,7 +106,7 @@ export function CategoryForm({ category, type = 'expense', onSuccess }: Category
         </Field>
 
         <Field>
-          <FieldLabel>Icon</FieldLabel>
+          <FieldLabel>{t('icon')}</FieldLabel>
           <IconPicker value={icon} onChange={setIcon} />
         </Field>
 
@@ -114,9 +117,9 @@ export function CategoryForm({ category, type = 'expense', onSuccess }: Category
         )}
 
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : category ? 'Update' : 'Create'}
+            {isSubmitting ? t('saving') : category ? t('update') : t('create')}
           </Button>
         </AlertDialogFooter>
       </FieldGroup>

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { AlertDialogCancel, AlertDialogFooter } from '@/components/ui/alert-dialog';
+import { useTranslations } from 'next-intl';
 
 type AccountFormProps = {
   account?: Account;
@@ -21,6 +22,8 @@ export function AccountForm({ account }: AccountFormProps) {
   const [closingDay, setClosingDay] = useState<number | null>(account?.closingDay ?? null);
   const [paymentDueDay, setPaymentDueDay] = useState<number | null>(account?.paymentDueDay ?? null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const t = useTranslations('accountForm');
+  const tAccountTypes = useTranslations('accountTypes');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -46,7 +49,7 @@ export function AccountForm({ account }: AccountFormProps) {
     <form onSubmit={handleSubmit}>
       <FieldGroup>
         <Field>
-          <FieldLabel htmlFor="name">Name</FieldLabel>
+          <FieldLabel htmlFor="name">{t('name')}</FieldLabel>
           <Input
             type="text"
             id="name"
@@ -58,17 +61,17 @@ export function AccountForm({ account }: AccountFormProps) {
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="type">Type</FieldLabel>
+          <FieldLabel htmlFor="type">{t('type')}</FieldLabel>
           <Select value={type} onValueChange={(v) => setType(v as typeof type)}>
             <SelectTrigger id="type">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectItem value="checking">Checking</SelectItem>
-                <SelectItem value="savings">Savings</SelectItem>
-                <SelectItem value="credit_card">Credit Card</SelectItem>
-                <SelectItem value="cash">Cash</SelectItem>
+                <SelectItem value="checking">{tAccountTypes('checking')}</SelectItem>
+                <SelectItem value="savings">{tAccountTypes('savings')}</SelectItem>
+                <SelectItem value="credit_card">{tAccountTypes('credit_card')}</SelectItem>
+                <SelectItem value="cash">{tAccountTypes('cash')}</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -77,13 +80,13 @@ export function AccountForm({ account }: AccountFormProps) {
         {type === 'credit_card' && (
           <>
             <Field>
-              <FieldLabel htmlFor="closingDay">Closing Day (1-28)</FieldLabel>
+              <FieldLabel htmlFor="closingDay">{t('closingDay')}</FieldLabel>
               <Select
                 value={closingDay?.toString() || ''}
                 onValueChange={(v) => setClosingDay(v ? Number(v) : null)}
               >
                 <SelectTrigger id="closingDay">
-                  <SelectValue placeholder="Select day" />
+                  <SelectValue placeholder={t('selectDay')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
@@ -98,13 +101,13 @@ export function AccountForm({ account }: AccountFormProps) {
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="paymentDueDay">Payment Due Day (1-28)</FieldLabel>
+              <FieldLabel htmlFor="paymentDueDay">{t('paymentDueDay')}</FieldLabel>
               <Select
                 value={paymentDueDay?.toString() || ''}
                 onValueChange={(v) => setPaymentDueDay(v ? Number(v) : null)}
               >
                 <SelectTrigger id="paymentDueDay">
-                  <SelectValue placeholder="Select day" />
+                  <SelectValue placeholder={t('selectDay')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
@@ -121,9 +124,9 @@ export function AccountForm({ account }: AccountFormProps) {
         )}
 
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : account ? 'Update' : 'Create'}
+            {isSubmitting ? t('saving') : account ? t('update') : t('create')}
           </Button>
         </AlertDialogFooter>
       </FieldGroup>

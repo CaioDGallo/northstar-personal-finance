@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { SidebarMenuButton } from '@/components/ui/sidebar';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Sun03Icon, SunCloudLittleRain01Icon } from '@hugeicons/core-free-icons';
+import { useTranslations } from 'next-intl';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -13,6 +14,7 @@ export function ThemeToggle() {
     return (localStorage.getItem('theme') as Theme | null) || 'system';
   });
   const mounted = useRef(false);
+  const t = useTranslations('theme');
 
   useEffect(() => {
     mounted.current = true;
@@ -55,12 +57,10 @@ export function ThemeToggle() {
     });
   };
 
-  const label = theme === 'system' ? 'System' : theme === 'light' ? 'Light' : 'Dark';
-
   return (
     <SidebarMenuButton onClick={cycleTheme} suppressHydrationWarning>
       <HugeiconsIcon icon={theme == 'light' ? Sun03Icon : SunCloudLittleRain01Icon} />
-      <span>{label}</span>
+      <span>{t(theme)}</span>
     </SidebarMenuButton>
   );
 }

@@ -12,6 +12,7 @@ import { Tick02Icon, Clock01Icon } from '@hugeicons/core-free-icons';
 import type { ExpenseEntry } from '@/lib/contexts/expense-context';
 import type { IncomeEntry } from '@/lib/contexts/income-context';
 import type { Account, Category } from '@/lib/schema';
+import { useTranslations } from 'next-intl';
 
 type TransactionDetailSheetProps = {
   expense?: ExpenseEntry;
@@ -26,15 +27,16 @@ export function TransactionDetailSheet({ expense, income, accounts, categories, 
   const [editOpen, setEditOpen] = useState(false);
   const isExpense = !!expense;
   const data = expense || income;
+  const t = useTranslations('transactionDetail');
 
   if (!data) return null;
 
   const isPaidOrReceived = isExpense ? !!expense.paidAt : !!income?.receivedAt;
   const statusLabel = isExpense
-    ? (isPaidOrReceived ? 'Paid' : 'Pending')
-    : (isPaidOrReceived ? 'Received' : 'Pending');
+    ? (isPaidOrReceived ? t('paid') : t('pending'))
+    : (isPaidOrReceived ? t('received') : t('pending'));
 
-  const dateLabel = isExpense ? 'Due Date' : 'Received Date';
+  const dateLabel = isExpense ? t('dueDate') : t('receivedDate');
   const dateValue = isExpense ? expense.dueDate : income?.receivedDate;
 
   return (
@@ -62,7 +64,7 @@ export function TransactionDetailSheet({ expense, income, accounts, categories, 
           <div className="space-y-3 p-4">
             {/* Amount */}
             <DetailRow
-              label="Amount"
+              label={t('amount')}
               value={
                 <span className={isExpense ? 'font-semibold' : 'font-semibold text-green-600'}>
                   {isExpense ? '' : '+'}
@@ -73,7 +75,7 @@ export function TransactionDetailSheet({ expense, income, accounts, categories, 
 
             {/* Status */}
             <DetailRow
-              label="Status"
+              label={t('status')}
               value={
                 <div className="flex items-center gap-2">
                   <HugeiconsIcon
@@ -90,10 +92,10 @@ export function TransactionDetailSheet({ expense, income, accounts, categories, 
             />
 
             {/* Category */}
-            <DetailRow label="Category" value={data.categoryName} />
+            <DetailRow label={t('category')} value={data.categoryName} />
 
             {/* Account */}
-            <DetailRow label="Account" value={data.accountName} />
+            <DetailRow label={t('account')} value={data.accountName} />
 
             {/* Date */}
             <DetailRow
@@ -111,7 +113,7 @@ export function TransactionDetailSheet({ expense, income, accounts, categories, 
                 {/* Purchase Date (show only if different from due date) */}
                 {expense.purchaseDate !== expense.dueDate && (
                   <DetailRow
-                    label="Purchase Date"
+                    label={t('purchaseDate')}
                     value={formatDate(expense.purchaseDate, {
                       day: '2-digit',
                       month: 'long',
@@ -122,7 +124,7 @@ export function TransactionDetailSheet({ expense, income, accounts, categories, 
 
                 {/* Fatura Month */}
                 <DetailRow
-                  label="Fatura"
+                  label={t('fatura')}
                   value={formatDate(expense.faturaMonth + '-01', {
                     month: 'long',
                     year: 'numeric',
@@ -132,10 +134,10 @@ export function TransactionDetailSheet({ expense, income, accounts, categories, 
                 {/* Installment info */}
                 {expense.totalInstallments > 1 && (
                   <DetailRow
-                    label="Installment"
+                    label={t('installment')}
                     value={
                       <Badge variant="secondary">
-                        {expense.installmentNumber} of {expense.totalInstallments}
+                        {expense.installmentNumber} {t('of')} {expense.totalInstallments}
                       </Badge>
                     }
                   />
@@ -157,7 +159,7 @@ export function TransactionDetailSheet({ expense, income, accounts, categories, 
                 console.log('View all installments for transaction:', expense.transactionId);
               }}
             >
-              View All {expense.totalInstallments} Installments
+              {t('viewAllInstallments', { count: expense.totalInstallments })}
             </Button>
           )}
 
@@ -171,7 +173,7 @@ export function TransactionDetailSheet({ expense, income, accounts, categories, 
                 setEditOpen(true);
               }}
             >
-              Edit
+              {t('edit')}
             </Button>
           )}
         </SheetFooter>

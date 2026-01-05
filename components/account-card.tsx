@@ -26,6 +26,7 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react';
 import { MoreVerticalIcon } from '@hugeicons/core-free-icons';
 import { accountTypeConfig } from '@/lib/account-type-config';
+import { useTranslations } from 'next-intl';
 
 type AccountCardProps = {
   account: Account;
@@ -36,6 +37,9 @@ export function AccountCard({ account }: AccountCardProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const t = useTranslations('accounts');
+  const tCommon = useTranslations('common');
+  const tAccountTypes = useTranslations('accountTypes');
 
   const config = accountTypeConfig[account.type];
 
@@ -48,7 +52,7 @@ export function AccountCard({ account }: AccountCardProps) {
       setDeleteOpen(false);
     } catch (err) {
       console.error('[AccountCard] Delete failed:', err);
-      setDeleteError('An unexpected error occurred. Please try again.');
+      setDeleteError(tCommon('unexpectedError'));
     } finally {
       setIsDeleting(false);
     }
@@ -68,7 +72,7 @@ export function AccountCard({ account }: AccountCardProps) {
         {/* Account name + type */}
         <div className="flex-1 min-w-0">
           <h3 className="font-medium text-sm truncate">{account.name}</h3>
-          <p className="text-xs text-gray-500">{config.label}</p>
+          <p className="text-xs text-gray-500">{tAccountTypes(account.type)}</p>
         </div>
 
         {/* Actions dropdown */}
@@ -82,12 +86,12 @@ export function AccountCard({ account }: AccountCardProps) {
             <AlertDialog open={editOpen} onOpenChange={setEditOpen}>
               <AlertDialogTrigger asChild>
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  Edit Account
+                  {tCommon('edit')} {t('title')}
                 </DropdownMenuItem>
               </AlertDialogTrigger>
               <AlertDialogContent closeOnBackdropClick>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Edit Account</AlertDialogTitle>
+                  <AlertDialogTitle>{tCommon('edit')} {t('title')}</AlertDialogTitle>
                 </AlertDialogHeader>
                 <AccountForm account={account} />
               </AlertDialogContent>
@@ -96,14 +100,14 @@ export function AccountCard({ account }: AccountCardProps) {
             <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
               <AlertDialogTrigger asChild>
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  Delete Account
+                  {tCommon('delete')} {t('title')}
                 </DropdownMenuItem>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete account?</AlertDialogTitle>
+                  <AlertDialogTitle>{tCommon('delete')} {t('title')}?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action cannot be undone.
+                    {tCommon('actionCannotBeUndone')}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
 
@@ -114,12 +118,12 @@ export function AccountCard({ account }: AccountCardProps) {
                 )}
 
                 <AlertDialogFooter>
-                  <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel disabled={isDeleting}>{tCommon('cancel')}</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleDelete}
                     disabled={isDeleting}
                   >
-                    {isDeleting ? 'Deleting...' : 'Delete'}
+                    {isDeleting ? tCommon('deleting') : tCommon('delete')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

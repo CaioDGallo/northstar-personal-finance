@@ -15,7 +15,8 @@
     "reverting": "Revertendo...",
     "updating": "Atualizando...",
     "yes": "Sim",
-    "no": "Não"
+    "no": "Não",
+    "actionCannotBeUndone": "Esta ação não pode ser desfeita."
   },
   "errors": {
     "descriptionRequired": "Descrição é obrigatória",
