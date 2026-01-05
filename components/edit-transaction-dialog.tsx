@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { getTransactionWithEntries } from '@/lib/actions/expenses';
 import { TransactionForm } from '@/components/transaction-form';
-import type { Account, Category, Transaction, Entry, Income } from '@/lib/schema';
+import type { Account, Category, Transaction, Entry } from '@/lib/schema';
 import type { IncomeEntry } from '@/lib/contexts/income-context';
 import {
   AlertDialog,
@@ -46,6 +46,7 @@ export function EditTransactionDialog({
   const t = useTranslations('expenses');
   const tCommon = useTranslations('common');
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!open) {
       setTransaction(null);
@@ -82,6 +83,7 @@ export function EditTransactionDialog({
       setShowForm(true);
     }
   }, [open, mode, transactionId, income, onOpenChange]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleWarningContinue = () => {
     setShowWarning(false);
