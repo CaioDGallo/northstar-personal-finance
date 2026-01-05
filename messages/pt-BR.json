@@ -285,9 +285,41 @@
     "description": "Digite suas credenciais para acessar sua conta",
     "email": "E-mail",
     "password": "Senha",
+    "forgotPassword": "Esqueceu a senha?",
+    "captchaRequired": "Por favor complete a verificação de captcha",
     "signingIn": "Entrando...",
     "signIn": "Entrar",
     "authenticationFailed": "Falha na autenticação. Verifique suas credenciais.",
+    "unexpectedError": "Ocorreu um erro inesperado",
+    "loading": "Carregando..."
+  },
+  "forgotPassword": {
+    "title": "Redefinir senha",
+    "description": "Digite seu e-mail e enviaremos um link de redefinição",
+    "email": "E-mail",
+    "checkYourEmail": "Verifique seu e-mail",
+    "checkEmailDescription": "Se uma conta existe para {email}, você receberá um link para redefinir a senha.",
+    "sending": "Enviando...",
+    "sendResetLink": "Enviar link de redefinição",
+    "backToLogin": "Voltar para login",
+    "unexpectedError": "Ocorreu um erro inesperado",
+    "loading": "Carregando..."
+  },
+  "resetPassword": {
+    "title": "Definir nova senha",
+    "description": "Digite sua nova senha abaixo",
+    "newPassword": "Nova senha",
+    "confirmPassword": "Confirmar senha",
+    "passwordRequirements": "Mín. 8 caracteres com letras e números",
+    "verifying": "Verificando...",
+    "updating": "Atualizando...",
+    "updatePassword": "Atualizar senha",
+    "successTitle": "Senha atualizada",
+    "successDescription": "Sua senha foi redefinida com sucesso.",
+    "continueToDashboard": "Continuar para dashboard",
+    "passwordTooShort": "A senha deve ter no mínimo 8 caracteres",
+    "passwordRequirementsNotMet": "A senha deve conter letras e números",
+    "passwordsMismatch": "As senhas não correspondem",
     "unexpectedError": "Ocorreu um erro inesperado",
     "loading": "Carregando..."
   },
@@ -311,5 +343,32 @@
     "allStatus": "Todos",
     "uploadStep": "Fazer upload do CSV {parser}",
     "summaryCount": "{count, plural, =1 {# transação} other {# transações}}"
+  },
+  "categoryForm": {
+    "name": "Nome",
+    "color": "Cor",
+    "icon": "Ícone",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "update": "Atualizar",
+    "create": "Criar",
+    "saving": "Salvando..."
+  },
+  "accountForm": {
+    "name": "Nome",
+    "type": "Tipo",
+    "closingDay": "Dia do Fechamento (1-28)",
+    "paymentDueDay": "Dia do Vencimento (1-28)",
+    "selectDay": "Selecione o dia",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "update": "Atualizar",
+    "create": "Criar",
+    "saving": "Salvando..."
+  },
+  "fileDropzone": {
+    "invalidFileType": "Por favor selecione um arquivo CSV",
+    "failedToRead": "Falha ao ler arquivo",
+    "dragAndDropText": "Arraste e solte o arquivo CSV aqui, ou clique para selecionar"
   }
 }

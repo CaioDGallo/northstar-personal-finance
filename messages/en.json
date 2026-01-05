@@ -285,9 +285,41 @@
     "description": "Enter your credentials to access your account",
     "email": "Email",
     "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "captchaRequired": "Please complete the captcha verification",
     "signingIn": "Signing in...",
     "signIn": "Sign in",
     "authenticationFailed": "Authentication failed. Please check your credentials.",
+    "unexpectedError": "An unexpected error occurred",
+    "loading": "Loading..."
+  },
+  "forgotPassword": {
+    "title": "Reset password",
+    "description": "Enter your email and we will send you a reset link",
+    "email": "Email",
+    "checkYourEmail": "Check your email",
+    "checkEmailDescription": "If an account exists for {email}, you will receive a password reset link.",
+    "sending": "Sending...",
+    "sendResetLink": "Send reset link",
+    "backToLogin": "Back to login",
+    "unexpectedError": "An unexpected error occurred",
+    "loading": "Loading..."
+  },
+  "resetPassword": {
+    "title": "Set new password",
+    "description": "Enter your new password below",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "passwordRequirements": "Min 8 characters with letters and numbers",
+    "verifying": "Verifying...",
+    "updating": "Updating...",
+    "updatePassword": "Update password",
+    "successTitle": "Password updated",
+    "successDescription": "Your password has been reset successfully.",
+    "continueToDashboard": "Continue to dashboard",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "passwordRequirementsNotMet": "Password must contain letters and numbers",
+    "passwordsMismatch": "Passwords do not match",
     "unexpectedError": "An unexpected error occurred",
     "loading": "Loading..."
   },
@@ -311,5 +343,32 @@
     "allStatus": "All",
     "uploadStep": "Upload {parser} CSV",
     "summaryCount": "{count, plural, =1 {# transaction} other {# transactions}}"
+  },
+  "categoryForm": {
+    "name": "Name",
+    "color": "Color",
+    "icon": "Icon",
+    "save": "Save",
+    "cancel": "Cancel",
+    "update": "Update",
+    "create": "Create",
+    "saving": "Saving..."
+  },
+  "accountForm": {
+    "name": "Name",
+    "type": "Type",
+    "closingDay": "Closing Day (1-28)",
+    "paymentDueDay": "Payment Due Day (1-28)",
+    "selectDay": "Select day",
+    "save": "Save",
+    "cancel": "Cancel",
+    "update": "Update",
+    "create": "Create",
+    "saving": "Saving..."
+  },
+  "fileDropzone": {
+    "invalidFileType": "Please select a CSV file",
+    "failedToRead": "Failed to read file",
+    "dragAndDropText": "Drag and drop CSV file here, or click to select"
   }
 }
