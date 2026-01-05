@@ -309,6 +309,7 @@
     "allCategories": "All Categories",
     "allAccounts": "All Accounts",
     "allStatus": "All",
-    "uploadStep": "Upload {parser} CSV"
+    "uploadStep": "Upload {parser} CSV",
+    "summaryCount": "{count, plural, =1 {# transaction} other {# transactions}}"
   }
 }

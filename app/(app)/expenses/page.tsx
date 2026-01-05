@@ -4,6 +4,7 @@ import { getAccounts } from '@/lib/actions/accounts';
 import { getCategories } from '@/lib/actions/categories';
 import { ExpenseList, ExpenseListProvider } from '@/components/expense-list';
 import { ExpenseFilters } from '@/components/expense-filters';
+import { ExpenseFilterSummary } from '@/components/expense-filter-summary';
 import { ImportModal } from '@/components/import-expenses/import-modal';
 import { Button } from '@/components/ui/button';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -65,6 +66,7 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
         categories={categories}
         filters={filters}
       >
+        <ExpenseFilterSummary />
         <ExpenseList />
       </ExpenseListProvider>
     </div>

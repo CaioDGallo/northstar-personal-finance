@@ -4,6 +4,7 @@ import { getAccounts } from '@/lib/actions/accounts';
 import { getCategories } from '@/lib/actions/categories';
 import { IncomeList, IncomeListProvider } from '@/components/income-list';
 import { IncomeFilters } from '@/components/income-filters';
+import { IncomeFilterSummary } from '@/components/income-filter-summary';
 import { getCurrentYearMonth } from '@/lib/utils';
 
 type PageProps = {
@@ -51,6 +52,7 @@ export default async function IncomePage({ searchParams }: PageProps) {
         categories={categories}
         filters={filters}
       >
+        <IncomeFilterSummary />
         <IncomeList />
       </IncomeListProvider>
     </div>
