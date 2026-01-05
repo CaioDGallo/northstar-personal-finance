@@ -5,6 +5,7 @@ import { getCategories } from '@/lib/actions/categories';
 import { IncomeList, IncomeListProvider } from '@/components/income-list';
 import { IncomeFilters } from '@/components/income-filters';
 import { IncomeFilterSummary } from '@/components/income-filter-summary';
+import { AddIncomeButton } from '@/components/add-income-button';
 import { getCurrentYearMonth } from '@/lib/utils';
 
 type PageProps = {
@@ -36,8 +37,9 @@ export default async function IncomePage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <div className="mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">{t('title')}</h1>
+        <AddIncomeButton accounts={accounts} categories={categories} />
       </div>
 
       <IncomeFilters

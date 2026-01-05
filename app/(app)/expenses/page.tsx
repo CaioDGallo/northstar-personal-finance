@@ -6,6 +6,7 @@ import { ExpenseList, ExpenseListProvider } from '@/components/expense-list';
 import { ExpenseFilters } from '@/components/expense-filters';
 import { ExpenseFilterSummary } from '@/components/expense-filter-summary';
 import { ImportModal } from '@/components/import-expenses/import-modal';
+import { AddExpenseButton } from '@/components/add-expense-button';
 import { Button } from '@/components/ui/button';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Upload02Icon } from '@hugeicons/core-free-icons';
@@ -42,16 +43,19 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">{t('title')}</h1>
-        <ImportModal
-          accounts={accounts}
-          categories={categories}
-          trigger={
-            <Button variant="hollow" size="sm">
-              <HugeiconsIcon icon={Upload02Icon} className="mr-2 size-4" />
-              {t('import')}
-            </Button>
-          }
-        />
+        <div className="flex gap-2">
+          <AddExpenseButton accounts={accounts} categories={categories} />
+          <ImportModal
+            accounts={accounts}
+            categories={categories}
+            trigger={
+              <Button variant="hollow" size="sm">
+                <HugeiconsIcon icon={Upload02Icon} className="mr-2 size-4" />
+                {t('import')}
+              </Button>
+            }
+          />
+        </div>
       </div>
 
       <ExpenseFilters

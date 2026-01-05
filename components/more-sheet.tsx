@@ -6,11 +6,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import type { Account, Category } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import {
   ArrowUp01Icon,
-  CreditCardIcon,
   Invoice03Icon,
   SparklesIcon,
   Wallet01Icon,
@@ -23,7 +21,6 @@ import { ThemeToggleRow } from './theme-toggle-row';
 import { LanguageToggleRow } from './language-toggle-row';
 
 const moreItems = [
-  { key: 'faturas', href: '/faturas', icon: CreditCardIcon },
   { key: 'income', href: '/income', icon: ArrowUp01Icon },
   { key: 'accounts', href: '/settings/accounts', icon: Wallet01Icon },
   { key: 'categories', href: '/settings/categories', icon: SparklesIcon },
@@ -33,9 +30,6 @@ const moreItems = [
 type MoreSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  accounts: Account[];
-  expenseCategories: Category[];
-  incomeCategories: Category[];
 };
 
 export function MoreSheet({

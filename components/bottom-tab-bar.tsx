@@ -9,28 +9,11 @@ import {
   Home01Icon,
   Invoice03Icon,
   Wallet01Icon,
+  CreditCardIcon,
   MoreHorizontalIcon,
-  Add01Icon,
-  Remove02Icon,
-  ArrowUp01Icon,
 } from '@hugeicons/core-free-icons';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { TransactionForm } from '@/components/transaction-form';
 import { cn } from '@/lib/utils';
 import { MoreSheet } from './more-sheet';
-import type { Account, Category } from '@/lib/schema';
-import { Button } from './ui/button';
-
-type BottomTabBarProps = {
-  accounts: Account[];
-  expenseCategories: Category[];
-  incomeCategories: Category[];
-};
 
 type TabItem = {
   key: string;
@@ -42,6 +25,7 @@ const tabs: TabItem[] = [
   { key: 'dashboard', href: '/dashboard', icon: Home01Icon },
   { key: 'budgets', href: '/budgets', icon: Invoice03Icon },
   { key: 'expenses', href: '/expenses', icon: Wallet01Icon },
+  { key: 'faturas', href: '/faturas', icon: CreditCardIcon },
   { key: 'more', href: null, icon: MoreHorizontalIcon },
 ];
 
@@ -85,58 +69,10 @@ function TabButton({ title, href, icon, active, onClick }: TabButtonProps) {
   );
 }
 
-type CenterFABProps = {
-  onExpense: () => void;
-  onIncome: () => void;
-};
-
-function CenterFAB({ onExpense, onIncome }: CenterFABProps) {
-  const t = useTranslations('expenses');
-  const tIncome = useTranslations('income');
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant={'popout'}
-          className={cn(
-            'relative -top-4', // raised above tab bar
-            'flex items-center justify-center',
-            'size-14',
-            'bg-primary text-primary-foreground',
-            'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]', // popout style
-            'border-2 border-black',
-            'active:translate-x-0.5 active:translate-y-0.5 active:shadow-none',
-            'transition-all'
-          )}
-        >
-          <HugeiconsIcon icon={Add01Icon} strokeWidth={2} className="size-6" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="center" side="top" sideOffset={8}>
-        <DropdownMenuItem onSelect={onExpense}>
-          <HugeiconsIcon icon={Remove02Icon} strokeWidth={2} />
-          {t('addExpense')}
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={onIncome}>
-          <HugeiconsIcon icon={ArrowUp01Icon} strokeWidth={2} />
-          {tIncome('addIncome')}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-export function BottomTabBar({
-  accounts,
-  expenseCategories,
-  incomeCategories,
-}: BottomTabBarProps) {
+export function BottomTabBar() {
   const t = useTranslations('navigation');
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
-  const [expenseOpen, setExpenseOpen] = useState(false);
-  const [incomeOpen, setIncomeOpen] = useState(false);
 
   const isActive = (href: string | null) => href ? pathname === href : false;
   const isMoreActive =
@@ -151,56 +87,34 @@ export function BottomTabBar({
           'pb-[env(safe-area-inset-bottom)]'
         )}
       >
-        <div className="flex items-end justify-around h-16 px-2 pb-3">
-          {/* Dashboard tab */}
-          <TabButton title={t(tabs[0].key)} {...tabs[0]} key={tabs[0].key} active={isActive(tabs[0].href)} />
-
-          {/* Budgets tab */}
-          <TabButton title={t(tabs[1].key)} {...tabs[1]} key={tabs[1].key} active={isActive(tabs[1].href)} />
-
-          {/* Center FAB */}
-          <CenterFAB
-            onExpense={() => setExpenseOpen(true)}
-            onIncome={() => setIncomeOpen(true)}
-          />
-
-          {/* Expenses tab */}
-          <TabButton title={t(tabs[2].key)} {...tabs[2]} key={tabs[2].key} active={isActive(tabs[2].href)} />
-
-          {/* More tab */}
-          <TabButton
-            title={t(tabs[3].key)}
-            {...tabs[3]}
-            key={tabs[3].key}
-            active={isMoreActive}
-            onClick={() => setMoreOpen(true)}
-          />
+        <div className="flex items-center justify-around h-16 px-2">
+          {tabs.map((tab) => {
+            if (tab.key === 'more') {
+              return (
+                <TabButton
+                  key={tab.key}
+                  title={t(tab.key)}
+                  href={tab.href}
+                  icon={tab.icon}
+                  active={isMoreActive}
+                  onClick={() => setMoreOpen(true)}
+                />
+              );
+            }
+            return (
+              <TabButton
+                key={tab.key}
+                title={t(tab.key)}
+                href={tab.href}
+                icon={tab.icon}
+                active={isActive(tab.href)}
+              />
+            );
+          })}
         </div>
       </nav>
 
-      <MoreSheet
-        open={moreOpen}
-        onOpenChange={setMoreOpen}
-        accounts={accounts}
-        expenseCategories={expenseCategories}
-        incomeCategories={incomeCategories}
-      />
-
-      <TransactionForm
-        mode="expense"
-        accounts={accounts}
-        categories={expenseCategories}
-        open={expenseOpen}
-        onOpenChange={setExpenseOpen}
-      />
-
-      <TransactionForm
-        mode="income"
-        accounts={accounts}
-        categories={incomeCategories}
-        open={incomeOpen}
-        onOpenChange={setIncomeOpen}
-      />
+      <MoreSheet open={moreOpen} onOpenChange={setMoreOpen} />
     </>
   );
 }
