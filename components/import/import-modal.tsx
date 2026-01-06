@@ -195,7 +195,7 @@ export function ImportModal({ accounts, categories, trigger }: Props) {
               </div>
 
               <div>
-                <h3 className="font-medium mb-2">{t('uploadStep', { parser: parsers[selectedTemplate].name })}</h3>
+                <h3 className="font-medium mb-2">{t('filters.uploadStep', { parser: parsers[selectedTemplate].name })}</h3>
                 <FileDropzone onFileContent={handleFileSelect} />
               </div>
 
