@@ -4,8 +4,8 @@ export const nubankExtratoParser: ImportTemplate = {
   id: 'nubank-extrato',
   name: 'Nubank Extrato (Conta Corrente)',
   description: 'Importar extrato da conta corrente Nubank (CSV)',
-  nameKey: 'parsers.nubank-extrato.name',
-  descriptionKey: 'parsers.nubank-extrato.description',
+  nameKey: 'nubank-extrato.name',
+  descriptionKey: 'nubank-extrato.description',
 
   parse(content: string): ParseResult {
     const rows: ValidatedImportRow[] = [];
@@ -36,7 +36,7 @@ export const nubankExtratoParser: ImportTemplate = {
           rowIndex: index + 1,
           field: 'description',
           message: 'Invalid CSV format',
-          messageKey: 'parsers.nubank-extrato.errors.invalidCsvFormat',
+          messageKey: 'nubank-extrato.errors.invalidCsvFormat',
           rawValue: line,
         });
         return;
@@ -55,7 +55,7 @@ export const nubankExtratoParser: ImportTemplate = {
           rowIndex: index + 1,
           field: 'date',
           message: 'Invalid date format',
-          messageKey: 'parsers.nubank-extrato.errors.invalidDateFormat',
+          messageKey: 'nubank-extrato.errors.invalidDateFormat',
           rawValue: dateStr,
         });
         return;
@@ -68,7 +68,7 @@ export const nubankExtratoParser: ImportTemplate = {
           rowIndex: index + 1,
           field: 'identifier',
           message: 'Invalid identifier format (expected UUID)',
-          messageKey: 'parsers.nubank-extrato.errors.invalidIdentifierFormat',
+          messageKey: 'nubank-extrato.errors.invalidIdentifierFormat',
           rawValue: identifier,
         });
         return;
@@ -81,7 +81,7 @@ export const nubankExtratoParser: ImportTemplate = {
           rowIndex: index + 1,
           field: 'amount',
           message: 'Invalid or zero amount',
-          messageKey: 'parsers.nubank-extrato.errors.invalidOrZeroAmount',
+          messageKey: 'nubank-extrato.errors.invalidOrZeroAmount',
           rawValue: amountStr,
         });
         return;
