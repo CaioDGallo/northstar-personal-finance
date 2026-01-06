@@ -64,7 +64,9 @@
     "passwordTooShort": "Password must be at least 8 characters",
     "passwordRequirementsNotMet": "Password must contain letters and numbers",
     "tooManyAttempts": "Too many attempts. Try again in {{retryAfter}}s.",
-    "unexpectedError": "An unexpected error occurred"
+    "unexpectedError": "An unexpected error occurred",
+    "noDefaultExpenseCategory": "No default expense category configured. Go to Settings > Categories to set one.",
+    "noDefaultIncomeCategory": "No default income category configured. Go to Settings > Categories to set one."
   },
   "navigation": {
     "northstar": "Northstar",
@@ -203,7 +205,12 @@
     "incomeCategories": "Income Categories",
     "add": "Add",
     "noExpenseCategoriesYet": "No expense categories yet.",
-    "noIncomeCategoriesYet": "No income categories yet."
+    "noIncomeCategoriesYet": "No income categories yet.",
+    "importDefault": "Import default",
+    "setAsImportDefault": "Set as import default",
+    "removeImportDefault": "Remove import default",
+    "setAsImportDefaultSuccess": "Category set as import default",
+    "removedImportDefault": "Import default removed"
   },
   "accountTypes": {
     "checking": "Checking",
@@ -280,8 +287,11 @@
     "category": "Category",
     "importExpenses": "Import {count} Expense(s)",
     "successMessage": "Successfully imported {count} expense(s)",
+    "successMixed": "Imported {expenses} expense(s) and {income} income(s)",
+    "skippedDuplicates": "{count} duplicate(s) skipped",
     "errorMessage": "Failed to import expenses. Please try again.",
-    "errorParsing": "Failed to parse CSV file. Please check the file format and try again."
+    "errorParsing": "Failed to parse CSV file. Please check the file format and try again.",
+    "noDefaultCategories": "Configure default import categories in Settings > Categories first"
   },
   "copyBudgets": {
     "copying": "Copying...",

@@ -48,8 +48,33 @@ export function ImportPreview({ parseResult }: Props) {
                     <td className="px-4 py-2 text-gray-600 dark:text-gray-400 whitespace-nowrap">
                       {formatDate(row.date)}
                     </td>
-                    <td className="px-4 py-2">{row.description}</td>
-                    <td className="px-4 py-2 text-right font-medium">{centsToDisplay(row.amountCents)}</td>
+                    <td className="px-4 py-2">
+                      <div className="flex items-center gap-2">
+                        <span>{row.description}</span>
+                        {row.type && (
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${
+                              row.type === 'income'
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                                : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+                            }`}
+                          >
+                            {row.type === 'income' ? 'Income' : 'Expense'}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td
+                      className={`px-4 py-2 text-right font-medium ${
+                        row.type === 'income'
+                          ? 'text-green-600 dark:text-green-400'
+                          : row.type === 'expense'
+                            ? 'text-red-600 dark:text-red-400'
+                            : ''
+                      }`}
+                    >
+                      {centsToDisplay(row.amountCents)}
+                    </td>
                   </tr>
                 ))}
                 {rows.length > 100 && (

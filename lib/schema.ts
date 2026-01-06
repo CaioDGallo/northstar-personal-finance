@@ -1,4 +1,4 @@
-import { date, integer, pgEnum, pgTable, serial, text, timestamp, unique } from 'drizzle-orm/pg-core';
+import { boolean, date, integer, pgEnum, pgTable, serial, text, timestamp, unique } from 'drizzle-orm/pg-core';
 
 // Enum for account types
 export const accountTypeEnum = pgEnum('account_type', ['credit_card', 'checking', 'savings', 'cash']);
@@ -27,6 +27,7 @@ export const categories = pgTable('categories', {
   color: text('color').notNull().default('#6b7280'),
   icon: text('icon'),
   type: categoryTypeEnum('type').notNull().default('expense'),
+  isImportDefault: boolean('is_import_default').default(false),
   createdAt: timestamp('created_at').defaultNow(),
 });
 
@@ -73,6 +74,7 @@ export const transactions = pgTable('transactions', {
   categoryId: integer('category_id')
     .notNull()
     .references(() => categories.id, { onDelete: 'restrict' }),
+  externalId: text('external_id'), // UUID from bank statement for idempotency
   createdAt: timestamp('created_at').defaultNow(),
 });
 
@@ -130,6 +132,7 @@ export const income = pgTable('income', {
     .references(() => accounts.id),
   receivedDate: date('received_date').notNull(),
   receivedAt: timestamp('received_at'), // null = pending, timestamp = received
+  externalId: text('external_id'), // UUID from bank statement for idempotency
   createdAt: timestamp('created_at').defaultNow(),
 });
 

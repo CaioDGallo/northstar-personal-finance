@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { parserList, parsers, type ParserKey } from '@/lib/import/parsers';
 import type { ParseResult } from '@/lib/import/types';
 import type { Account, Category } from '@/lib/schema';
-import { importExpenses } from '@/lib/actions/import';
+import { importExpenses, importMixed } from '@/lib/actions/import';
 import { FileDropzone } from './file-dropzone';
 import { ImportPreview } from './import-preview';
 
@@ -55,21 +55,57 @@ export function ImportModal({ accounts, categories, trigger }: Props) {
     setIsImporting(true);
 
     try {
-      const result = await importExpenses({
-        rows: parseResult.rows,
-        accountId: parseInt(accountId),
-        categoryId: parseInt(categoryId),
-      });
+      // Check if this is a mixed import parser (has both income and expense rows)
+      const hasMixedTypes =
+        parseResult.rows.some((r) => r.type === 'income') &&
+        parseResult.rows.some((r) => r.type === 'expense');
 
-      if (result.success) {
-        toast.success(t('successMessage', { count: result.imported }));
-        setOpen(false);
-        resetState();
+      if (hasMixedTypes || selectedTemplate === 'nubank-extrato') {
+        // Use importMixed for nubank-extrato or any parser with mixed types
+        const result = await importMixed({
+          rows: parseResult.rows,
+          accountId: parseInt(accountId),
+        });
+
+        if (result.success) {
+          if (result.skippedDuplicates > 0) {
+            toast.success(
+              `${t('successMixed', {
+                expenses: result.importedExpenses,
+                income: result.importedIncome,
+              })}. ${t('skippedDuplicates', { count: result.skippedDuplicates })}`
+            );
+          } else {
+            toast.success(
+              t('successMixed', {
+                expenses: result.importedExpenses,
+                income: result.importedIncome,
+              })
+            );
+          }
+          setOpen(false);
+          resetState();
+        } else {
+          toast.error(result.error);
+        }
       } else {
-        toast.error(result.error);
+        // Use importExpenses for single-type imports
+        const result = await importExpenses({
+          rows: parseResult.rows,
+          accountId: parseInt(accountId),
+          categoryId: parseInt(categoryId),
+        });
+
+        if (result.success) {
+          toast.success(t('successMessage', { count: result.imported }));
+          setOpen(false);
+          resetState();
+        } else {
+          toast.error(result.error);
+        }
       }
     } catch (error) {
-      console.error('Failed to import expenses:', error);
+      console.error('Failed to import:', error);
       toast.error(t('errorMessage'));
     } finally {
       setIsImporting(false);
@@ -166,30 +202,41 @@ export function ImportModal({ accounts, categories, trigger }: Props) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {accounts.map((account) => (
-                        <SelectItem key={account.id} value={account.id.toString()}>
-                          {account.name}
-                        </SelectItem>
-                      ))}
+                      {accounts
+                        .filter((account) =>
+                          selectedTemplate === 'nubank-extrato' ? account.type === 'checking' : true
+                        )
+                        .map((account) => (
+                          <SelectItem key={account.id} value={account.id.toString()}>
+                            {account.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </Field>
 
-                <Field>
-                  <FieldLabel htmlFor="category">{t('category')}</FieldLabel>
-                  <Select value={categoryId} onValueChange={setCategoryId}>
-                    <SelectTrigger id="category">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id.toString()}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
+                {/* Only show category selector for non-mixed imports */}
+                {selectedTemplate !== 'nubank-extrato' &&
+                  !(
+                    parseResult.rows.some((r) => r.type === 'income') &&
+                    parseResult.rows.some((r) => r.type === 'expense')
+                  ) && (
+                    <Field>
+                      <FieldLabel htmlFor="category">{t('category')}</FieldLabel>
+                      <Select value={categoryId} onValueChange={setCategoryId}>
+                        <SelectTrigger id="category">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.id.toString()}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                  )}
               </FieldGroup>
 
               <div className="flex gap-2">

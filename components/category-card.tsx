@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { deleteCategory } from '@/lib/actions/categories';
+import { deleteCategory, setImportDefault } from '@/lib/actions/categories';
 import type { Category } from '@/lib/schema';
 import { CategoryForm } from '@/components/category-form';
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,7 @@ import { CategoryIcon } from '@/components/icon-picker';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { MoreVerticalIcon } from '@hugeicons/core-free-icons';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 
 type CategoryCardProps = {
   category: Category;
@@ -37,6 +38,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdatingDefault, setIsUpdatingDefault] = useState(false);
   const t = useTranslations('categories');
   const tCommon = useTranslations('common');
 
@@ -61,6 +63,30 @@ export function CategoryCard({ category }: CategoryCardProps) {
     }
   }
 
+  async function handleToggleImportDefault() {
+    setIsUpdatingDefault(true);
+
+    try {
+      const result = await setImportDefault(category.id, !category.isImportDefault);
+
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success(
+        category.isImportDefault
+          ? t('removedImportDefault')
+          : t('setAsImportDefaultSuccess')
+      );
+    } catch (err) {
+      console.error('[CategoryCard] Toggle import default failed:', err);
+      toast.error(tCommon('unexpectedError'));
+    } finally {
+      setIsUpdatingDefault(false);
+    }
+  }
+
   return (
     <Card className="py-0">
       <CardContent className="flex items-center gap-3 md:gap-4 px-3 md:px-4 py-3">
@@ -74,7 +100,14 @@ export function CategoryCard({ category }: CategoryCardProps) {
 
         {/* Category name */}
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-sm truncate">{category.name}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-medium text-sm truncate">{category.name}</h3>
+            {category.isImportDefault && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 whitespace-nowrap">
+                {t('importDefault')}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Actions dropdown */}
@@ -85,6 +118,13 @@ export function CategoryCard({ category }: CategoryCardProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onSelect={handleToggleImportDefault}
+              disabled={isUpdatingDefault}
+            >
+              {category.isImportDefault ? t('removeImportDefault') : t('setAsImportDefault')}
+            </DropdownMenuItem>
+
             <AlertDialog open={editOpen} onOpenChange={setEditOpen}>
               <AlertDialogTrigger asChild>
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>

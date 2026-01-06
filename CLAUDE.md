@@ -1,5 +1,7 @@
 # Agent Instructions
 
+Use 'bd' for task tracking
+
 ## Quick Reference
 
 ```bash

@@ -96,3 +96,80 @@ export async function deleteCategory(id: number): Promise<ActionResult> {
     return { success: false, error: await t('errors.failedToDelete') };
   }
 }
+
+export async function setImportDefault(categoryId: number, isDefault: boolean): Promise<ActionResult> {
+  try {
+    const userId = await getCurrentUserId();
+
+    // Get the category to check its type
+    const [category] = await db
+      .select()
+      .from(categories)
+      .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)))
+      .limit(1);
+
+    if (!category) {
+      return { success: false, error: await t('errors.categoryNotFound') };
+    }
+
+    // If setting to true, unset any existing default of the same type
+    if (isDefault) {
+      await db
+        .update(categories)
+        .set({ isImportDefault: false })
+        .where(and(
+          eq(categories.userId, userId),
+          eq(categories.type, category.type),
+          eq(categories.isImportDefault, true)
+        ));
+    }
+
+    // Update the target category
+    await db
+      .update(categories)
+      .set({ isImportDefault: isDefault })
+      .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)));
+
+    revalidatePath('/settings/categories');
+    revalidateTag('categories', 'max');
+    revalidateTag('expense-categories', 'max');
+    revalidateTag('income-categories', 'max');
+
+    return { success: true };
+  } catch (error) {
+    console.error('[categories:setImportDefault] Failed:', error);
+    return { success: false, error: await t('errors.failedToUpdateCategory') };
+  }
+}
+
+export async function getDefaultImportCategories(): Promise<{
+  expense: typeof categories.$inferSelect | null;
+  income: typeof categories.$inferSelect | null;
+}> {
+  const userId = await getCurrentUserId();
+
+  const [expenseCategory] = await db
+    .select()
+    .from(categories)
+    .where(and(
+      eq(categories.userId, userId),
+      eq(categories.type, 'expense'),
+      eq(categories.isImportDefault, true)
+    ))
+    .limit(1);
+
+  const [incomeCategory] = await db
+    .select()
+    .from(categories)
+    .where(and(
+      eq(categories.userId, userId),
+      eq(categories.type, 'income'),
+      eq(categories.isImportDefault, true)
+    ))
+    .limit(1);
+
+  return {
+    expense: expenseCategory || null,
+    income: incomeCategory || null,
+  };
+}

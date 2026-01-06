@@ -64,7 +64,9 @@
     "passwordTooShort": "Senha deve ter no mínimo 8 caracteres",
     "passwordRequirementsNotMet": "Senha deve conter letras e números",
     "tooManyAttempts": "Muitas tentativas. Tente novamente em {{retryAfter}}s.",
-    "unexpectedError": "Ocorreu um erro inesperado"
+    "unexpectedError": "Ocorreu um erro inesperado",
+    "noDefaultExpenseCategory": "Nenhuma categoria padrão de despesa configurada. Vá em Configurações > Categorias para definir uma.",
+    "noDefaultIncomeCategory": "Nenhuma categoria padrão de receita configurada. Vá em Configurações > Categorias para definir uma."
   },
   "navigation": {
     "northstar": "Northstar",
@@ -203,7 +205,12 @@
     "incomeCategories": "Categorias de Receita",
     "add": "Adicionar",
     "noExpenseCategoriesYet": "Nenhuma categoria de despesa ainda.",
-    "noIncomeCategoriesYet": "Nenhuma categoria de receita ainda."
+    "noIncomeCategoriesYet": "Nenhuma categoria de receita ainda.",
+    "importDefault": "Padrão para importação",
+    "setAsImportDefault": "Definir como padrão para importação",
+    "removeImportDefault": "Remover padrão de importação",
+    "setAsImportDefaultSuccess": "Categoria definida como padrão para importação",
+    "removedImportDefault": "Padrão de importação removido"
   },
   "accountTypes": {
     "checking": "Conta Corrente",
@@ -280,8 +287,11 @@
     "category": "Categoria",
     "importExpenses": "Importar {count} Despesa(s)",
     "successMessage": "Importado com sucesso {count} despesa(s)",
+    "successMixed": "Importado {expenses} despesa(s) e {income} receita(s)",
+    "skippedDuplicates": "{count} duplicata(s) ignorada(s)",
     "errorMessage": "Falha ao importar despesas. Tente novamente.",
-    "errorParsing": "Falha ao processar arquivo CSV. Verifique o formato e tente novamente."
+    "errorParsing": "Falha ao processar arquivo CSV. Verifique o formato e tente novamente.",
+    "noDefaultCategories": "Configure as categorias padrão para importação em Configurações > Categorias primeiro"
   },
   "copyBudgets": {
     "copying": "Copiando...",
