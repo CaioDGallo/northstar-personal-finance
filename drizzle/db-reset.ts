@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { db } from '../lib/db';
 import { accounts, categories, budgets, transactions, entries, income, faturas } from '../lib/schema';
-import { migrate } from 'drizzle-orm/postgres-js/migrator';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
@@ -37,15 +37,22 @@ async function reset() {
 
     // Step 3: Run seed
     console.log('  🌱 Seeding database...');
-    const { stdout, stderr } = await execAsync(
-      `DATABASE_URL=${dbUrl} npx tsx drizzle/seed.ts`
-    );
+    try {
+      const { stdout, stderr } = await execAsync(
+        `DATABASE_URL=${dbUrl} npx tsx drizzle/seed.ts`,
+        { encoding: 'utf8' }
+      );
 
-    if (stderr && !stderr.includes('ExperimentalWarning')) {
-      console.error('Seed stderr:', stderr);
+      if (stderr) {
+        console.error('Seed stderr:', stderr);
+      }
+
+      console.log(stdout);
+    } catch (seedError) {
+      console.error('❌ Seed failed:', seedError);
+      throw seedError;
     }
 
-    console.log(stdout);
     console.log('✅ Reset complete!\n');
   } catch (error) {
     console.error('❌ Reset failed:', error);

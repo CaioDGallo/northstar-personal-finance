@@ -4,8 +4,8 @@
   "private": true,
   "packageManager": "pnpm@10.17.0",
   "scripts": {
-    "dev": "next dev --webpack",
-    "build": "rm -rf .next && next build --webpack",
+    "dev": "next dev",
+    "build": "next build",
     "build:clean": "rm -rf .next && next build --webpack",
     "start": "next start",
     "lint": "eslint",

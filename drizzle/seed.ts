@@ -12,8 +12,8 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Test user ID for development seeding
-// In a real scenario, you'd get this from auth.users or create a test user
-const TEST_USER_ID = 'test-user-seed-id';
+// Hardcoded from auth.users table (caiogallo88@gmail.com)
+const TEST_USER_ID = 'f58dd388-190e-4d12-9d8f-126add711507';
 
 // Date helpers
 const CURRENT_MONTH = getCurrentYearMonth();

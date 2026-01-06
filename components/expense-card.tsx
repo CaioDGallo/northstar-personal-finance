@@ -191,7 +191,7 @@ export function ExpenseCard(props: ExpenseCardProps) {
 
           {/* Description + installment badge + mobile date */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <h3 className="font-medium text-sm truncate">{entry.description}</h3>
               {entry.totalInstallments > 1 && (
                 <Badge variant="secondary" className="shrink-0">

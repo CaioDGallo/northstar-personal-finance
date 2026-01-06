@@ -15,7 +15,7 @@ export default async function AppLayout({
           <SidebarTrigger className="hidden md:flex" />
           <span className="font-semibold md:hidden">Northstar</span>
         </header>
-        <main className="flex-1 p-4 md:p-6 lg:p-8 pb-24 md:pb-8">{children}</main>
+        <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8 pb-24 md:pb-8">{children}</main>
       </SidebarInset>
 
       {/* Mobile Bottom Tab Bar */}

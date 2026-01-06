@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import 'dotenv/config';
 import withSerwistInit from "@serwist/next";
 import createNextIntlPlugin from 'next-intl/plugin';
 
