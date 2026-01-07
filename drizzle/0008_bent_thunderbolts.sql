@@ -1,0 +1,3 @@
+ALTER TABLE "events" ADD CONSTRAINT "start_before_end" CHECK ("events"."start_at" < "events"."end_at");--> statement-breakpoint
+ALTER TABLE "tasks" ADD CONSTRAINT "start_before_due" CHECK ("tasks"."start_at" IS NULL OR "tasks"."start_at" <= "tasks"."due_at");--> statement-breakpoint
+ALTER TABLE "tasks" ADD CONSTRAINT "duration_positive" CHECK ("tasks"."duration_minutes" IS NULL OR "tasks"."duration_minutes" > 0);

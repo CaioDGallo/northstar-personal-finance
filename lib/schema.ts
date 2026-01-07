@@ -1,4 +1,5 @@
-import { boolean, date, integer, pgEnum, pgTable, serial, text, timestamp, unique } from 'drizzle-orm/pg-core';
+import { boolean, date, integer, pgEnum, pgTable, serial, text, timestamp, unique, check } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 // Enum for account types
 export const accountTypeEnum = pgEnum('account_type', ['credit_card', 'checking', 'savings', 'cash']);
@@ -158,7 +159,9 @@ export const events = pgTable('events', {
   status: eventStatusEnum('status').notNull().default('scheduled'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
-});
+}, (table) => ({
+  startBeforeEnd: check('start_before_end', sql`${table.startAt} < ${table.endAt}`),
+}));
 
 // Tasks table
 export const tasks = pgTable('tasks', {
@@ -175,7 +178,10 @@ export const tasks = pgTable('tasks', {
   completedAt: timestamp('completed_at'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
-});
+}, (table) => ({
+  startBeforeDue: check('start_before_due', sql`${table.startAt} IS NULL OR ${table.startAt} <= ${table.dueAt}`),
+  durationPositive: check('duration_positive', sql`${table.durationMinutes} IS NULL OR ${table.durationMinutes} > 0`),
+}));
 
 // Recurrence rules table
 export const recurrenceRules = pgTable('recurrence_rules', {
