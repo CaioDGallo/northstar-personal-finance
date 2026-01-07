@@ -13,7 +13,8 @@ import 'temporal-polyfill/global';
 import '@schedule-x/theme-default/dist/index.css';
 import { deleteEvent, getEvents } from '@/lib/actions/events';
 import { deleteTask, getTasks } from '@/lib/actions/tasks';
-import { type Event, type Task } from '@/lib/schema';
+import { getUserSettings } from '@/lib/actions/user-settings';
+import { type Event, type Task, type UserSettings } from '@/lib/schema';
 import {
   Select,
   SelectContent,
@@ -46,10 +47,32 @@ function toOptionalDate(value?: Date | string | null): Date | null {
   return toDate(value);
 }
 
+function getBrowserTimeZone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  } catch {
+    return 'UTC';
+  }
+}
+
+function resolveTimeZone(settings?: UserSettings | null): string {
+  const browserTimeZone = getBrowserTimeZone();
+  if (!settings?.timezone) return browserTimeZone;
+  if (settings.timezone === 'UTC' && browserTimeZone !== 'UTC') {
+    return browserTimeZone;
+  }
+  return settings.timezone;
+}
+
+function toZonedDateTime(date: Date, timeZone: string) {
+  return Temporal.Instant.from(date.toISOString()).toZonedDateTimeISO(timeZone);
+}
+
 export default function CalendarPage() {
   const eventsService = useState(() => createEventsServicePlugin())[0];
   const [events, setEvents] = useState<Event[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [timeZone, setTimeZone] = useState(() => getBrowserTimeZone());
   const [filterType, setFilterType] = useState<'all' | 'event' | 'task'>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
@@ -75,7 +98,12 @@ export default function CalendarPage() {
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
-    const [eventsData, tasksData] = await Promise.all([getEvents(), getTasks()]);
+    const [eventsData, tasksData, settings] = await Promise.all([
+      getEvents(),
+      getTasks(),
+      getUserSettings(),
+    ]);
+    setTimeZone(resolveTimeZone(settings));
     const normalizedEvents = eventsData.map((event) => ({
       ...event,
       startAt: toDate(event.startAt),
@@ -216,12 +244,8 @@ export default function CalendarPage() {
         return {
           id: `event-${event.id}`,
           title: event.title,
-          start: Temporal.ZonedDateTime.from(
-            startAt.toISOString().replace('Z', '+00:00[UTC]')
-          ),
-          end: Temporal.ZonedDateTime.from(
-            endAt.toISOString().replace('Z', '+00:00[UTC]')
-          ),
+          start: toZonedDateTime(startAt, timeZone),
+          end: toZonedDateTime(endAt, timeZone),
           calendarId: 'events',
           description: event.description || undefined,
           location: event.location || undefined,
@@ -244,19 +268,15 @@ export default function CalendarPage() {
         return {
           id: `task-${task.id}`,
           title: task.title,
-          start: Temporal.ZonedDateTime.from(
-            startDate.toISOString().replace('Z', '+00:00[UTC]')
-          ),
-          end: Temporal.ZonedDateTime.from(
-            endDate.toISOString().replace('Z', '+00:00[UTC]')
-          ),
+          start: toZonedDateTime(startDate, timeZone),
+          end: toZonedDateTime(endDate, timeZone),
           calendarId: 'tasks',
           description: task.description || undefined,
           location: task.location || undefined,
         };
       }),
     ];
-  }, [filteredEvents, filteredTasks]);
+  }, [filteredEvents, filteredTasks, timeZone]);
 
   const calendar = useNextCalendarApp({
     views: [createViewDay(), createViewWeek(), createViewMonthGrid(), createViewMonthAgenda()],

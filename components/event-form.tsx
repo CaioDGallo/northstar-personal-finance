@@ -16,18 +16,25 @@ type EventFormProps = {
   onSuccess?: () => void;
 };
 
+function formatDateInput(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function EventForm({ event, onSuccess }: EventFormProps) {
   const [title, setTitle] = useState(event?.title || '');
   const [description, setDescription] = useState(event?.description || '');
   const [location, setLocation] = useState(event?.location || '');
   const [startDate, setStartDate] = useState(
-    event?.startAt ? event.startAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+    event?.startAt ? formatDateInput(event.startAt) : formatDateInput(new Date())
   );
   const [startTime, setStartTime] = useState(
     event?.startAt ? event.startAt.toTimeString().slice(0, 5) : '09:00'
   );
   const [endDate, setEndDate] = useState(
-    event?.endAt ? event.endAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+    event?.endAt ? formatDateInput(event.endAt) : formatDateInput(new Date())
   );
   const [endTime, setEndTime] = useState(
     event?.endAt ? event.endAt.toTimeString().slice(0, 5) : '10:00'

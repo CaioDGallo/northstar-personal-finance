@@ -16,12 +16,19 @@ type TaskFormProps = {
   onSuccess?: () => void;
 };
 
+function formatDateInput(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function TaskForm({ task, onSuccess }: TaskFormProps) {
   const [title, setTitle] = useState(task?.title || '');
   const [description, setDescription] = useState(task?.description || '');
   const [location, setLocation] = useState(task?.location || '');
   const [dueDate, setDueDate] = useState(
-    task?.dueAt ? task.dueAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+    task?.dueAt ? formatDateInput(task.dueAt) : formatDateInput(new Date())
   );
   const [dueTime, setDueTime] = useState(
     task?.dueAt ? task.dueAt.toTimeString().slice(0, 5) : '09:00'
