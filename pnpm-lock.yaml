@@ -35,6 +35,9 @@ importers:
       '@schedule-x/theme-default':
         specifier: ^3.6.0
         version: 3.6.0
+      '@schedule-x/theme-shadcn':
+        specifier: ^3.6.0
+        version: 3.6.0
       '@serwist/next':
         specifier: ^9.4.2
         version: 9.4.2(next@16.1.1(@babel/core@7.28.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
@@ -2233,6 +2236,9 @@ packages:
 
   '@schedule-x/theme-default@3.6.0':
     resolution: {integrity: sha512-lkJtL1ODiMOjELBvVPeQ/GzRkpAyzuW6iW9o+S/bLLCbiD+LbguACZ6oPan/p04VTxhsxMGfwSlGDq7HCL/F9w==}
+
+  '@schedule-x/theme-shadcn@3.6.0':
+    resolution: {integrity: sha512-pexKXF97YOlXd1/cfAKxILN8MBj5vV1V3qE0IS3GTKXLbUH383n3F8nOzuBJxhhvJD2RYbuWPmKLrmT8rpnuxQ==}
 
   '@schummar/icu-type-parser@1.21.5':
     resolution: {integrity: sha512-bXHSaW5jRTmke9Vd0h5P7BtWZG9Znqb8gSDxZnxaGSJnGwPLDPfS+3g0BKzeWqzgZPsIVZkM7m2tbo18cm5HBw==}
@@ -7384,6 +7390,8 @@ snapshots:
       react-dom: 19.2.3(react@19.2.3)
 
   '@schedule-x/theme-default@3.6.0': {}
+
+  '@schedule-x/theme-shadcn@3.6.0': {}
 
   '@schummar/icu-type-parser@1.21.5': {}
 

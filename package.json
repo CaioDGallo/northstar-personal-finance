@@ -31,6 +31,7 @@
     "@schedule-x/events-service": "^3.6.0",
     "@schedule-x/react": "^3.5.0",
     "@schedule-x/theme-default": "^3.6.0",
+    "@schedule-x/theme-shadcn": "^3.6.0",
     "@serwist/next": "^9.4.2",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.89.0",

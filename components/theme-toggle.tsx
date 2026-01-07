@@ -6,7 +6,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { Sun03Icon, SunCloudLittleRain01Icon } from '@hugeicons/core-free-icons';
 import { useTranslations } from 'next-intl';
 
-type Theme = 'light' | 'dark' | 'system';
+export type Theme = 'light' | 'dark' | 'system';
 
 export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>(() => {

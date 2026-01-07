@@ -10,7 +10,7 @@ import {
 } from '@schedule-x/calendar';
 import { createEventsServicePlugin } from '@schedule-x/events-service';
 import 'temporal-polyfill/global';
-import '@schedule-x/theme-default/dist/index.css';
+import '@schedule-x/theme-shadcn/dist/index.css';
 import { deleteEvent, getEvents } from '@/lib/actions/events';
 import { deleteTask, getTasks } from '@/lib/actions/tasks';
 import { getUserSettings } from '@/lib/actions/user-settings';
@@ -37,6 +37,7 @@ import {
 import { EventForm } from '@/components/event-form';
 import { TaskForm } from '@/components/task-form';
 import { useTranslations } from 'next-intl';
+import { Theme } from '@/components/theme-toggle';
 
 function toDate(value: Date | string): Date {
   return value instanceof Date ? value : new Date(value);
@@ -95,6 +96,11 @@ export default function CalendarPage() {
   const tasksRef = useRef<Task[]>([]);
   const t = useTranslations('calendar');
   const tCommon = useTranslations('common');
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'system';
+    return (localStorage.getItem('theme') as Theme | null) || 'system';
+  });
+  const prefersDark = typeof window === 'undefined' ? 'false' : window.matchMedia('(prefers-color-scheme: dark)').matches;
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -279,35 +285,38 @@ export default function CalendarPage() {
   }, [filteredEvents, filteredTasks, timeZone]);
 
   const calendar = useNextCalendarApp({
+    theme: 'shadcn',
     views: [createViewDay(), createViewWeek(), createViewMonthGrid(), createViewMonthAgenda()],
     events: scheduleEvents,
     plugins: [eventsService],
     timezone: timeZone,
+    isDark: theme === 'dark' || theme === 'system' && prefersDark,
+    isResponsive: true,
     calendars: {
       events: {
         colorName: 'events',
         lightColors: {
-          main: '#3b82f6',
-          container: '#dbeafe',
-          onContainer: '#1e3a8a',
+          main: 'oklch(0.60 0.20 250)',
+          container: 'oklch(0.95 0.05 250)',
+          onContainer: 'oklch(0.40 0.20 250)',
         },
         darkColors: {
-          main: '#60a5fa',
-          container: '#1e40af',
-          onContainer: '#dbeafe',
+          main: 'oklch(0.70 0.20 250)',
+          container: 'oklch(0.30 0.15 250)',
+          onContainer: 'oklch(0.95 0.05 250)',
         },
       },
       tasks: {
         colorName: 'tasks',
         lightColors: {
-          main: '#10b981',
-          container: '#d1fae5',
-          onContainer: '#064e3b',
+          main: 'oklch(0.65 0.15 145)',
+          container: 'oklch(0.95 0.10 145)',
+          onContainer: 'oklch(0.40 0.15 145)',
         },
         darkColors: {
-          main: '#34d399',
-          container: '#065f46',
-          onContainer: '#d1fae5',
+          main: 'oklch(0.75 0.15 145)',
+          container: 'oklch(0.30 0.10 145)',
+          onContainer: 'oklch(0.95 0.10 145)',
         },
       },
     },
