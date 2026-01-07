@@ -11,7 +11,6 @@ import {
   Alert01Icon,
   CircleIcon,
   Loading03Icon,
-  NoteIcon,
 } from "@hugeicons/core-free-icons"
 
 import {
@@ -70,13 +69,13 @@ function getPriorityInfo(priority: string) {
 
 // Helper: Get status badge config
 function getStatusConfig(status: string, type: string) {
-  const eventStatuses: Record<string, { variant: "default" | "secondary" | "outline" | "ghost", icon: any }> = {
+  const eventStatuses: Record<string, { variant: "default" | "secondary" | "outline" | "ghost", icon: typeof Clock01Icon }> = {
     scheduled: { variant: "outline", icon: Clock01Icon },
     completed: { variant: "default", icon: Tick02Icon },
     cancelled: { variant: "ghost", icon: CircleIcon },
   }
 
-  const taskStatuses: Record<string, { variant: "default" | "secondary" | "outline" | "ghost", icon: any }> = {
+  const taskStatuses: Record<string, { variant: "default" | "secondary" | "outline" | "ghost", icon: typeof Clock01Icon }> = {
     pending: { variant: "outline", icon: Clock01Icon },
     in_progress: { variant: "secondary", icon: Loading03Icon },
     completed: { variant: "default", icon: Tick02Icon },

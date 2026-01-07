@@ -173,13 +173,13 @@ export default function CalendarPage() {
     void loadData();
   }, [loadData]);
 
-  function parseCalendarId(id: string | number) {
-    if (typeof id === 'number') return id;
-    const parsed = Number(id.replace(/^event-/, '').replace(/^task-/, ''));
-    return Number.isNaN(parsed) ? null : parsed;
-  }
+  const handleCalendarEventClick = useCallback((calendarEvent: { id: string | number; calendarId?: string }) => {
+    function parseCalendarId(id: string | number) {
+      if (typeof id === 'number') return id;
+      const parsed = Number(id.replace(/^event-/, '').replace(/^task-/, ''));
+      return Number.isNaN(parsed) ? null : parsed;
+    }
 
-  function handleCalendarEventClick(calendarEvent: { id: string | number; calendarId?: string }) {
     const parsedId = parseCalendarId(calendarEvent.id);
     if (parsedId === null) return;
     const inferredCalendarId = (() => {
@@ -229,7 +229,7 @@ export default function CalendarPage() {
       });
       setDetailSheetOpen(true);
     }
-  }
+  }, []);
 
   function handleEditEventOpenChange(open: boolean) {
     setEditEventDialogOpen(open);
@@ -318,7 +318,7 @@ export default function CalendarPage() {
   // Handlers for custom event item context menu
   const handleEventItemEdit = useCallback((id: number, type: 'event' | 'task') => {
     handleCalendarEventClick({ id: `${type}-${id}`, calendarId: type === 'event' ? 'events' : 'tasks' });
-  }, []);
+  }, [handleCalendarEventClick]);
 
   const handleEventItemDelete = useCallback((id: number, type: 'event' | 'task') => {
     const item = type === 'event'

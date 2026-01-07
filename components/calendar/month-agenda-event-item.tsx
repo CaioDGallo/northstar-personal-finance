@@ -59,13 +59,13 @@ function getPriorityColor(priority: string): string {
 
 // Helper: Get status badge config
 function getStatusConfig(status: string, itemType: string) {
-  const eventStatuses: Record<string, { variant: "default" | "secondary" | "outline" | "ghost" | "destructive", icon: any }> = {
+  const eventStatuses: Record<string, { variant: "default" | "secondary" | "outline" | "ghost" | "destructive", icon: typeof Clock01Icon }> = {
     scheduled: { variant: "outline", icon: Clock01Icon },
     completed: { variant: "default", icon: Tick02Icon },
     cancelled: { variant: "ghost", icon: CircleIcon },
   }
 
-  const taskStatuses: Record<string, { variant: "default" | "secondary" | "outline" | "ghost" | "destructive", icon: any }> = {
+  const taskStatuses: Record<string, { variant: "default" | "secondary" | "outline" | "ghost" | "destructive", icon: typeof Clock01Icon }> = {
     pending: { variant: "outline", icon: Clock01Icon },
     in_progress: { variant: "secondary", icon: Loading03Icon },
     completed: { variant: "default", icon: Tick02Icon },
@@ -77,7 +77,7 @@ function getStatusConfig(status: string, itemType: string) {
 }
 
 // Helper: Format time from Temporal.ZonedDateTime
-function formatTime(zdt: any): string {
+function formatTime(zdt: unknown): string {
   if (!zdt || !zdt.toLocaleString) return ''
 
   try {
