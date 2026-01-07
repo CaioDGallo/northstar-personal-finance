@@ -34,6 +34,7 @@ export async function processPendingNotificationJobs(): Promise<ProcessNotificat
     try {
       let isValid = false;
       let itemData: EventItem | TaskItem | null = null;
+      let userId: string | null = null;
 
       if (job.itemType === 'event') {
         const result = await db
@@ -42,6 +43,7 @@ export async function processPendingNotificationJobs(): Promise<ProcessNotificat
           .where(eq(events.id, job.itemId))
           .limit(1);
         itemData = result[0] || null;
+        userId = itemData?.userId || null;
         isValid = itemData !== null && itemData.status === 'scheduled';
       } else if (job.itemType === 'task') {
         const result = await db
@@ -50,13 +52,21 @@ export async function processPendingNotificationJobs(): Promise<ProcessNotificat
           .where(eq(tasks.id, job.itemId))
           .limit(1);
         itemData = result[0] || null;
+        userId = itemData?.userId || null;
         isValid = itemData !== null && (itemData.status === 'pending' || itemData.status === 'in_progress');
       }
-      
-      if (!isValid) {
+
+      if (!isValid || !userId) {
+        console.warn('[notification-jobs:process] Cancelling invalid job:', {
+          jobId: job.id,
+          itemType: job.itemType,
+          itemId: job.itemId,
+          userId,
+          reason: !itemData ? 'Item not found' : 'Item status invalid'
+        });
         await db
           .update(notificationJobs)
-          .set({ 
+          .set({
             status: 'cancelled',
             lastError: 'Item no longer valid',
             updatedAt: new Date()
@@ -64,13 +74,22 @@ export async function processPendingNotificationJobs(): Promise<ProcessNotificat
           .where(eq(notificationJobs.id, job.id));
         continue;
       }
-      
+
+      // Log processing with user context for audit trail
+      console.log('[notification-jobs:process] Processing job:', {
+        jobId: job.id,
+        itemType: job.itemType,
+        itemId: job.itemId,
+        userId,
+        scheduledAt: job.scheduledAt
+      });
+
       const sendResult = await sendNotification(job, itemData);
-      
+
       if (sendResult.success) {
         await db
           .update(notificationJobs)
-          .set({ 
+          .set({
             status: 'sent',
             sentAt: new Date(),
             updatedAt: new Date()
@@ -78,12 +97,17 @@ export async function processPendingNotificationJobs(): Promise<ProcessNotificat
           .where(eq(notificationJobs.id, job.id));
         processed++;
       } else {
+        console.warn('[notification-jobs:process] Failed to send notification:', {
+          jobId: job.id,
+          userId,
+          error: sendResult.error
+        });
         failed++;
-        
+
         if (job.attempts >= 3) {
           await db
             .update(notificationJobs)
-            .set({ 
+            .set({
               status: 'failed',
               lastError: sendResult.error,
               updatedAt: new Date()
@@ -92,7 +116,7 @@ export async function processPendingNotificationJobs(): Promise<ProcessNotificat
         } else {
           await db
             .update(notificationJobs)
-            .set({ 
+            .set({
               attempts: job.attempts + 1,
               lastError: sendResult.error,
               updatedAt: new Date()
@@ -101,12 +125,16 @@ export async function processPendingNotificationJobs(): Promise<ProcessNotificat
         }
       }
     } catch (error) {
-      console.error('[notification-jobs:process] Failed:', error);
+      console.error('[notification-jobs:process] Failed:', error, {
+        jobId: job.id,
+        itemType: job.itemType,
+        itemId: job.itemId
+      });
       failed++;
-      
+
       await db
         .update(notificationJobs)
-        .set({ 
+        .set({
           attempts: job.attempts + 1,
           lastError: error instanceof Error ? error.message : 'Unknown error',
           updatedAt: new Date()
