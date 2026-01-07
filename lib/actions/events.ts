@@ -1,6 +1,4 @@
 'use server';
-
-import { cache } from 'react';
 import { db } from '@/lib/db';
 import { events, recurrenceRules, notifications, notificationJobs, type NewEvent } from '@/lib/schema';
 import { eq, and, asc } from 'drizzle-orm';
@@ -12,7 +10,7 @@ import { scheduleNotificationJobs } from './notifications';
 
 type ActionResult = { success: true } | { success: false; error: string };
 
-export const getEvents = cache(async () => {
+export async function getEvents() {
   try {
     const userId = await getCurrentUserId();
     return await db.select().from(events).where(eq(events.userId, userId)).orderBy(asc(events.startAt));
@@ -20,7 +18,7 @@ export const getEvents = cache(async () => {
     console.error('[events:get] Failed:', error);
     return [];
   }
-});
+}
 
 export async function getEventById(id: number) {
   try {

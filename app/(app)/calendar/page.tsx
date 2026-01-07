@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ScheduleXCalendar, useNextCalendarApp } from '@schedule-x/react';
 import {
   createViewDay,
@@ -173,47 +173,58 @@ export default function CalendarPage() {
     return true;
   });
 
-  const scheduleEvents = [
-    ...filteredEvents.map((event) => ({
-      id: `event-${event.id}`,
-      title: event.title,
-      start: Temporal.ZonedDateTime.from(
-        event.startAt.toISOString().replace('Z', '+00:00[UTC]')
-      ),
-      end: Temporal.ZonedDateTime.from(
-        event.endAt.toISOString().replace('Z', '+00:00[UTC]')
-      ),
-      calendarId: 'events',
-      description: event.description || undefined,
-      location: event.location || undefined,
-    })),
-    ...filteredTasks.map((task) => {
-      let startDate: Date;
-      let endDate: Date;
+  const scheduleEvents = useMemo(() => {
+    const toDate = (value: Date | string) => (value instanceof Date ? value : new Date(value));
 
-      if (task.startAt && task.durationMinutes) {
-        startDate = task.startAt;
-        endDate = new Date(task.startAt.getTime() + task.durationMinutes * 60 * 1000);
-      } else {
-        startDate = task.dueAt;
-        endDate = task.dueAt;
-      }
+    return [
+      ...filteredEvents.map((event) => {
+        const startAt = toDate(event.startAt);
+        const endAt = toDate(event.endAt);
 
-      return {
-        id: `task-${task.id}`,
-        title: task.title,
-        start: Temporal.ZonedDateTime.from(
-          startDate.toISOString().replace('Z', '+00:00[UTC]')
-        ),
-        end: Temporal.ZonedDateTime.from(
-          endDate.toISOString().replace('Z', '+00:00[UTC]')
-        ),
-        calendarId: 'tasks',
-        description: task.description || undefined,
-        location: task.location || undefined,
-      };
-    }),
-  ];
+        return {
+          id: `event-${event.id}`,
+          title: event.title,
+          start: Temporal.ZonedDateTime.from(
+            startAt.toISOString().replace('Z', '+00:00[UTC]')
+          ),
+          end: Temporal.ZonedDateTime.from(
+            endAt.toISOString().replace('Z', '+00:00[UTC]')
+          ),
+          calendarId: 'events',
+          description: event.description || undefined,
+          location: event.location || undefined,
+        };
+      }),
+      ...filteredTasks.map((task) => {
+        let startDate: Date;
+        let endDate: Date;
+
+        if (task.startAt && task.durationMinutes) {
+          const taskStart = toDate(task.startAt);
+          startDate = taskStart;
+          endDate = new Date(taskStart.getTime() + task.durationMinutes * 60 * 1000);
+        } else {
+          const taskDue = toDate(task.dueAt);
+          startDate = taskDue;
+          endDate = taskDue;
+        }
+
+        return {
+          id: `task-${task.id}`,
+          title: task.title,
+          start: Temporal.ZonedDateTime.from(
+            startDate.toISOString().replace('Z', '+00:00[UTC]')
+          ),
+          end: Temporal.ZonedDateTime.from(
+            endDate.toISOString().replace('Z', '+00:00[UTC]')
+          ),
+          calendarId: 'tasks',
+          description: task.description || undefined,
+          location: task.location || undefined,
+        };
+      }),
+    ];
+  }, [filteredEvents, filteredTasks]);
 
   const calendar = useNextCalendarApp({
     views: [createViewDay(), createViewWeek(), createViewMonthGrid(), createViewMonthAgenda()],
@@ -251,6 +262,11 @@ export default function CalendarPage() {
       onEventClick: (event) => handleCalendarEventClick(event),
     },
   });
+
+  useEffect(() => {
+    if (!calendar) return;
+    eventsService.set(scheduleEvents);
+  }, [calendar, eventsService, scheduleEvents]);
 
   return (
     <div className="p-4">
@@ -458,4 +474,3 @@ export default function CalendarPage() {
     </div>
   );
 }
-
