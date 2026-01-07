@@ -120,3 +120,22 @@ Core tables for personal finance tracking:
 
 - `getCurrentYearMonth()` returns "YYYY-MM" format
 - `parseYearMonth()` / `addMonths()` for month arithmetic
+
+**Error handling & logging**:
+
+- Use `logError()` from `/lib/logger.ts` for production errors (Sentry-ready)
+- Use `logForDebugging()` for development/troubleshooting logs
+- Use `logEvent()` for analytics/telemetry tracking
+- Error IDs defined in `/constants/errorIds.ts` for consistent error tracking
+- Example:
+  ```typescript
+  import { logError, logForDebugging } from '@/lib/logger';
+  import { ErrorIds } from '@/constants/errorIds';
+
+  try {
+    // operation
+  } catch (error) {
+    logError(ErrorIds.EVENT_CREATE_FAILED, 'Failed to create event', error, { eventId: 123 });
+    return { success: false, error: await t('errors.failedToCreate') };
+  }
+  ```
