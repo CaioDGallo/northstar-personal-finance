@@ -7,6 +7,7 @@ import {
   createViewMonthAgenda,
   createViewMonthGrid,
   createViewWeek,
+  CalendarEvent
 } from '@schedule-x/calendar';
 import { createEventsServicePlugin } from '@schedule-x/events-service';
 import 'temporal-polyfill/global';
@@ -15,13 +16,6 @@ import { deleteEvent, getEvents } from '@/lib/actions/events';
 import { deleteTask, getTasks } from '@/lib/actions/tasks';
 import { getUserSettings } from '@/lib/actions/user-settings';
 import { type Event, type Task, type UserSettings } from '@/lib/schema';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -38,6 +32,19 @@ import { EventForm } from '@/components/event-form';
 import { TaskForm } from '@/components/task-form';
 import { useTranslations } from 'next-intl';
 import { Theme } from '@/components/theme-toggle';
+import { createEventModalPlugin } from '@schedule-x/event-modal';
+import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  Calendar03Icon,
+  Tick02Icon,
+  Clock01Icon,
+  Loading03Icon,
+  Flag01Icon,
+  Alert01Icon,
+  CircleIcon,
+} from '@hugeicons/core-free-icons';
+
+const eventModal = createEventModalPlugin()
 
 function toDate(value: Date | string): Date {
   return value instanceof Date ? value : new Date(value);
@@ -69,14 +76,35 @@ function toZonedDateTime(date: Date, timeZone: string) {
   return Temporal.Instant.from(date.toISOString()).toZonedDateTimeISO(timeZone);
 }
 
+const CustomNorthstarEventItem = ({ calendarEvent }: { calendarEvent: CalendarEvent }) => {
+  return <div>{calendarEvent.title}</div>
+}
+
 export default function CalendarPage() {
   const eventsService = useState(() => createEventsServicePlugin())[0];
   const [events, setEvents] = useState<Event[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [timeZone, setTimeZone] = useState(() => getBrowserTimeZone());
-  const [filterType, setFilterType] = useState<'all' | 'event' | 'task'>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterPriority, setFilterPriority] = useState<string>('all');
+  const [filterType, setFilterType] = useState<'event' | 'task'>('event');
+  const [statusFilters, setStatusFilters] = useState({
+    pending: true,
+    inProgress: true,
+    completed: true,
+  });
+  const [priorityFilters, setPriorityFilters] = useState({
+    low: true,
+    medium: true,
+    high: true,
+    critical: true,
+  });
+
+  const toggleStatus = (key: 'pending' | 'inProgress' | 'completed') => {
+    setStatusFilters(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const togglePriority = (key: 'low' | 'medium' | 'high' | 'critical') => {
+    setPriorityFilters(prev => ({ ...prev, [key]: !prev[key] }));
+  };
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [editEventDialogOpen, setEditEventDialogOpen] = useState(false);
@@ -227,19 +255,42 @@ export default function CalendarPage() {
     }
   }
 
-  const filteredEvents = events.filter((event) => {
-    if (filterType === 'task') return false;
-    if (filterStatus !== 'all' && event.status !== filterStatus) return false;
-    if (filterPriority !== 'all' && event.priority !== filterPriority) return false;
-    return true;
-  });
+  const filteredEvents = useMemo(() => {
+    return events.filter((event) => {
+      // Type filter
+      if (filterType === 'task') return false;
 
-  const filteredTasks = tasks.filter((task) => {
-    if (filterType === 'event') return false;
-    if (filterStatus !== 'all' && task.status !== filterStatus) return false;
-    if (filterPriority !== 'all' && task.priority !== filterPriority) return false;
-    return true;
-  });
+      // Status filter - map event statuses to our 3 categories
+      const statusMatch =
+        (event.status === 'scheduled' && statusFilters.pending) ||
+        (event.status === 'completed' && statusFilters.completed);
+      if (!statusMatch) return false;
+
+      // Priority filter
+      if (!priorityFilters[event.priority]) return false;
+
+      return true;
+    });
+  }, [events, filterType, statusFilters, priorityFilters]);
+
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      // Type filter
+      if (filterType === 'event') return false;
+
+      // Status filter
+      const statusMatch =
+        (task.status === 'pending' && statusFilters.pending) ||
+        (task.status === 'in_progress' && statusFilters.inProgress) ||
+        (task.status === 'completed' && statusFilters.completed);
+      if (!statusMatch) return false;
+
+      // Priority filter
+      if (!priorityFilters[task.priority]) return false;
+
+      return true;
+    });
+  }, [tasks, filterType, statusFilters, priorityFilters]);
 
   const scheduleEvents = useMemo(() => {
     return [
@@ -288,7 +339,7 @@ export default function CalendarPage() {
     theme: 'shadcn',
     views: [createViewDay(), createViewWeek(), createViewMonthGrid(), createViewMonthAgenda()],
     events: scheduleEvents,
-    plugins: [eventsService],
+    plugins: [eventsService, eventModal],
     timezone: timeZone,
     isDark: theme === 'dark' || (theme === 'system' && prefersDark),
     isResponsive: true,
@@ -321,7 +372,7 @@ export default function CalendarPage() {
       },
     },
     callbacks: {
-      onEventClick: (event) => handleCalendarEventClick(event),
+      // onEventClick: (event) => handleCalendarEventClick(event),
     },
   });
 
@@ -435,45 +486,126 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      <div className="mb-4 space-y-4">
-        <div className="flex flex-wrap gap-3">
-          <Select value={filterType} onValueChange={(value: 'all' | 'event' | 'task') => setFilterType(value)}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder={t('allTypes')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('allTypes')}</SelectItem>
-              <SelectItem value="event">{t('events')}</SelectItem>
-              <SelectItem value="task">{t('tasks')}</SelectItem>
-            </SelectContent>
-          </Select>
+      <div className="mb-4 space-y-3">
+        {/* Type Filter */}
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-muted-foreground hidden md:inline min-w-[60px]">
+            {t('type')}:
+          </span>
+          <div className="flex gap-1 border border-border rounded-md p-1 bg-background">
+            <Button
+              variant={filterType === 'event' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setFilterType('event')}
+              className="gap-1.5"
+            >
+              <HugeiconsIcon icon={Calendar03Icon} />
+              <span className="hidden xs:inline">{t('events')}</span>
+            </Button>
+            <Button
+              variant={filterType === 'task' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setFilterType('task')}
+              className="gap-1.5"
+            >
+              <HugeiconsIcon icon={Tick02Icon} />
+              <span className="hidden xs:inline">{t('tasks')}</span>
+            </Button>
+          </div>
+        </div>
 
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder={t('allStatus')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('allStatus')}</SelectItem>
-              <SelectItem value="scheduled">{t('status.scheduled')}</SelectItem>
-              <SelectItem value="pending">{t('status.pending')}</SelectItem>
-              <SelectItem value="in_progress">{t('status.inProgress')}</SelectItem>
-              <SelectItem value="completed">{t('status.completed')}</SelectItem>
-              <SelectItem value="cancelled">{t('status.cancelled')}</SelectItem>
-            </SelectContent>
-          </Select>
+        {/* Status Filter */}
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-muted-foreground hidden md:inline min-w-[60px]">
+            {t('status')}:
+          </span>
+          <div className="flex gap-2">
+            <Button
+              variant={statusFilters.pending ? 'default' : 'outline'}
+              size="icon-sm"
+              onClick={() => toggleStatus('pending')}
+              aria-label={t('status.pending')}
+              aria-pressed={statusFilters.pending}
+              title={t('status.pending')}
+            >
+              <HugeiconsIcon icon={Clock01Icon} strokeWidth={2} />
+            </Button>
+            <Button
+              variant={statusFilters.inProgress ? 'default' : 'outline'}
+              size="icon-sm"
+              onClick={() => toggleStatus('inProgress')}
+              disabled={filterType === 'event'}
+              aria-label={t('status.inProgress')}
+              aria-pressed={statusFilters.inProgress}
+              title={t('status.inProgress')}
+              className={filterType === 'event' ? 'opacity-30' : ''}
+            >
+              <HugeiconsIcon icon={Loading03Icon} strokeWidth={2} />
+            </Button>
+            <Button
+              variant={statusFilters.completed ? 'default' : 'outline'}
+              size="icon-sm"
+              onClick={() => toggleStatus('completed')}
+              aria-label={t('status.completed')}
+              aria-pressed={statusFilters.completed}
+              title={t('status.completed')}
+            >
+              <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} />
+            </Button>
+          </div>
+        </div>
 
-          <Select value={filterPriority} onValueChange={setFilterPriority}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder={t('allPriorities')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('allPriorities')}</SelectItem>
-              <SelectItem value="low">{t('priority.low')}</SelectItem>
-              <SelectItem value="medium">{t('priority.medium')}</SelectItem>
-              <SelectItem value="high">{t('priority.high')}</SelectItem>
-              <SelectItem value="critical">{t('priority.critical')}</SelectItem>
-            </SelectContent>
-          </Select>
+        {/* Priority Filter */}
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-muted-foreground hidden md:inline min-w-[60px]">
+            {t('priority')}:
+          </span>
+          <div className="flex gap-2">
+            <Button
+              variant={priorityFilters.low ? 'default' : 'outline'}
+              size="icon-sm"
+              onClick={() => togglePriority('low')}
+              aria-label={t('priority.low')}
+              aria-pressed={priorityFilters.low}
+              title={t('priority.low')}
+              className={!priorityFilters.low ? 'text-muted-foreground' : ''}
+            >
+              <HugeiconsIcon icon={CircleIcon} strokeWidth={2} />
+            </Button>
+            <Button
+              variant={priorityFilters.medium ? 'default' : 'outline'}
+              size="icon-sm"
+              onClick={() => togglePriority('medium')}
+              aria-label={t('priority.medium')}
+              aria-pressed={priorityFilters.medium}
+              title={t('priority.medium')}
+              className={!priorityFilters.medium ? 'text-blue-600' : ''}
+            >
+              <HugeiconsIcon icon={Flag01Icon} strokeWidth={2} />
+            </Button>
+            <Button
+              variant={priorityFilters.high ? 'default' : 'outline'}
+              size="icon-sm"
+              onClick={() => togglePriority('high')}
+              aria-label={t('priority.high')}
+              aria-pressed={priorityFilters.high}
+              title={t('priority.high')}
+              className={!priorityFilters.high ? 'text-orange-600' : ''}
+            >
+              <HugeiconsIcon icon={Flag01Icon} strokeWidth={2} />
+            </Button>
+            <Button
+              variant={priorityFilters.critical ? 'default' : 'outline'}
+              size="icon-sm"
+              onClick={() => togglePriority('critical')}
+              aria-label={t('priority.critical')}
+              aria-pressed={priorityFilters.critical}
+              title={t('priority.critical')}
+              className={!priorityFilters.critical ? 'text-red-600' : ''}
+            >
+              <HugeiconsIcon icon={Alert01Icon} strokeWidth={2} />
+            </Button>
+          </div>
         </div>
 
         {/* <div className="flex flex-wrap gap-2 text-sm"> */}
@@ -496,7 +628,9 @@ export default function CalendarPage() {
         </div>
       ) : (
         <div className="bg-background border border-border -mx-4">
-          <ScheduleXCalendar calendarApp={calendar} />
+          <ScheduleXCalendar calendarApp={calendar} customComponents={{
+            monthAgendaEvent: CustomNorthstarEventItem
+          }} />
         </div>
       )}
 
