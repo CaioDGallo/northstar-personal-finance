@@ -427,6 +427,10 @@
     "legend": "Legenda",
     "addEvent": "Adicionar Evento",
     "addTask": "Adicionar Tarefa",
+    "editEvent": "Editar Evento",
+    "editTask": "Editar Tarefa",
+    "deleteEventTitle": "Excluir evento?",
+    "deleteTaskTitle": "Excluir tarefa?",
     "loading": "Carregando...",
     "status": {
       "scheduled": "Agendado",

@@ -11,8 +11,8 @@ import {
 import { createEventsServicePlugin } from '@schedule-x/events-service';
 import 'temporal-polyfill/global';
 import '@schedule-x/theme-default/dist/index.css';
-import { getEvents } from '@/lib/actions/events';
-import { getTasks } from '@/lib/actions/tasks';
+import { deleteEvent, getEvents } from '@/lib/actions/events';
+import { deleteTask, getTasks } from '@/lib/actions/tasks';
 import { type Event, type Task } from '@/lib/schema';
 import {
   Select,
@@ -24,7 +24,11 @@ import {
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
@@ -42,8 +46,21 @@ export default function CalendarPage() {
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [editEventDialogOpen, setEditEventDialogOpen] = useState(false);
+  const [editTaskDialogOpen, setEditTaskDialogOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: 'event' | 'task';
+    id: number;
+    title: string;
+  } | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const t = useTranslations('calendar');
+  const tCommon = useTranslations('common');
 
   async function loadData() {
     setIsLoading(true);
@@ -58,6 +75,89 @@ export default function CalendarPage() {
       await loadData();
     })();
   }, []);
+
+  function parseCalendarId(id: string | number) {
+    if (typeof id === 'number') return id;
+    const parsed = Number(id.replace(/^event-/, '').replace(/^task-/, ''));
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  function handleCalendarEventClick(calendarEvent: { id: string | number; calendarId?: string }) {
+    const parsedId = parseCalendarId(calendarEvent.id);
+    if (parsedId === null) return;
+
+    if (calendarEvent.calendarId === 'events') {
+      const event = events.find((item) => item.id === parsedId);
+      if (!event) return;
+      setSelectedEvent(event);
+      setEditEventDialogOpen(true);
+      return;
+    }
+
+    if (calendarEvent.calendarId === 'tasks') {
+      const task = tasks.find((item) => item.id === parsedId);
+      if (!task) return;
+      setSelectedTask(task);
+      setEditTaskDialogOpen(true);
+    }
+  }
+
+  function handleEditEventOpenChange(open: boolean) {
+    setEditEventDialogOpen(open);
+    if (!open) {
+      setSelectedEvent(null);
+    }
+  }
+
+  function handleEditTaskOpenChange(open: boolean) {
+    setEditTaskDialogOpen(open);
+    if (!open) {
+      setSelectedTask(null);
+    }
+  }
+
+  function handleDeleteDialogOpenChange(open: boolean) {
+    setDeleteDialogOpen(open);
+    if (!open) {
+      setDeleteTarget(null);
+      setDeleteError(null);
+      setIsDeleting(false);
+    }
+  }
+
+  function requestDelete(target: { type: 'event' | 'task'; id: number; title: string }) {
+    setDeleteError(null);
+    setDeleteTarget(target);
+    setDeleteDialogOpen(true);
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+
+    try {
+      const result = deleteTarget.type === 'event'
+        ? await deleteEvent(deleteTarget.id)
+        : await deleteTask(deleteTarget.id);
+
+      if (!result.success) {
+        setDeleteError(result.error);
+        return;
+      }
+
+      setDeleteDialogOpen(false);
+      setDeleteTarget(null);
+      setSelectedEvent(null);
+      setSelectedTask(null);
+      await loadData();
+    } catch (error) {
+      console.error('[Calendar] Delete failed:', error);
+      setDeleteError(tCommon('unexpectedError'));
+    } finally {
+      setIsDeleting(false);
+    }
+  }
 
   const filteredEvents = events.filter((event) => {
     if (filterType === 'task') return false;
@@ -147,6 +247,9 @@ export default function CalendarPage() {
         },
       },
     },
+    callbacks: {
+      onEventClick: (event) => handleCalendarEventClick(event),
+    },
   });
 
   return (
@@ -175,6 +278,80 @@ export default function CalendarPage() {
                 <AlertDialogTitle>{t('addTask')}</AlertDialogTitle>
               </AlertDialogHeader>
               <TaskForm onSuccess={() => { setTaskDialogOpen(false); loadData(); }} />
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <AlertDialog open={editEventDialogOpen} onOpenChange={handleEditEventOpenChange}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t('editEvent')}</AlertDialogTitle>
+              </AlertDialogHeader>
+              {selectedEvent && (
+                <>
+                  <EventForm
+                    key={`event-${selectedEvent.id}`}
+                    event={selectedEvent}
+                    onSuccess={() => {
+                      setEditEventDialogOpen(false);
+                      setSelectedEvent(null);
+                      loadData();
+                    }}
+                  />
+                  <div className="flex justify-end border-t border-border pt-3">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => {
+                        setEditEventDialogOpen(false);
+                        requestDelete({
+                          type: 'event',
+                          id: selectedEvent.id,
+                          title: selectedEvent.title,
+                        });
+                      }}
+                    >
+                      {tCommon('delete')}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <AlertDialog open={editTaskDialogOpen} onOpenChange={handleEditTaskOpenChange}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t('editTask')}</AlertDialogTitle>
+              </AlertDialogHeader>
+              {selectedTask && (
+                <>
+                  <TaskForm
+                    key={`task-${selectedTask.id}`}
+                    task={selectedTask}
+                    onSuccess={() => {
+                      setEditTaskDialogOpen(false);
+                      setSelectedTask(null);
+                      loadData();
+                    }}
+                  />
+                  <div className="flex justify-end border-t border-border pt-3">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => {
+                        setEditTaskDialogOpen(false);
+                        requestDelete({
+                          type: 'task',
+                          id: selectedTask.id,
+                          title: selectedTask.title,
+                        });
+                      }}
+                    >
+                      {tCommon('delete')}
+                    </Button>
+                  </div>
+                </>
+              )}
             </AlertDialogContent>
           </AlertDialog>
         </div>
@@ -244,10 +421,41 @@ export default function CalendarPage() {
           <ScheduleXCalendar calendarApp={calendar} />
         </div>
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={handleDeleteDialogOpenChange}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {deleteTarget?.type === 'task' ? t('deleteTaskTitle') : t('deleteEventTitle')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget?.title}
+              <span className="block mt-2">{tCommon('actionCannotBeUndone')}</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {deleteError && (
+            <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+              {deleteError}
+            </div>
+          )}
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>{tCommon('cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault();
+                handleDeleteConfirm();
+              }}
+              disabled={isDeleting}
+              variant="destructive"
+            >
+              {isDeleting ? tCommon('deleting') : tCommon('delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
-
-
-
 
