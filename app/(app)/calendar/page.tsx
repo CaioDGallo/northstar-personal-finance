@@ -44,6 +44,7 @@ import {
   Alert01Icon,
   CircleIcon,
 } from '@hugeicons/core-free-icons';
+import { cn } from '@/lib/utils';
 
 function toDate(value: Date | string): Date {
   return value instanceof Date ? value : new Date(value);
@@ -594,18 +595,18 @@ export default function CalendarPage() {
           <div className="flex gap-1 rounded-md bg-background">
             <Button
               variant={filterType === 'event' ? 'hollow' : 'popout'}
-              size="sm"
+              size="icon-sm"
               onClick={() => setFilterType('event')}
-              className="gap-1.5"
+              className="p-4"
             >
               <HugeiconsIcon icon={Calendar03Icon} />
               <span className="hidden xs:inline">{t('events')}</span>
             </Button>
             <Button
               variant={filterType === 'task' ? 'hollow' : 'popout'}
-              size="sm"
+              size="icon-sm"
               onClick={() => setFilterType('task')}
-              className="gap-1.5"
+              className="p-4"
             >
               <HugeiconsIcon icon={Tick02Icon} />
               <span className="hidden xs:inline">{t('tasks')}</span>
@@ -626,6 +627,7 @@ export default function CalendarPage() {
               aria-label={t('status.pending')}
               aria-pressed={statusFilters.pending}
               title={t('status.pending')}
+              className='p-4'
             >
               <HugeiconsIcon icon={Clock01Icon} strokeWidth={2} />
             </Button>
@@ -637,7 +639,7 @@ export default function CalendarPage() {
               aria-label={t('status.inProgress')}
               aria-pressed={statusFilters.inProgress}
               title={t('status.inProgress')}
-              className={filterType === 'event' ? 'opacity-30' : ''}
+              className={cn(filterType === 'event' ? 'opacity-30' : '', 'p-4')}
             >
               <HugeiconsIcon icon={Loading03Icon} strokeWidth={2} />
             </Button>
@@ -648,6 +650,7 @@ export default function CalendarPage() {
               aria-label={t('status.completed')}
               aria-pressed={statusFilters.completed}
               title={t('status.completed')}
+              className='p-4'
             >
               <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} />
             </Button>
@@ -667,7 +670,7 @@ export default function CalendarPage() {
               aria-label={t('priority.low')}
               aria-pressed={priorityFilters.low}
               title={t('priority.low')}
-              className={!priorityFilters.low ? 'text-muted-foreground' : ''}
+              className={'text-muted-foreground p-4'}
             >
               <HugeiconsIcon icon={CircleIcon} strokeWidth={2} />
             </Button>
@@ -678,7 +681,7 @@ export default function CalendarPage() {
               aria-label={t('priority.medium')}
               aria-pressed={priorityFilters.medium}
               title={t('priority.medium')}
-              className={!priorityFilters.medium ? 'text-blue-600' : ''}
+              className={'text-blue-600 p-4'}
             >
               <HugeiconsIcon icon={Flag01Icon} strokeWidth={2} />
             </Button>
@@ -689,7 +692,7 @@ export default function CalendarPage() {
               aria-label={t('priority.high')}
               aria-pressed={priorityFilters.high}
               title={t('priority.high')}
-              className={!priorityFilters.high ? 'text-orange-600' : ''}
+              className={'text-orange-600 p-4'}
             >
               <HugeiconsIcon icon={Flag01Icon} strokeWidth={2} />
             </Button>
@@ -700,7 +703,7 @@ export default function CalendarPage() {
               aria-label={t('priority.critical')}
               aria-pressed={priorityFilters.critical}
               title={t('priority.critical')}
-              className={!priorityFilters.critical ? 'text-red-600' : ''}
+              className={'text-red-600 p-4'}
             >
               <HugeiconsIcon icon={Alert01Icon} strokeWidth={2} />
             </Button>
