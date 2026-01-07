@@ -1,18 +1,18 @@
 'use client';
 
+import { cn } from '@/lib/utils';
+import {
+  CalendarIcon,
+  Home01Icon,
+  Invoice03Icon,
+  MoreHorizontalIcon,
+  Wallet01Icon
+} from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { HugeiconsIcon } from '@hugeicons/react';
-import {
-  Home01Icon,
-  Invoice03Icon,
-  Wallet01Icon,
-  CreditCardIcon,
-  MoreHorizontalIcon,
-} from '@hugeicons/core-free-icons';
-import { cn } from '@/lib/utils';
 import { MoreSheet } from './more-sheet';
 
 type TabItem = {
@@ -25,7 +25,7 @@ const tabs: TabItem[] = [
   { key: 'dashboard', href: '/dashboard', icon: Home01Icon },
   { key: 'budgets', href: '/budgets', icon: Invoice03Icon },
   { key: 'expenses', href: '/expenses', icon: Wallet01Icon },
-  { key: 'faturas', href: '/faturas', icon: CreditCardIcon },
+  { key: 'calendar', href: '/calendar', icon: CalendarIcon },
   { key: 'more', href: null, icon: MoreHorizontalIcon },
 ];
 
@@ -41,7 +41,7 @@ function TabButton({ title, href, icon, active, onClick }: TabButtonProps) {
   const content = (
     <div
       className={cn(
-        'flex flex-col items-center justify-center gap-0.5 p-2 min-w-[64px] relative',
+        'flex flex-col items-center justify-center gap-0.5 p-2 min-w-16 relative',
         'text-muted-foreground transition-colors',
         active && 'text-foreground'
       )}

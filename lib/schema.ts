@@ -6,6 +6,14 @@ export const accountTypeEnum = pgEnum('account_type', ['credit_card', 'checking'
 // Enum for category types
 export const categoryTypeEnum = pgEnum('category_type', ['expense', 'income']);
 
+// Enums for events and tasks
+export const priorityEnum = pgEnum('priority', ['low', 'medium', 'high', 'critical']);
+export const eventStatusEnum = pgEnum('event_status', ['scheduled', 'cancelled', 'completed']);
+export const taskStatusEnum = pgEnum('task_status', ['pending', 'in_progress', 'completed', 'cancelled']);
+export const itemTypeEnum = pgEnum('item_type', ['event', 'task']);
+export const notificationChannelEnum = pgEnum('notification_channel', ['email']);
+export const notificationStatusEnum = pgEnum('notification_status', ['pending', 'sent', 'failed', 'cancelled']);
+
 // Accounts table
 export const accounts = pgTable('accounts', {
   id: serial('id').primaryKey(),
@@ -136,6 +144,95 @@ export const income = pgTable('income', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
+// Events table
+export const events = pgTable('events', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  title: text('title').notNull(),
+  description: text('description'),
+  location: text('location'),
+  startAt: timestamp('start_at').notNull(),
+  endAt: timestamp('end_at').notNull(),
+  isAllDay: boolean('is_all_day').notNull().default(false),
+  priority: priorityEnum('priority').notNull().default('medium'),
+  status: eventStatusEnum('status').notNull().default('scheduled'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Tasks table
+export const tasks = pgTable('tasks', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  title: text('title').notNull(),
+  description: text('description'),
+  location: text('location'),
+  dueAt: timestamp('due_at').notNull(),
+  startAt: timestamp('start_at'),
+  durationMinutes: integer('duration_minutes'),
+  priority: priorityEnum('priority').notNull().default('medium'),
+  status: taskStatusEnum('status').notNull().default('pending'),
+  completedAt: timestamp('completed_at'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Recurrence rules table
+export const recurrenceRules = pgTable('recurrence_rules', {
+  id: serial('id').primaryKey(),
+  itemType: itemTypeEnum('item_type').notNull(),
+  itemId: integer('item_id').notNull(),
+  rrule: text('rrule').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// Notifications table
+export const notifications = pgTable('notifications', {
+  id: serial('id').primaryKey(),
+  itemType: itemTypeEnum('item_type').notNull(),
+  itemId: integer('item_id').notNull(),
+  channel: notificationChannelEnum('channel').notNull(),
+  offsetMinutes: integer('offset_minutes').notNull(),
+  enabled: boolean('enabled').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Notification jobs table
+export const notificationJobs = pgTable('notification_jobs', {
+  id: serial('id').primaryKey(),
+  itemType: itemTypeEnum('item_type').notNull(),
+  itemId: integer('item_id').notNull(),
+  notificationId: integer('notification_id').references(() => notifications.id, { onDelete: 'cascade' }),
+  channel: notificationChannelEnum('channel').notNull(),
+  scheduledAt: timestamp('scheduled_at').notNull(),
+  status: notificationStatusEnum('status').notNull().default('pending'),
+  attempts: integer('attempts').notNull().default(0),
+  lastError: text('last_error'),
+  sentAt: timestamp('sent_at'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// User settings table
+export const userSettings = pgTable(
+  'user_settings',
+  {
+    id: serial('id').primaryKey(),
+    userId: text('user_id').notNull(),
+    timezone: text('timezone').default('UTC'),
+    notificationEmail: text('notification_email'),
+    notificationsEnabled: boolean('notifications_enabled').default(true),
+    defaultEventOffsetMinutes: integer('default_event_offset_minutes').default(60),
+    defaultTaskOffsetMinutes: integer('default_task_offset_minutes').default(60),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+  },
+  (table) => ({
+    uniqueUser: unique().on(table.userId),
+  })
+);
+
 // Type exports for TypeScript
 export type Account = typeof accounts.$inferSelect;
 export type NewAccount = typeof accounts.$inferInsert;
@@ -160,6 +257,24 @@ export type NewIncome = typeof income.$inferInsert;
 
 export type Fatura = typeof faturas.$inferSelect;
 export type NewFatura = typeof faturas.$inferInsert;
+
+export type Event = typeof events.$inferSelect;
+export type NewEvent = typeof events.$inferInsert;
+
+export type Task = typeof tasks.$inferSelect;
+export type NewTask = typeof tasks.$inferInsert;
+
+export type RecurrenceRule = typeof recurrenceRules.$inferSelect;
+export type NewRecurrenceRule = typeof recurrenceRules.$inferInsert;
+
+export type Notification = typeof notifications.$inferSelect;
+export type NewNotification = typeof notifications.$inferInsert;
+
+export type NotificationJob = typeof notificationJobs.$inferSelect;
+export type NewNotificationJob = typeof notificationJobs.$inferInsert;
+
+export type UserSettings = typeof userSettings.$inferSelect;
+export type NewUserSettings = typeof userSettings.$inferInsert;
 
 // Relations
 import { relations } from 'drizzle-orm';
@@ -214,3 +329,25 @@ export const faturasRelations = relations(faturas, ({ one }) => ({
     references: [accounts.id],
   }),
 }));
+
+export const eventsRelations = relations(events, ({ many }) => ({
+  recurrenceRules: many(recurrenceRules),
+  notifications: many(notifications),
+  notificationJobs: many(notificationJobs),
+}));
+
+export const tasksRelations = relations(tasks, ({ many }) => ({
+  recurrenceRules: many(recurrenceRules),
+  notifications: many(notifications),
+  notificationJobs: many(notificationJobs),
+}));
+
+export const recurrenceRulesRelations = relations(recurrenceRules, ({ many }) => ({
+  notificationJobs: many(notificationJobs),
+}));
+
+export const notificationsRelations = relations(notifications, ({ many }) => ({
+  notificationJobs: many(notificationJobs),
+}));
+
+export const userSettingsRelations = relations(userSettings, () => ({}));
