@@ -11,6 +11,7 @@ import { getDefaultImportCategories } from '@/lib/actions/categories';
 import { getCurrentUserId } from '@/lib/auth';
 import { checkBulkRateLimit } from '@/lib/rate-limit';
 import { t } from '@/lib/i18n/server-errors';
+import { handleDbError } from '@/lib/db-errors';
 
 type SuggestionsInput = {
   expenseDescriptions: string[];
@@ -213,7 +214,7 @@ export async function importExpenses(data: ImportExpenseData): Promise<ImportRes
     return { success: true, imported: rows.length };
   } catch (error) {
     console.error('[import:expenses] Failed:', error);
-    return { success: false, error: await t('errors.failedToImport') };
+    return { success: false, error: await handleDbError(error, 'errors.failedToImport') };
   }
 }
 
@@ -399,6 +400,6 @@ export async function importMixed(data: ImportMixedData): Promise<ImportMixedRes
     };
   } catch (error) {
     console.error('[import:mixed] Failed:', error);
-    return { success: false, error: await t('errors.failedToImport') };
+    return { success: false, error: await handleDbError(error, 'errors.failedToImport') };
   }
 }

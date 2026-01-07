@@ -5,6 +5,7 @@ import { recurrenceRules, events, tasks, type NewRecurrenceRule } from '@/lib/sc
 import { eq, and } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 import { t } from '@/lib/i18n/server-errors';
+import { handleDbError } from '@/lib/db-errors';
 import { rrulestr } from 'rrule';
 import { getCurrentUserId } from '@/lib/auth';
 
@@ -32,7 +33,7 @@ export async function createRecurrenceRule(data: Omit<NewRecurrenceRule, 'id' | 
     return { success: true };
   } catch (error) {
     console.error('[recurrence:create] Failed:', error);
-    return { success: false, error: await t('errors.failedToCreate') };
+    return { success: false, error: await handleDbError(error, 'errors.failedToCreate') };
   }
 }
 
@@ -82,7 +83,7 @@ export async function updateRecurrenceRule(id: number, data: Partial<Omit<NewRec
     return { success: true };
   } catch (error) {
     console.error('[recurrence:update] Failed:', error);
-    return { success: false, error: await t('errors.failedToUpdate') };
+    return { success: false, error: await handleDbError(error, 'errors.failedToUpdate') };
   }
 }
 
@@ -125,7 +126,7 @@ export async function deleteRecurrenceRule(id: number): Promise<ActionResult> {
     return { success: true };
   } catch (error) {
     console.error('[recurrence:delete] Failed:', error);
-    return { success: false, error: await t('errors.failedToDelete') };
+    return { success: false, error: await handleDbError(error, 'errors.failedToDelete') };
   }
 }
 

@@ -6,6 +6,7 @@ import { eq, and } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 import { getCurrentUserId } from '@/lib/auth';
 import { t } from '@/lib/i18n/server-errors';
+import { handleDbError } from '@/lib/db-errors';
 
 type ActionResult = { success: true } | { success: false; error: string };
 
@@ -61,7 +62,7 @@ export async function createNotification(data: Omit<NewNotification, 'id' | 'cre
     return { success: true };
   } catch (error) {
     console.error('[notifications:create] Failed:', error);
-    return { success: false, error: await t('errors.failedToCreate') };
+    return { success: false, error: await handleDbError(error, 'errors.failedToCreate') };
   }
 }
 
@@ -78,7 +79,7 @@ export async function updateNotification(id: number, data: Partial<Omit<NewNotif
     return { success: true };
   } catch (error) {
     console.error('[notifications:update] Failed:', error);
-    return { success: false, error: await t('errors.failedToUpdate') };
+    return { success: false, error: await handleDbError(error, 'errors.failedToUpdate') };
   }
 }
 
@@ -95,7 +96,7 @@ export async function deleteNotification(id: number): Promise<ActionResult> {
     return { success: true };
   } catch (error) {
     console.error('[notifications:delete] Failed:', error);
-    return { success: false, error: await t('errors.failedToDelete') };
+    return { success: false, error: await handleDbError(error, 'errors.failedToDelete') };
   }
 }
 

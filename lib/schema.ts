@@ -181,6 +181,10 @@ export const tasks = pgTable('tasks', {
 }, (table) => ({
   startBeforeDue: check('start_before_due', sql`${table.startAt} IS NULL OR ${table.startAt} <= ${table.dueAt}`),
   durationPositive: check('duration_positive', sql`${table.durationMinutes} IS NULL OR ${table.durationMinutes} > 0`),
+  completedAtStatusInvariant: check('completed_at_status_invariant', sql`
+    (${table.status} = 'completed' AND ${table.completedAt} IS NOT NULL) OR
+    (${table.status} != 'completed' AND ${table.completedAt} IS NULL)
+  `),
 }));
 
 // Recurrence rules table

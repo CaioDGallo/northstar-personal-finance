@@ -7,6 +7,7 @@ import { eq, and } from 'drizzle-orm';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { getCurrentUserId } from '@/lib/auth';
 import { t } from '@/lib/i18n/server-errors';
+import { handleDbError } from '@/lib/db-errors';
 
 const ACCOUNT_TYPES = new Set(['credit_card', 'checking', 'savings', 'cash']);
 
@@ -44,48 +45,72 @@ export async function getAccountsByUser(userId: string) {
 }
 
 export async function createAccount(data: Omit<NewAccount, 'id' | 'userId' | 'createdAt'>) {
-  const name = await validateAccountName(data.name);
-  await validateAccountType(data.type);
-  await validateBillingDay(data.closingDay, 'errors.invalidClosingDay');
-  await validateBillingDay(data.paymentDueDay, 'errors.invalidPaymentDueDay');
+  try {
+    const name = await validateAccountName(data.name);
+    await validateAccountType(data.type);
+    await validateBillingDay(data.closingDay, 'errors.invalidClosingDay');
+    await validateBillingDay(data.paymentDueDay, 'errors.invalidPaymentDueDay');
 
-  const userId = await getCurrentUserId();
-  await db.insert(accounts).values({ ...data, name, userId });
-  revalidatePath('/settings/accounts');
-  revalidateTag('accounts', 'max');
+    const userId = await getCurrentUserId();
+    await db.insert(accounts).values({ ...data, name, userId });
+    revalidatePath('/settings/accounts');
+    revalidateTag('accounts', 'max');
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('errors.')) {
+      throw error;
+    }
+    console.error('[accounts:create] Failed:', error);
+    throw new Error(await handleDbError(error, 'errors.failedToCreate'));
+  }
 }
 
 export async function updateAccount(id: number, data: Partial<Omit<NewAccount, 'id' | 'userId' | 'createdAt'>>) {
-  if (!Number.isInteger(id) || id <= 0) {
-    throw new Error(await t('errors.invalidAccountId'));
-  }
-  const updates = { ...data };
+  try {
+    if (!Number.isInteger(id) || id <= 0) {
+      throw new Error(await t('errors.invalidAccountId'));
+    }
+    const updates = { ...data };
 
-  if (updates.name !== undefined) {
-    updates.name = await validateAccountName(updates.name);
-  }
-  if (updates.type !== undefined) {
-    await validateAccountType(updates.type);
-  }
-  if (updates.closingDay !== undefined) {
-    await validateBillingDay(updates.closingDay, 'errors.invalidClosingDay');
-  }
-  if (updates.paymentDueDay !== undefined) {
-    await validateBillingDay(updates.paymentDueDay, 'errors.invalidPaymentDueDay');
-  }
+    if (updates.name !== undefined) {
+      updates.name = await validateAccountName(updates.name);
+    }
+    if (updates.type !== undefined) {
+      await validateAccountType(updates.type);
+    }
+    if (updates.closingDay !== undefined) {
+      await validateBillingDay(updates.closingDay, 'errors.invalidClosingDay');
+    }
+    if (updates.paymentDueDay !== undefined) {
+      await validateBillingDay(updates.paymentDueDay, 'errors.invalidPaymentDueDay');
+    }
 
-  const userId = await getCurrentUserId();
-  await db.update(accounts).set(updates).where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
-  revalidatePath('/settings/accounts');
-  revalidateTag('accounts', 'max');
+    const userId = await getCurrentUserId();
+    await db.update(accounts).set(updates).where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
+    revalidatePath('/settings/accounts');
+    revalidateTag('accounts', 'max');
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('errors.')) {
+      throw error;
+    }
+    console.error('[accounts:update] Failed:', error);
+    throw new Error(await handleDbError(error, 'errors.failedToUpdate'));
+  }
 }
 
 export async function deleteAccount(id: number) {
-  if (!Number.isInteger(id) || id <= 0) {
-    throw new Error(await t('errors.invalidAccountId'));
+  try {
+    if (!Number.isInteger(id) || id <= 0) {
+      throw new Error(await t('errors.invalidAccountId'));
+    }
+    const userId = await getCurrentUserId();
+    await db.delete(accounts).where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
+    revalidatePath('/settings/accounts');
+    revalidateTag('accounts', 'max');
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('errors.')) {
+      throw error;
+    }
+    console.error('[accounts:delete] Failed:', error);
+    throw new Error(await handleDbError(error, 'errors.failedToDelete'));
   }
-  const userId = await getCurrentUserId();
-  await db.delete(accounts).where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
-  revalidatePath('/settings/accounts');
-  revalidateTag('accounts', 'max');
 }

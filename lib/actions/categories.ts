@@ -7,6 +7,7 @@ import { eq, and } from 'drizzle-orm';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { getCurrentUserId } from '@/lib/auth';
 import { t } from '@/lib/i18n/server-errors';
+import { handleDbError } from '@/lib/db-errors';
 
 type ActionResult = { success: true } | { success: false; error: string };
 
@@ -40,7 +41,7 @@ export async function createCategory(data: Omit<NewCategory, 'id' | 'userId' | '
     return { success: true };
   } catch (error) {
     console.error('[categories:create] Failed:', error);
-    return { success: false, error: await t('errors.failedToCreate') };
+    return { success: false, error: await handleDbError(error, 'errors.failedToCreate') };
   }
 }
 
@@ -55,7 +56,7 @@ export async function updateCategory(id: number, data: Partial<Omit<NewCategory,
     return { success: true };
   } catch (error) {
     console.error('[categories:update] Failed:', error);
-    return { success: false, error: await t('errors.failedToUpdateCategory') };
+    return { success: false, error: await handleDbError(error, 'errors.failedToUpdateCategory') };
   }
 }
 
@@ -93,7 +94,7 @@ export async function deleteCategory(id: number): Promise<ActionResult> {
     return { success: true };
   } catch (error) {
     console.error('[categories:delete] Failed:', error);
-    return { success: false, error: await t('errors.failedToDelete') };
+    return { success: false, error: await handleDbError(error, 'errors.failedToDelete') };
   }
 }
 
@@ -138,7 +139,7 @@ export async function setImportDefault(categoryId: number, isDefault: boolean): 
     return { success: true };
   } catch (error) {
     console.error('[categories:setImportDefault] Failed:', error);
-    return { success: false, error: await t('errors.failedToUpdateCategory') };
+    return { success: false, error: await handleDbError(error, 'errors.failedToUpdateCategory') };
   }
 }
 

@@ -7,6 +7,7 @@ import { eq, and, gte, lte, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { getCurrentUserId } from '@/lib/auth';
 import { t } from '@/lib/i18n/server-errors';
+import { handleDbError } from '@/lib/db-errors';
 
 export async function getBudgetsForMonth(yearMonth: string) {
   try {
@@ -35,7 +36,7 @@ export async function getBudgetsForMonth(yearMonth: string) {
     return result;
   } catch (error) {
     console.error('Failed to get budgets for month:', error);
-    throw new Error(await t('errors.failedToLoad'));
+    throw new Error(await handleDbError(error, 'errors.failedToLoad'));
   }
 }
 
@@ -80,7 +81,7 @@ export async function upsertBudget(
     revalidatePath('/budgets');
   } catch (error) {
     console.error('Failed to upsert budget:', error);
-    throw new Error(await t('errors.failedToSave'));
+    throw new Error(await handleDbError(error, 'errors.failedToSave'));
   }
 }
 
@@ -100,7 +101,7 @@ export async function getMonthlyBudget(yearMonth: string): Promise<number | null
     return result.length > 0 ? result[0].amount : null;
   } catch (error) {
     console.error('Failed to get monthly budget:', error);
-    throw new Error(await t('errors.failedToLoad'));
+    throw new Error(await handleDbError(error, 'errors.failedToLoad'));
   }
 }
 
@@ -133,7 +134,7 @@ export async function upsertMonthlyBudget(yearMonth: string, amount: number) {
     revalidatePath('/budgets');
   } catch (error) {
     console.error('Failed to upsert monthly budget:', error);
-    throw new Error(await t('errors.failedToSave'));
+    throw new Error(await handleDbError(error, 'errors.failedToSave'));
   }
 }
 
@@ -224,7 +225,7 @@ export const getBudgetsWithSpending = cache(async (yearMonth: string): Promise<B
     };
   } catch (error) {
     console.error('Failed to get budgets with spending:', error);
-    throw new Error(await t('errors.failedToLoad'));
+    throw new Error(await handleDbError(error, 'errors.failedToLoad'));
   }
 });
 
@@ -302,6 +303,6 @@ export async function copyBudgetsFromMonth(
     };
   } catch (error) {
     console.error('Failed to copy budgets:', error);
-    throw new Error(await t('errors.failedToCopy'));
+    throw new Error(await handleDbError(error, 'errors.failedToCopy'));
   }
 }

@@ -66,7 +66,15 @@
     "tooManyAttempts": "Too many attempts. Try again in {{retryAfter}}s.",
     "unexpectedError": "An unexpected error occurred",
     "noDefaultExpenseCategory": "No default expense category configured. Go to Settings > Categories to set one.",
-    "noDefaultIncomeCategory": "No default income category configured. Go to Settings > Categories to set one."
+    "noDefaultIncomeCategory": "No default income category configured. Go to Settings > Categories to set one.",
+    "invalidTimezone": "Invalid timezone identifier",
+    "invalidEmail": "Invalid email address format",
+    "invalidOffsetMinutes": "Notification offset must be between 0 and 10080 minutes (1 week)",
+    "duplicateEntry": "This entry already exists",
+    "relatedRecordNotFound": "Related record not found or access denied",
+    "requiredFieldMissing": "Required field is missing",
+    "invalidDataConstraint": "Data violates a constraint requirement",
+    "databaseConnectionFailed": "Database connection failed. Please try again later."
   },
   "navigation": {
     "northstar": "Northstar",

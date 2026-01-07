@@ -66,7 +66,15 @@
     "tooManyAttempts": "Muitas tentativas. Tente novamente em {{retryAfter}}s.",
     "unexpectedError": "Ocorreu um erro inesperado",
     "noDefaultExpenseCategory": "Nenhuma categoria padrão de despesa configurada. Vá em Configurações > Categorias para definir uma.",
-    "noDefaultIncomeCategory": "Nenhuma categoria padrão de receita configurada. Vá em Configurações > Categorias para definir uma."
+    "noDefaultIncomeCategory": "Nenhuma categoria padrão de receita configurada. Vá em Configurações > Categorias para definir uma.",
+    "invalidTimezone": "Identificador de fuso horário inválido",
+    "invalidEmail": "Formato de endereço de e-mail inválido",
+    "invalidOffsetMinutes": "O intervalo de notificação deve estar entre 0 e 10080 minutos (1 semana)",
+    "duplicateEntry": "Esta entrada já existe",
+    "relatedRecordNotFound": "Registro relacionado não encontrado ou acesso negado",
+    "requiredFieldMissing": "Campo obrigatório está faltando",
+    "invalidDataConstraint": "Os dados violam um requisito de restrição",
+    "databaseConnectionFailed": "Falha na conexão com o banco de dados. Tente novamente mais tarde."
   },
   "navigation": {
     "northstar": "Northstar",

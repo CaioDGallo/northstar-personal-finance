@@ -7,6 +7,7 @@ import { eq, and, asc } from 'drizzle-orm';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { getCurrentUserId } from '@/lib/auth';
 import { t } from '@/lib/i18n/server-errors';
+import { handleDbError } from '@/lib/db-errors';
 import { scheduleNotificationJobs } from './notifications';
 
 type ActionResult = { success: true } | { success: false; error: string };
@@ -46,7 +47,7 @@ export async function createTask(data: Omit<NewTask, 'id' | 'userId' | 'createdA
     return { success: true };
   } catch (error) {
     console.error('[tasks:create] Failed:', error);
-    return { success: false, error: await t('errors.failedToCreate') };
+    return { success: false, error: await handleDbError(error, 'errors.failedToCreate') };
   }
 }
 
@@ -74,7 +75,7 @@ export async function updateTask(id: number, data: Partial<Omit<NewTask, 'id' | 
     return { success: true };
   } catch (error) {
     console.error('[tasks:update] Failed:', error);
-    return { success: false, error: await t('errors.failedToUpdate') };
+    return { success: false, error: await handleDbError(error, 'errors.failedToUpdate') };
   }
 }
 
@@ -104,7 +105,7 @@ export async function deleteTask(id: number): Promise<ActionResult> {
     return { success: true };
   } catch (error) {
     console.error('[tasks:delete] Failed:', error);
-    return { success: false, error: await t('errors.failedToDelete') };
+    return { success: false, error: await handleDbError(error, 'errors.failedToDelete') };
   }
 }
 
@@ -117,7 +118,7 @@ export async function completeTask(id: number): Promise<ActionResult> {
     return { success: true };
   } catch (error) {
     console.error('[tasks:complete] Failed:', error);
-    return { success: false, error: await t('errors.failedToUpdate') };
+    return { success: false, error: await handleDbError(error, 'errors.failedToUpdate') };
   }
 }
 
@@ -130,7 +131,7 @@ export async function cancelTask(id: number): Promise<ActionResult> {
     return { success: true };
   } catch (error) {
     console.error('[tasks:cancel] Failed:', error);
-    return { success: false, error: await t('errors.failedToUpdate') };
+    return { success: false, error: await handleDbError(error, 'errors.failedToUpdate') };
   }
 }
 

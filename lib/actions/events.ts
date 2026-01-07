@@ -7,6 +7,7 @@ import { eq, and, asc } from 'drizzle-orm';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { getCurrentUserId } from '@/lib/auth';
 import { t } from '@/lib/i18n/server-errors';
+import { handleDbError } from '@/lib/db-errors';
 import { scheduleNotificationJobs } from './notifications';
 
 type ActionResult = { success: true } | { success: false; error: string };
@@ -46,7 +47,7 @@ export async function createEvent(data: Omit<NewEvent, 'id' | 'userId' | 'create
     return { success: true };
   } catch (error) {
     console.error('[events:create] Failed:', error);
-    return { success: false, error: await t('errors.failedToCreate') };
+    return { success: false, error: await handleDbError(error, 'errors.failedToCreate') };
   }
 }
 
@@ -74,7 +75,7 @@ export async function updateEvent(id: number, data: Partial<Omit<NewEvent, 'id' 
     return { success: true };
   } catch (error) {
     console.error('[events:update] Failed:', error);
-    return { success: false, error: await t('errors.failedToUpdate') };
+    return { success: false, error: await handleDbError(error, 'errors.failedToUpdate') };
   }
 }
 
@@ -104,7 +105,7 @@ export async function deleteEvent(id: number): Promise<ActionResult> {
     return { success: true };
   } catch (error) {
     console.error('[events:delete] Failed:', error);
-    return { success: false, error: await t('errors.failedToDelete') };
+    return { success: false, error: await handleDbError(error, 'errors.failedToDelete') };
   }
 }
 
@@ -117,7 +118,7 @@ export async function completeEvent(id: number): Promise<ActionResult> {
     return { success: true };
   } catch (error) {
     console.error('[events:complete] Failed:', error);
-    return { success: false, error: await t('errors.failedToUpdate') };
+    return { success: false, error: await handleDbError(error, 'errors.failedToUpdate') };
   }
 }
 
@@ -130,6 +131,6 @@ export async function cancelEvent(id: number): Promise<ActionResult> {
     return { success: true };
   } catch (error) {
     console.error('[events:cancel] Failed:', error);
-    return { success: false, error: await t('errors.failedToUpdate') };
+    return { success: false, error: await handleDbError(error, 'errors.failedToUpdate') };
   }
 }

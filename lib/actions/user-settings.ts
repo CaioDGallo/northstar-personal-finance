@@ -49,15 +49,53 @@ export async function getOrCreateUserSettings() {
   }
 }
 
+function isValidTimezone(tz: string): boolean {
+  try {
+    const validTimezones = Intl.supportedValuesOf('timeZone');
+    return validTimezones.includes(tz);
+  } catch {
+    return false;
+  }
+}
+
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
 export async function updateUserSettings(data: Partial<Omit<NewUserSettings, 'id' | 'userId' | 'createdAt'>>): Promise<ActionResult> {
   try {
     const userId = await getCurrentUserId();
-    
+
+    // Validate timezone if provided
+    if (data.timezone !== undefined && data.timezone !== null && !isValidTimezone(data.timezone)) {
+      return { success: false, error: await t('errors.invalidTimezone') };
+    }
+
+    // Validate notification email if provided
+    if (data.notificationEmail !== undefined && data.notificationEmail !== null && !isValidEmail(data.notificationEmail)) {
+      return { success: false, error: await t('errors.invalidEmail') };
+    }
+
+    // Validate default event offset minutes (0-10080 = 1 week)
+    if (data.defaultEventOffsetMinutes !== undefined && data.defaultEventOffsetMinutes !== null) {
+      if (data.defaultEventOffsetMinutes < 0 || data.defaultEventOffsetMinutes > 10080) {
+        return { success: false, error: await t('errors.invalidOffsetMinutes') };
+      }
+    }
+
+    // Validate default task offset minutes (0-10080 = 1 week)
+    if (data.defaultTaskOffsetMinutes !== undefined && data.defaultTaskOffsetMinutes !== null) {
+      if (data.defaultTaskOffsetMinutes < 0 || data.defaultTaskOffsetMinutes > 10080) {
+        return { success: false, error: await t('errors.invalidOffsetMinutes') };
+      }
+    }
+
     await db
       .update(userSettings)
       .set({ ...data, updatedAt: new Date() })
       .where(eq(userSettings.userId, userId));
-    
+
     revalidatePath('/settings');
     revalidatePath('/calendar');
     return { success: true };

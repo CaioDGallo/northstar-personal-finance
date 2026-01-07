@@ -8,6 +8,7 @@ import { revalidatePath } from 'next/cache';
 import { getCurrentUserId } from '@/lib/auth';
 import { checkBulkRateLimit } from '@/lib/rate-limit';
 import { t } from '@/lib/i18n/server-errors';
+import { handleDbError } from '@/lib/db-errors';
 
 export type CreateIncomeData = {
   description: string;
@@ -51,7 +52,7 @@ export async function createIncome(data: CreateIncomeData) {
     revalidatePath('/dashboard');
   } catch (error) {
     console.error('Failed to create income:', error);
-    throw new Error(await t('errors.failedToCreate'));
+    throw new Error(await handleDbError(error, 'errors.failedToCreate'));
   }
 }
 
@@ -94,7 +95,7 @@ export async function updateIncome(incomeId: number, data: CreateIncomeData) {
     revalidatePath('/dashboard');
   } catch (error) {
     console.error('Failed to update income:', error);
-    throw new Error(await t('errors.failedToUpdate'));
+    throw new Error(await handleDbError(error, 'errors.failedToUpdate'));
   }
 }
 
@@ -112,7 +113,7 @@ export async function deleteIncome(incomeId: number) {
     revalidatePath('/dashboard');
   } catch (error) {
     console.error('Failed to delete income:', error);
-    throw new Error(await t('errors.failedToDelete'));
+    throw new Error(await handleDbError(error, 'errors.failedToDelete'));
   }
 }
 
@@ -196,7 +197,7 @@ export async function markIncomeReceived(incomeId: number) {
     revalidatePath('/dashboard');
   } catch (error) {
     console.error('Failed to mark income as received:', error);
-    throw new Error(await t('errors.failedToUpdate'));
+    throw new Error(await handleDbError(error, 'errors.failedToUpdate'));
   }
 }
 
@@ -217,7 +218,7 @@ export async function markIncomePending(incomeId: number) {
     revalidatePath('/dashboard');
   } catch (error) {
     console.error('Failed to mark income as pending:', error);
-    throw new Error(await t('errors.failedToUpdate'));
+    throw new Error(await handleDbError(error, 'errors.failedToUpdate'));
   }
 }
 
@@ -261,6 +262,6 @@ export async function bulkUpdateIncomeCategories(
     revalidatePath('/dashboard');
   } catch (error) {
     console.error('Failed to bulk update income categories:', { incomeIds, categoryId, error });
-    throw new Error(await t('errors.failedToUpdate'));
+    throw new Error(await handleDbError(error, 'errors.failedToUpdate'));
   }
 }

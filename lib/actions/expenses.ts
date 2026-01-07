@@ -10,6 +10,7 @@ import { ensureFaturaExists, updateFaturaTotal } from '@/lib/actions/faturas';
 import { getCurrentUserId } from '@/lib/auth';
 import { checkBulkRateLimit } from '@/lib/rate-limit';
 import { t } from '@/lib/i18n/server-errors';
+import { handleDbError } from '@/lib/db-errors';
 
 type CreateExpenseData = {
   description: string;
@@ -125,7 +126,7 @@ export async function createExpense(data: CreateExpenseData) {
     revalidatePath('/faturas');
   } catch (error) {
     console.error('Failed to create expense:', { data, error });
-    throw new Error(await t('errors.failedToCreate'));
+    throw new Error(await handleDbError(error, 'errors.failedToCreate'));
   }
 }
 
@@ -267,7 +268,7 @@ export async function updateExpense(transactionId: number, data: CreateExpenseDa
     revalidatePath('/faturas');
   } catch (error) {
     console.error('Failed to update expense:', { transactionId, data, error });
-    throw new Error(await t('errors.failedToUpdate'));
+    throw new Error(await handleDbError(error, 'errors.failedToUpdate'));
   }
 }
 
@@ -308,7 +309,7 @@ export async function deleteExpense(transactionId: number) {
     revalidatePath('/faturas');
   } catch (error) {
     console.error('Failed to delete expense:', { transactionId, error });
-    throw new Error(await t('errors.failedToDelete'));
+    throw new Error(await handleDbError(error, 'errors.failedToDelete'));
   }
 }
 
@@ -391,7 +392,7 @@ export async function markEntryPaid(entryId: number) {
     revalidatePath('/dashboard');
   } catch (error) {
     console.error('Failed to mark entry paid:', { entryId, error });
-    throw new Error(await t('errors.failedToMarkPaid'));
+    throw new Error(await handleDbError(error, 'errors.failedToMarkPaid'));
   }
 }
 
@@ -412,7 +413,7 @@ export async function markEntryPending(entryId: number) {
     revalidatePath('/dashboard');
   } catch (error) {
     console.error('Failed to mark entry pending:', { entryId, error });
-    throw new Error(await t('errors.failedToMarkPending'));
+    throw new Error(await handleDbError(error, 'errors.failedToMarkPending'));
   }
 }
 
@@ -436,7 +437,7 @@ export async function updateTransactionCategory(transactionId: number, categoryI
     revalidatePath('/dashboard');
   } catch (error) {
     console.error('Failed to update transaction category:', { transactionId, categoryId, error });
-    throw new Error(await t('errors.failedToUpdateCategory'));
+    throw new Error(await handleDbError(error, 'errors.failedToUpdateCategory'));
   }
 }
 
@@ -468,6 +469,6 @@ export async function bulkUpdateTransactionCategories(
     revalidatePath('/dashboard');
   } catch (error) {
     console.error('Failed to bulk update categories:', { transactionIds, categoryId, error });
-    throw new Error(await t('errors.failedToUpdate'));
+    throw new Error(await handleDbError(error, 'errors.failedToUpdate'));
   }
 }
