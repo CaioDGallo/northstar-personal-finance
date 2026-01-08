@@ -511,6 +511,19 @@
     "savedSuccessfully": "Settings saved successfully!",
     "unexpectedError": "An unexpected error occurred. Please try again."
   },
+  "recurrence": {
+    "repeat": "Repeat",
+    "never": "Never",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "ends": "Ends",
+    "endsNever": "Never",
+    "endsAfter": "After",
+    "endsOn": "On date",
+    "occurrences": "occurrences"
+  },
   "parsers": {
     "nubank": {
       "name": "Nubank Credit Card",

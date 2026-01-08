@@ -8,7 +8,7 @@ import { t } from '@/lib/i18n/server-errors';
 import { handleDbError } from '@/lib/db-errors';
 import { scheduleNotificationJobs } from './notifications';
 
-type ActionResult = { success: true } | { success: false; error: string };
+type ActionResult = { success: true; data?: { id: number } } | { success: false; error: string };
 
 export async function getTasks() {
   try {
@@ -43,7 +43,7 @@ export async function createTask(data: Omit<NewTask, 'id' | 'userId' | 'createdA
     revalidatePath('/calendar');
     revalidatePath('/tasks');
     revalidateTag('tasks', 'default');
-    return { success: true };
+    return { success: true, data: { id: task.id } };
   } catch (error) {
     console.error('[tasks:create] Failed:', error);
     return { success: false, error: await handleDbError(error, 'errors.failedToCreate') };

@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createTask, updateTask } from '@/lib/actions/tasks';
+import { createRecurrenceRule, deleteRecurrenceRule, getRecurrenceRuleByItem, updateRecurrenceRule } from '@/lib/actions/recurrence';
+import { createSimpleRRule } from '@/lib/recurrence';
 import type { Task } from '@/lib/schema';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
@@ -10,6 +12,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Button } from '@/components/ui/button';
 import { AlertDialogCancel, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { useTranslations } from 'next-intl';
+import { RecurrenceSelect, type RepeatFrequency, type EndType } from '@/components/recurrence-select';
 
 type TaskFormProps = {
   task?: Task;
@@ -46,8 +49,58 @@ export function TaskForm({ task, onSuccess }: TaskFormProps) {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Recurrence state
+  const [repeat, setRepeat] = useState<RepeatFrequency>('never');
+  const [endType, setEndType] = useState<EndType>('never');
+  const [endCount, setEndCount] = useState(1);
+  const [endDate_, setEndDate_] = useState(formatDateInput(new Date()));
+  const [existingRecurrenceId, setExistingRecurrenceId] = useState<number | null>(null);
+
   const t = useTranslations('taskForm');
   const tCommon = useTranslations('common');
+
+  // Fetch existing recurrence rule on edit
+  useEffect(() => {
+    if (!task?.id) return;
+
+    async function fetchRecurrence() {
+      const rule = await getRecurrenceRuleByItem('task', task!.id);
+      if (rule) {
+        setExistingRecurrenceId(rule.id);
+
+        // Parse RRULE string to populate state
+        const parts = rule.rrule.split(';');
+        const freqPart = parts.find(p => p.startsWith('FREQ='));
+        const countPart = parts.find(p => p.startsWith('COUNT='));
+        const untilPart = parts.find(p => p.startsWith('UNTIL='));
+
+        if (freqPart) {
+          const freq = freqPart.split('=')[1] as RepeatFrequency;
+          setRepeat(freq);
+
+          if (countPart) {
+            setEndType('after');
+            setEndCount(parseInt(countPart.split('=')[1]));
+          } else if (untilPart) {
+            setEndType('on');
+            const untilValue = untilPart.split('=')[1];
+            const date = new Date(
+              parseInt(untilValue.slice(0, 4)),
+              parseInt(untilValue.slice(4, 6)) - 1,
+              parseInt(untilValue.slice(6, 8))
+            );
+            setEndDate_(formatDateInput(date));
+          } else {
+            setEndType('never');
+          }
+        }
+      }
+    }
+
+    fetchRecurrence();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [task?.id]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -85,6 +138,41 @@ export function TaskForm({ task, onSuccess }: TaskFormProps) {
       if (!result.success) {
         setError(result.error);
         return;
+      }
+
+      // Handle recurrence rule
+      const taskId = task?.id || result.data?.id;
+      if (!taskId) {
+        console.error('[TaskForm] No task ID after create/update');
+        setError(tCommon('unexpectedError'));
+        return;
+      }
+
+      if (repeat === 'never') {
+        // Delete existing recurrence rule if any
+        if (existingRecurrenceId) {
+          await deleteRecurrenceRule(existingRecurrenceId);
+        }
+      } else {
+        // Create RRULE string
+        const rruleString = createSimpleRRule(
+          repeat,
+          1,
+          endType === 'after' ? endCount : undefined,
+          endType === 'on' ? new Date(endDate_) : undefined
+        );
+
+        if (existingRecurrenceId) {
+          // Update existing rule
+          await updateRecurrenceRule(existingRecurrenceId, { rrule: rruleString });
+        } else {
+          // Create new rule
+          await createRecurrenceRule({
+            itemType: 'task',
+            itemId: taskId,
+            rrule: rruleString,
+          });
+        }
       }
 
       onSuccess?.();
@@ -242,6 +330,17 @@ export function TaskForm({ task, onSuccess }: TaskFormProps) {
             </SelectContent>
           </Select>
         </Field>
+
+        <RecurrenceSelect
+          repeat={repeat}
+          onRepeatChange={setRepeat}
+          endType={endType}
+          onEndTypeChange={setEndType}
+          endCount={endCount}
+          onEndCountChange={setEndCount}
+          endDate={endDate_}
+          onEndDateChange={setEndDate_}
+        />
 
         {error && (
           <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">

@@ -8,7 +8,7 @@ import { t } from '@/lib/i18n/server-errors';
 import { handleDbError } from '@/lib/db-errors';
 import { scheduleNotificationJobs } from './notifications';
 
-type ActionResult = { success: true } | { success: false; error: string };
+type ActionResult = { success: true; data?: { id: number } } | { success: false; error: string };
 
 export async function getEvents() {
   try {
@@ -42,7 +42,7 @@ export async function createEvent(data: Omit<NewEvent, 'id' | 'userId' | 'create
     await scheduleNotificationJobs('event', event.id, event.startAt);
     revalidatePath('/calendar');
     revalidateTag('events', 'default');
-    return { success: true };
+    return { success: true, data: { id: event.id } };
   } catch (error) {
     console.error('[events:create] Failed:', error);
     return { success: false, error: await handleDbError(error, 'errors.failedToCreate') };
