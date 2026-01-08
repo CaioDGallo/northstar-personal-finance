@@ -8,6 +8,15 @@ import {
   createSimpleRRule,
 } from '@/lib/recurrence';
 
+// Convert RRULE date format to ISO for Date parsing
+// '20250105T000000Z' -> '2025-01-05T00:00:00Z'
+function rruleDateToISO(rruleDate: string): string {
+  return rruleDate.replace(
+    /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/,
+    '$1-$2-$3T$4:$5:$6Z'
+  );
+}
+
 describe('Recurrence Logic', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -136,7 +145,7 @@ describe('Recurrence Logic', () => {
       );
       expect(occurrences.length).toBeGreaterThan(0);
       const last = occurrences[occurrences.length - 1]!;
-      expect(last.getTime()).toBeLessThanOrEqual(new Date(until).getTime());
+      expect(last.getTime()).toBeLessThanOrEqual(new Date(rruleDateToISO(until)).getTime());
     });
   });
 
