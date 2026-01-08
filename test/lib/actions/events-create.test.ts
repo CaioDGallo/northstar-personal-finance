@@ -224,7 +224,8 @@ describe('Event Actions - Create Event', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data?.id).toEqual(expect.any(Number));
+        expect(result.data).toBeDefined();
+        expect(result.data!.id).toEqual(expect.any(Number));
       }
     });
 
