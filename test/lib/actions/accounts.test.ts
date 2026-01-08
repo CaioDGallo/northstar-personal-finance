@@ -18,6 +18,7 @@ describe('Account Actions', () => {
   let createAccount: AccountsActions['createAccount'];
   let updateAccount: AccountsActions['updateAccount'];
   let deleteAccount: AccountsActions['deleteAccount'];
+  let reconcileCurrentUserBalances: AccountsActions['reconcileCurrentUserBalances'];
   let createExpense: ExpensesActions['createExpense'];
 
   let getCurrentUserIdMock: ReturnType<typeof vi.fn>;
@@ -42,6 +43,7 @@ describe('Account Actions', () => {
     createAccount = accountActions.createAccount;
     updateAccount = accountActions.updateAccount;
     deleteAccount = accountActions.deleteAccount;
+    reconcileCurrentUserBalances = accountActions.reconcileCurrentUserBalances;
 
     const expenseActions = await import('@/lib/actions/expenses');
     createExpense = expenseActions.createExpense;
@@ -390,6 +392,98 @@ describe('Account Actions', () => {
 
       const faturas = await db.select().from(schema.faturas);
       expect(faturas).toHaveLength(0);
+    });
+  });
+
+  describe('reconcileCurrentUserBalances', () => {
+    it('recalculates balances using entries, income, and transfers', async () => {
+      const [checking] = await db
+        .insert(schema.accounts)
+        .values({ ...testAccounts.checking, currentBalance: 0 })
+        .returning();
+
+      const [savings] = await db
+        .insert(schema.accounts)
+        .values({ userId: TEST_USER_ID, name: 'Savings', type: 'savings', currentBalance: 0 })
+        .returning();
+
+      await db.insert(schema.accounts).values({
+        userId: OTHER_USER_ID,
+        name: 'Other Account',
+        type: 'checking',
+        currentBalance: 999,
+      });
+
+      const [expenseCategory] = await db
+        .insert(schema.categories)
+        .values(testCategories.expense)
+        .returning();
+
+      const [incomeCategory] = await db
+        .insert(schema.categories)
+        .values(testCategories.income)
+        .returning();
+
+      const [transaction] = await db
+        .insert(schema.transactions)
+        .values({
+          userId: TEST_USER_ID,
+          description: 'Test',
+          totalAmount: 1000,
+          totalInstallments: 1,
+          categoryId: expenseCategory.id,
+        })
+        .returning();
+
+      await db.insert(schema.entries).values({
+        userId: TEST_USER_ID,
+        transactionId: transaction.id,
+        accountId: checking.id,
+        amount: 1000,
+        purchaseDate: '2025-01-01',
+        faturaMonth: '2025-01',
+        dueDate: '2025-01-01',
+        installmentNumber: 1,
+        paidAt: null,
+      });
+
+      await db.insert(schema.income).values({
+        userId: TEST_USER_ID,
+        description: 'Salary',
+        amount: 5000,
+        categoryId: incomeCategory.id,
+        accountId: checking.id,
+        receivedDate: '2025-01-02',
+        receivedAt: new Date('2025-01-02T00:00:00Z'),
+      });
+
+      await db.insert(schema.transfers).values({
+        userId: TEST_USER_ID,
+        fromAccountId: checking.id,
+        toAccountId: savings.id,
+        amount: 2000,
+        date: '2025-01-03',
+        type: 'internal_transfer',
+      });
+
+      await reconcileCurrentUserBalances();
+      expect(revalidatePathMock).toHaveBeenCalledWith('/settings/accounts');
+      expect(revalidateTagMock).toHaveBeenCalledWith('accounts', 'max');
+
+      const updatedAccounts = await db
+        .select()
+        .from(schema.accounts)
+        .where(eq(schema.accounts.userId, TEST_USER_ID));
+
+      const updatedById = new Map(updatedAccounts.map((account) => [account.id, account]));
+      expect(updatedById.get(checking.id)?.currentBalance).toBe(2000);
+      expect(updatedById.get(savings.id)?.currentBalance).toBe(2000);
+
+      const [otherAccount] = await db
+        .select()
+        .from(schema.accounts)
+        .where(eq(schema.accounts.userId, OTHER_USER_ID));
+      expect(otherAccount.currentBalance).toBe(999);
     });
   });
 

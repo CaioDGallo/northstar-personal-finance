@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server';
-import { getAccountsWithBalances } from '@/lib/actions/accounts';
+import { getAccountsWithBalances, reconcileCurrentUserBalances } from '@/lib/actions/accounts';
 import { AccountForm } from '@/components/account-form';
 import { AccountCard } from '@/components/account-card';
 import { Button } from '@/components/ui/button';
@@ -25,17 +25,22 @@ export default async function AccountsPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">{t('title')}</h1>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="hollow">{t('addAccount')}</Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent closeOnBackdropClick>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t('addAccount')}</AlertDialogTitle>
-            </AlertDialogHeader>
-            <AccountForm />
-          </AlertDialogContent>
-        </AlertDialog>
+        <div className="flex items-center gap-2">
+          <form action={reconcileCurrentUserBalances}>
+            <Button variant="outline">{t('recalculateBalances')}</Button>
+          </form>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="hollow">{t('addAccount')}</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent closeOnBackdropClick>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t('addAccount')}</AlertDialogTitle>
+              </AlertDialogHeader>
+              <AccountForm />
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
 
       <div className="space-y-8">

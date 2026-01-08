@@ -95,6 +95,57 @@ export async function syncAccountBalance(
   return balance;
 }
 
+export async function reconcileAccountBalancesForUser(
+  userId: string,
+  dbClient: DbClient = db
+): Promise<{ updated: number }> {
+  if (!userId) {
+    throw new Error(await t('errors.notAuthenticated'));
+  }
+
+  const userAccounts = await dbClient
+    .select({ id: accounts.id })
+    .from(accounts)
+    .where(eq(accounts.userId, userId));
+
+  let updated = 0;
+  for (const account of userAccounts) {
+    const balance = await calculateAccountBalanceForUser(dbClient, userId, account.id);
+    await dbClient
+      .update(accounts)
+      .set({ currentBalance: balance, lastBalanceUpdate: new Date() })
+      .where(and(eq(accounts.userId, userId), eq(accounts.id, account.id)));
+    updated += 1;
+  }
+
+  return { updated };
+}
+
+export async function reconcileCurrentUserBalances(): Promise<void> {
+  const userId = await getCurrentUserId();
+  await reconcileAccountBalancesForUser(userId);
+
+  revalidatePath('/settings/accounts');
+  revalidateTag('accounts', 'max');
+}
+
+export async function reconcileAllAccountBalances(): Promise<{ users: number; accounts: number }> {
+  const userRows = await db
+    .selectDistinct({ userId: accounts.userId })
+    .from(accounts);
+
+  let users = 0;
+  let accountsUpdated = 0;
+
+  for (const row of userRows) {
+    const result = await reconcileAccountBalancesForUser(row.userId);
+    users += 1;
+    accountsUpdated += result.updated;
+  }
+
+  return { users, accounts: accountsUpdated };
+}
+
 export async function updateAccountBalance(
   accountId: number,
   amount: number,

@@ -218,6 +218,7 @@
   "accounts": {
     "title": "Accounts",
     "addAccount": "Add Account",
+    "recalculateBalances": "Recalculate balances",
     "creditCards": "Credit Cards",
     "checkingAccounts": "Checking Accounts",
     "savingsAccounts": "Savings Accounts",
