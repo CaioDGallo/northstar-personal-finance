@@ -2,8 +2,8 @@
 
 import { cache } from 'react';
 import { db } from '@/lib/db';
-import { entries, transactions, categories, budgets, accounts, income } from '@/lib/schema';
-import { eq, and, gte, lte, sql, desc } from 'drizzle-orm';
+import { entries, transactions, categories, budgets, accounts, income, transfers } from '@/lib/schema';
+import { eq, and, gte, lte, sql, desc, isNotNull } from 'drizzle-orm';
 import { getCurrentUserId } from '@/lib/auth';
 
 export type DashboardData = {
@@ -11,6 +11,9 @@ export type DashboardData = {
   totalBudget: number;
   totalIncome: number;
   netBalance: number;
+  totalTransfersIn: number;
+  totalTransfersOut: number;
+  cashFlowNet: number;
   categoryBreakdown: {
     categoryId: number;
     categoryName: string;
@@ -109,12 +112,34 @@ export const getDashboardData = cache(async (yearMonth: string): Promise<Dashboa
 
   const totalIncome = incomeData.reduce((sum, inc) => sum + inc.amount, 0);
 
-  // 5. Calculate totals
+  // 5. Get transfers for the month
+  const [{ total: totalTransfersIn }] = await db
+    .select({ total: sql<number>`CAST(COALESCE(SUM(${transfers.amount}), 0) AS INTEGER)` })
+    .from(transfers)
+    .where(and(
+      gte(transfers.date, startDate),
+      lte(transfers.date, endDate),
+      eq(transfers.userId, userId),
+      isNotNull(transfers.toAccountId)
+    ));
+
+  const [{ total: totalTransfersOut }] = await db
+    .select({ total: sql<number>`CAST(COALESCE(SUM(${transfers.amount}), 0) AS INTEGER)` })
+    .from(transfers)
+    .where(and(
+      gte(transfers.date, startDate),
+      lte(transfers.date, endDate),
+      eq(transfers.userId, userId),
+      isNotNull(transfers.fromAccountId)
+    ));
+
+  // 6. Calculate totals
   const totalBudget = categoryBreakdown.reduce((sum, cat) => sum + cat.budget, 0);
   const totalSpent = Array.from(spendingMap.values()).reduce((sum, spent) => sum + spent, 0);
   const netBalance = totalIncome - totalSpent;
+  const cashFlowNet = totalIncome + totalTransfersIn - totalSpent - totalTransfersOut;
 
-  // 6. Get recent 5 expenses (filtered by purchaseDate)
+  // 7. Get recent 5 expenses (filtered by purchaseDate)
   const recentExpenses = await db
     .select({
       entryId: entries.id,
@@ -139,7 +164,7 @@ export const getDashboardData = cache(async (yearMonth: string): Promise<Dashboa
     .orderBy(desc(entries.createdAt))
     .limit(5);
 
-  // 7. Get recent 5 income
+  // 8. Get recent 5 income
   const recentIncome = await db
     .select({
       incomeId: income.id,
@@ -167,6 +192,9 @@ export const getDashboardData = cache(async (yearMonth: string): Promise<Dashboa
     totalBudget,
     totalIncome,
     netBalance,
+    totalTransfersIn,
+    totalTransfersOut,
+    cashFlowNet,
     categoryBreakdown,
     recentExpenses,
     recentIncome,

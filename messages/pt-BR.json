@@ -138,6 +138,21 @@
   },
   "transfers": {
     "title": "Transferências",
+    "addTransfer": "Adicionar Transferência",
+    "editTransfer": "Editar Transferência",
+    "deleteTransfer": "Excluir Transferência",
+    "deleteConfirmationTitle": "Excluir transferência?",
+    "type": "Tipo",
+    "fromAccount": "Conta de origem",
+    "toAccount": "Conta de destino",
+    "date": "Data",
+    "selectAccount": "Selecionar conta",
+    "descriptionPlaceholder": "Transferência entre contas",
+    "backfillButton": "Preencher transferências de fatura",
+    "backfillTitle": "Preencher transferências de fatura?",
+    "backfillDescription": "Crie transferências de pagamento de faturas a partir de faturas pagas. Transferências existentes serão ignoradas.",
+    "backfillConfirm": "Preencher transferências",
+    "backfillSuccess": "Backfill completo. {count, plural, =0 {Nenhuma transferência criada} =1 {# transferência criada} other {# transferências criadas}}",
     "noTransfers": "Nenhuma transferência ainda",
     "external": "Externo",
     "types": {
@@ -258,6 +273,14 @@
     "netBalance": "Saldo Líquido",
     "incomeSpent": "da receita gasto",
     "noIncome": "Nenhuma receita registrada"
+  },
+  "cashFlow": {
+    "title": "Fluxo de Caixa",
+    "income": "Receitas",
+    "expenses": "Despesas",
+    "transfersIn": "Transferências de entrada",
+    "transfersOut": "Transferências de saída",
+    "net": "Fluxo de Caixa Líquido"
   },
   "recentExpenses": {
     "title": "Despesas Recentes",

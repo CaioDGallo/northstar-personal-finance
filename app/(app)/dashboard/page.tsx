@@ -4,6 +4,7 @@ import { getCurrentYearMonth } from '@/lib/utils';
 import { MonthPicker } from '@/components/month-picker';
 import { SummaryCard } from '@/components/summary-card';
 import { BalanceSummary } from '@/components/balance-summary';
+import { CashFlowReport } from '@/components/cash-flow-report';
 import { BudgetProgress } from '@/components/budget-progress';
 import { RecentExpenses } from '@/components/recent-expenses';
 import Link from 'next/link';
@@ -48,6 +49,13 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               income={data.totalIncome}
               expenses={data.totalSpent}
               netBalance={data.netBalance}
+            />
+            <CashFlowReport
+              income={data.totalIncome}
+              expenses={data.totalSpent}
+              transfersIn={data.totalTransfersIn}
+              transfersOut={data.totalTransfersOut}
+              net={data.cashFlowNet}
             />
             <SummaryCard spent={data.totalSpent} budget={data.totalBudget} />
             <RecentExpenses expenses={data.recentExpenses} />

@@ -87,6 +87,9 @@ describe('Dashboard Actions - getDashboardData', () => {
         totalBudget: 0,
         totalIncome: 0,
         netBalance: 0,
+        totalTransfersIn: 0,
+        totalTransfersOut: 0,
+        cashFlowNet: 0,
         categoryBreakdown: [],
         recentExpenses: [],
         recentIncome: [],
@@ -168,6 +171,41 @@ describe('Dashboard Actions - getDashboardData', () => {
       expect(result.netBalance).toBe(120000);
       expect(result.recentIncome).toHaveLength(2);
       expect(result.recentExpenses).toHaveLength(0);
+    });
+
+    it('includes transfers in cash flow totals', async () => {
+      await db.insert(schema.transfers).values([
+        {
+          userId: TEST_USER_ID,
+          fromAccountId: accountId2,
+          toAccountId: accountId1,
+          amount: 15000,
+          date: '2025-01-10',
+          type: 'internal_transfer',
+        },
+        {
+          userId: TEST_USER_ID,
+          fromAccountId: accountId2,
+          toAccountId: null,
+          amount: 5000,
+          date: '2025-01-12',
+          type: 'withdrawal',
+        },
+        {
+          userId: TEST_USER_ID,
+          fromAccountId: null,
+          toAccountId: accountId1,
+          amount: 3000,
+          date: '2025-01-15',
+          type: 'deposit',
+        },
+      ]);
+
+      const result = await getDashboardData('2025-01');
+
+      expect(result.totalTransfersIn).toBe(18000);
+      expect(result.totalTransfersOut).toBe(20000);
+      expect(result.cashFlowNet).toBe(-2000);
     });
 
     it('handles budgets without spending', async () => {
@@ -888,6 +926,9 @@ describe('Dashboard Actions - getDashboardData', () => {
       expect(result).toHaveProperty('totalBudget');
       expect(result).toHaveProperty('totalIncome');
       expect(result).toHaveProperty('netBalance');
+      expect(result).toHaveProperty('totalTransfersIn');
+      expect(result).toHaveProperty('totalTransfersOut');
+      expect(result).toHaveProperty('cashFlowNet');
       expect(result).toHaveProperty('categoryBreakdown');
       expect(result).toHaveProperty('recentExpenses');
       expect(result).toHaveProperty('recentIncome');

@@ -2,12 +2,14 @@
 
 import { useTranslations } from 'next-intl';
 import { TransferCard, type TransferListItem } from '@/components/transfer-card';
+import type { Account } from '@/lib/schema';
 
 type TransferListProps = {
   transfers: TransferListItem[];
+  accounts: Account[];
 };
 
-export function TransferList({ transfers }: TransferListProps) {
+export function TransferList({ transfers, accounts }: TransferListProps) {
   const t = useTranslations('transfers');
 
   if (transfers.length === 0) {
@@ -21,7 +23,7 @@ export function TransferList({ transfers }: TransferListProps) {
   return (
     <div className="space-y-3">
       {transfers.map((transfer) => (
-        <TransferCard key={transfer.id} transfer={transfer} />
+        <TransferCard key={transfer.id} transfer={transfer} accounts={accounts} />
       ))}
     </div>
   );

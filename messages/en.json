@@ -138,6 +138,21 @@
   },
   "transfers": {
     "title": "Transfers",
+    "addTransfer": "Add Transfer",
+    "editTransfer": "Edit Transfer",
+    "deleteTransfer": "Delete Transfer",
+    "deleteConfirmationTitle": "Delete transfer?",
+    "type": "Type",
+    "fromAccount": "From account",
+    "toAccount": "To account",
+    "date": "Date",
+    "selectAccount": "Select an account",
+    "descriptionPlaceholder": "Transfer between accounts",
+    "backfillButton": "Backfill bill transfers",
+    "backfillTitle": "Backfill bill transfers?",
+    "backfillDescription": "Create missing bill payment transfers from paid bills. Existing transfers will be skipped.",
+    "backfillConfirm": "Backfill transfers",
+    "backfillSuccess": "Backfill complete. {count, plural, =0 {No transfers created} =1 {# transfer created} other {# transfers created}}",
     "noTransfers": "No transfers yet",
     "external": "External",
     "types": {
@@ -258,6 +273,14 @@
     "netBalance": "Net Balance",
     "incomeSpent": "of income spent",
     "noIncome": "No income recorded"
+  },
+  "cashFlow": {
+    "title": "Cash Flow",
+    "income": "Income",
+    "expenses": "Expenses",
+    "transfersIn": "Transfers In",
+    "transfersOut": "Transfers Out",
+    "net": "Net Cash Flow"
   },
   "recentExpenses": {
     "title": "Recent Expenses",
