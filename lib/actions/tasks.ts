@@ -41,6 +41,7 @@ export async function createTask(data: Omit<NewTask, 'id' | 'userId' | 'createdA
     const [task] = await db.insert(tasks).values({ ...data, userId }).returning();
     await scheduleNotificationJobs('task', task.id, task.dueAt);
     revalidatePath('/calendar');
+    revalidatePath('/tasks');
     revalidateTag('tasks', 'default');
     return { success: true };
   } catch (error) {
@@ -69,6 +70,7 @@ export async function updateTask(id: number, data: Partial<Omit<NewTask, 'id' | 
     }
 
     revalidatePath('/calendar');
+    revalidatePath('/tasks');
     revalidateTag('tasks', 'default');
     return { success: true };
   } catch (error) {
@@ -99,6 +101,7 @@ export async function deleteTask(id: number): Promise<ActionResult> {
 
     await db.delete(tasks).where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
     revalidatePath('/calendar');
+    revalidatePath('/tasks');
     revalidateTag('tasks', 'default');
     return { success: true };
   } catch (error) {
@@ -112,6 +115,7 @@ export async function completeTask(id: number): Promise<ActionResult> {
     const userId = await getCurrentUserId();
     await db.update(tasks).set({ status: 'completed', completedAt: new Date(), updatedAt: new Date() }).where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
     revalidatePath('/calendar');
+    revalidatePath('/tasks');
     revalidateTag('tasks', 'default');
     return { success: true };
   } catch (error) {
@@ -125,6 +129,7 @@ export async function cancelTask(id: number): Promise<ActionResult> {
     const userId = await getCurrentUserId();
     await db.update(tasks).set({ status: 'cancelled', updatedAt: new Date() }).where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
     revalidatePath('/calendar');
+    revalidatePath('/tasks');
     revalidateTag('tasks', 'default');
     return { success: true };
   } catch (error) {
@@ -138,6 +143,7 @@ export async function startTask(id: number): Promise<ActionResult> {
     const userId = await getCurrentUserId();
     await db.update(tasks).set({ status: 'in_progress', updatedAt: new Date() }).where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
     revalidatePath('/calendar');
+    revalidatePath('/tasks');
     revalidateTag('tasks', 'default');
     return { success: true };
   } catch (error) {

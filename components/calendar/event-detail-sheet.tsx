@@ -140,17 +140,17 @@ export function EventDetailSheet({
 
   // Type indicator color
   const typeColor = event.type === 'event'
-    ? 'bg-[oklch(0.60_0.20_250)]' // Blue
-    : 'bg-[oklch(0.65_0.15_145)]'  // Green
+    ? '[oklch(0.60_0.20_250)]' // Blue
+    : '[oklch(0.65_0.15_145)]'  // Green
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-md">
         <SheetHeader>
           {/* Type indicator bar */}
-          <div className={cn("h-1 w-full mb-4 rounded-none", typeColor)} />
+          <div className={cn("h-1 w-3/5 mb-4 rounded-none", `bg-${typeColor}`)} />
 
-          <SheetTitle className="text-base font-bold">
+          <SheetTitle className={`text-base font-bold`}>
             {event.title}
           </SheetTitle>
 
@@ -264,7 +264,7 @@ export function EventDetailSheet({
           <SheetFooter className="flex-row gap-2">
             {onEdit && (
               <Button
-                variant="hollow"
+                variant="popout"
                 onClick={() => {
                   onEdit()
                   onOpenChange(false)
@@ -276,7 +276,7 @@ export function EventDetailSheet({
             )}
             {onDelete && (
               <Button
-                variant="outline"
+                variant="hollow"
                 onClick={() => {
                   onDelete()
                   onOpenChange(false)

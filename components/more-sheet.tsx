@@ -12,6 +12,7 @@ import {
   CreditCardIcon,
   Invoice03Icon,
   SparklesIcon,
+  Tick02Icon,
   Wallet01Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -22,6 +23,7 @@ import { ThemeToggleRow } from './theme-toggle-row';
 import { LanguageToggleRow } from './language-toggle-row';
 
 const moreItems = [
+  { key: 'tasks', href: '/tasks', icon: Tick02Icon },
   { key: 'faturas', href: '/faturas', icon: CreditCardIcon },
   { key: 'income', href: '/income', icon: ArrowUp01Icon },
   { key: 'accounts', href: '/settings/accounts', icon: Wallet01Icon },

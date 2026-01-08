@@ -12,9 +12,9 @@ import {
 import { createEventsServicePlugin } from '@schedule-x/events-service';
 import 'temporal-polyfill/global';
 import '@schedule-x/theme-shadcn/dist/index.css';
-import { deleteEvent, getEvents } from '@/lib/actions/events';
+import { deleteTask, getTasks } from '@/lib/actions/tasks';
 import { getUserSettings } from '@/lib/actions/user-settings';
-import { type Event, type UserSettings } from '@/lib/schema';
+import { type Task, type UserSettings } from '@/lib/schema';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -27,7 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { EventForm } from '@/components/event-form';
+import { TaskForm } from '@/components/task-form';
 import { MonthAgendaEventItem } from '@/components/calendar/month-agenda-event-item';
 import { EventDetailSheet } from '@/components/calendar/event-detail-sheet';
 import { useTranslations } from 'next-intl';
@@ -35,12 +35,12 @@ import { Theme } from '@/components/theme-toggle';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Clock01Icon,
+  Loading03Icon,
+  Tick02Icon,
   Flag01Icon,
   Alert01Icon,
   CircleIcon,
-  Tick02Icon,
 } from '@hugeicons/core-free-icons';
-import { cn } from '@/lib/utils';
 
 function toDate(value: Date | string): Date {
   return value instanceof Date ? value : new Date(value);
@@ -72,12 +72,13 @@ function toZonedDateTime(date: Date, timeZone: string) {
   return Temporal.Instant.from(date.toISOString()).toZonedDateTimeISO(timeZone);
 }
 
-export default function CalendarPage() {
+export default function TasksPage() {
   const eventsService = useState(() => createEventsServicePlugin())[0];
-  const [events, setEvents] = useState<Event[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [timeZone, setTimeZone] = useState(() => getBrowserTimeZone());
   const [statusFilters, setStatusFilters] = useState({
-    scheduled: true,
+    pending: true,
+    inProgress: true,
     completed: true,
   });
   const [priorityFilters, setPriorityFilters] = useState({
@@ -87,16 +88,16 @@ export default function CalendarPage() {
     critical: true,
   });
 
-  const toggleStatus = (key: 'scheduled' | 'completed') => {
+  const toggleStatus = (key: 'pending' | 'inProgress' | 'completed') => {
     setStatusFilters(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
   const togglePriority = (key: 'low' | 'medium' | 'high' | 'critical') => {
     setPriorityFilters(prev => ({ ...prev, [key]: !prev[key] }));
   };
-  const [eventDialogOpen, setEventDialogOpen] = useState(false);
-  const [editEventDialogOpen, setEditEventDialogOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [editTaskDialogOpen, setEditTaskDialogOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: number;
@@ -119,9 +120,10 @@ export default function CalendarPage() {
     type: 'event' | 'task';
     durationMinutes?: number | null;
   } | null>(null);
-  const eventsRef = useRef<Event[]>([]);
+  const tasksRef = useRef<Task[]>([]);
   const t = useTranslations('calendar');
   const tCommon = useTranslations('common');
+  const tNav = useTranslations('navigation');
   const [theme] = useState<Theme>(() => {
     if (typeof window === 'undefined') return 'system';
     return (localStorage.getItem('theme') as Theme | null) || 'system';
@@ -130,20 +132,21 @@ export default function CalendarPage() {
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
-    const [eventsData, settings] = await Promise.all([
-      getEvents(),
+    const [tasksData, settings] = await Promise.all([
+      getTasks(),
       getUserSettings(),
     ]);
     setTimeZone(resolveTimeZone(settings));
-    const normalizedEvents = eventsData.map((event) => ({
-      ...event,
-      startAt: toDate(event.startAt),
-      endAt: toDate(event.endAt),
-      createdAt: toOptionalDate(event.createdAt),
-      updatedAt: toOptionalDate(event.updatedAt),
+    const normalizedTasks = tasksData.map((task) => ({
+      ...task,
+      dueAt: toDate(task.dueAt),
+      startAt: toOptionalDate(task.startAt),
+      completedAt: toOptionalDate(task.completedAt),
+      createdAt: toOptionalDate(task.createdAt),
+      updatedAt: toOptionalDate(task.updatedAt),
     }));
-    eventsRef.current = normalizedEvents;
-    setEvents(normalizedEvents);
+    tasksRef.current = normalizedTasks;
+    setTasks(normalizedTasks);
     setIsLoading(false);
   }, []);
 
@@ -154,34 +157,36 @@ export default function CalendarPage() {
   const handleCalendarEventClick = useCallback((calendarEvent: { id: string | number; calendarId?: string }) => {
     function parseCalendarId(id: string | number) {
       if (typeof id === 'number') return id;
-      const parsed = Number(id.replace(/^event-/, ''));
+      const parsed = Number(id.replace(/^task-/, ''));
       return Number.isNaN(parsed) ? null : parsed;
     }
 
     const parsedId = parseCalendarId(calendarEvent.id);
     if (parsedId === null) return;
 
-    const event = eventsRef.current.find((item) => item.id === parsedId);
-    if (!event) return;
+    const task = tasksRef.current.find((item) => item.id === parsedId);
+    if (!task) return;
     setDetailSheetData({
-      id: event.id,
-      title: event.title,
-      description: event.description,
-      location: event.location,
-      startAt: event.startAt,
-      endAt: event.endAt,
-      isAllDay: event.isAllDay,
-      priority: event.priority,
-      status: event.status,
-      type: 'event',
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      location: task.location,
+      startAt: task.startAt || task.dueAt,
+      endAt: task.durationMinutes
+        ? new Date(toDate(task.startAt || task.dueAt).getTime() + task.durationMinutes * 60 * 1000)
+        : task.dueAt,
+      priority: task.priority,
+      status: task.status,
+      type: 'task',
+      durationMinutes: task.durationMinutes,
     });
     setDetailSheetOpen(true);
   }, []);
 
-  function handleEditEventOpenChange(open: boolean) {
-    setEditEventDialogOpen(open);
+  function handleEditTaskOpenChange(open: boolean) {
+    setEditTaskDialogOpen(open);
     if (!open) {
-      setSelectedEvent(null);
+      setSelectedTask(null);
     }
   }
 
@@ -206,7 +211,7 @@ export default function CalendarPage() {
     setDeleteError(null);
 
     try {
-      const result = await deleteEvent(deleteTarget.id);
+      const result = await deleteTask(deleteTarget.id);
 
       if (!result.success) {
         setDeleteError(result.error);
@@ -215,10 +220,10 @@ export default function CalendarPage() {
 
       setDeleteDialogOpen(false);
       setDeleteTarget(null);
-      setSelectedEvent(null);
+      setSelectedTask(null);
       await loadData();
     } catch (error) {
-      console.error('[Calendar] Delete failed:', error);
+      console.error('[Tasks] Delete failed:', error);
       setDeleteError(tCommon('unexpectedError'));
     } finally {
       setIsDeleting(false);
@@ -229,10 +234,10 @@ export default function CalendarPage() {
   const handleDetailSheetEdit = useCallback(() => {
     if (!detailSheetData) return;
 
-    const event = eventsRef.current.find((e) => e.id === detailSheetData.id);
-    if (!event) return;
-    setSelectedEvent(event);
-    setEditEventDialogOpen(true);
+    const task = tasksRef.current.find((t) => t.id === detailSheetData.id);
+    if (!task) return;
+    setSelectedTask(task);
+    setEditTaskDialogOpen(true);
   }, [detailSheetData]);
 
   const handleDetailSheetDelete = useCallback(() => {
@@ -246,11 +251,11 @@ export default function CalendarPage() {
 
   // Handlers for custom event item context menu
   const handleEventItemEdit = useCallback((id: number, type: 'event' | 'task') => {
-    handleCalendarEventClick({ id: `event-${id}`, calendarId: 'events' });
+    handleCalendarEventClick({ id: `task-${id}`, calendarId: 'tasks' });
   }, [handleCalendarEventClick]);
 
   const handleEventItemDelete = useCallback((id: number, type: 'event' | 'task') => {
-    const item = eventsRef.current.find((e) => e.id === id);
+    const item = tasksRef.current.find((t) => t.id === id);
 
     if (!item) return;
 
@@ -271,42 +276,52 @@ export default function CalendarPage() {
     );
   }, [handleEventItemEdit, handleEventItemDelete]);
 
-  const filteredEvents = useMemo(() => {
-    return events.filter((event) => {
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
       // Status filter
       const statusMatch =
-        (event.status === 'scheduled' && statusFilters.scheduled) ||
-        (event.status === 'completed' && statusFilters.completed);
+        (task.status === 'pending' && statusFilters.pending) ||
+        (task.status === 'in_progress' && statusFilters.inProgress) ||
+        (task.status === 'completed' && statusFilters.completed);
       if (!statusMatch) return false;
 
       // Priority filter
-      if (!priorityFilters[event.priority]) return false;
+      if (!priorityFilters[task.priority]) return false;
 
       return true;
     });
-  }, [events, statusFilters, priorityFilters]);
+  }, [tasks, statusFilters, priorityFilters]);
 
   const scheduleEvents = useMemo(() => {
-    return filteredEvents.map((event) => {
-      const startAt = toDate(event.startAt);
-      const endAt = toDate(event.endAt);
+    return filteredTasks.map((task) => {
+      let startDate: Date;
+      let endDate: Date;
+
+      if (task.startAt && task.durationMinutes) {
+        const taskStart = toDate(task.startAt);
+        startDate = taskStart;
+        endDate = new Date(taskStart.getTime() + task.durationMinutes * 60 * 1000);
+      } else {
+        const taskDue = toDate(task.dueAt);
+        startDate = taskDue;
+        endDate = taskDue;
+      }
 
       return {
-        id: `event-${event.id}`,
-        title: event.title,
-        start: toZonedDateTime(startAt, timeZone),
-        end: toZonedDateTime(endAt, timeZone),
-        calendarId: 'events',
-        description: event.description || undefined,
-        location: event.location || undefined,
-        priority: event.priority,
-        status: event.status,
-        itemType: 'event' as const,
-        itemId: event.id,
-        isAllDay: event.isAllDay,
+        id: `task-${task.id}`,
+        title: task.title,
+        start: toZonedDateTime(startDate, timeZone),
+        end: toZonedDateTime(endDate, timeZone),
+        calendarId: 'tasks',
+        description: task.description || undefined,
+        location: task.location || undefined,
+        priority: task.priority,
+        status: task.status,
+        itemType: 'task' as const,
+        itemId: task.id,
       };
     });
-  }, [filteredEvents, timeZone]);
+  }, [filteredTasks, timeZone]);
 
   const calendar = useNextCalendarApp({
     theme: 'shadcn',
@@ -317,17 +332,17 @@ export default function CalendarPage() {
     isDark: theme === 'dark' || (theme === 'system' && prefersDark),
     isResponsive: true,
     calendars: {
-      events: {
-        colorName: 'events',
+      tasks: {
+        colorName: 'tasks',
         lightColors: {
-          main: 'oklch(0.60 0.20 250)',
-          container: 'oklch(0.95 0.05 250)',
-          onContainer: 'oklch(0.40 0.20 250)',
+          main: 'oklch(0.65 0.15 145)',
+          container: 'oklch(0.95 0.10 145)',
+          onContainer: 'oklch(0.40 0.15 145)',
         },
         darkColors: {
-          main: 'oklch(0.70 0.20 250)',
-          container: 'oklch(0.30 0.15 250)',
-          onContainer: 'oklch(0.95 0.05 250)',
+          main: 'oklch(0.75 0.15 145)',
+          container: 'oklch(0.30 0.10 145)',
+          onContainer: 'oklch(0.95 0.10 145)',
         },
       },
     },
@@ -344,33 +359,33 @@ export default function CalendarPage() {
   return (
     <div className="p-4">
       <div className="flex items-center justify-between mb-6 flex-col md:flex-row space-y-4 md:space-y-0">
-        <h1 className="text-2xl font-bold">{t('title')}</h1>
+        <h1 className="text-2xl font-bold">{tNav('tasks')}</h1>
         <div className="flex gap-2 w-full justify-end">
-          <AlertDialog open={eventDialogOpen} onOpenChange={setEventDialogOpen}>
+          <AlertDialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen}>
             <AlertDialogTrigger asChild>
-              <Button variant="hollow">{t('addEvent')}</Button>
+              <Button variant="hollow">{t('addTask')}</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>{t('addEvent')}</AlertDialogTitle>
+                <AlertDialogTitle>{t('addTask')}</AlertDialogTitle>
               </AlertDialogHeader>
-              <EventForm onSuccess={() => { setEventDialogOpen(false); loadData(); }} />
+              <TaskForm onSuccess={() => { setTaskDialogOpen(false); loadData(); }} />
             </AlertDialogContent>
           </AlertDialog>
 
-          <AlertDialog open={editEventDialogOpen} onOpenChange={handleEditEventOpenChange}>
+          <AlertDialog open={editTaskDialogOpen} onOpenChange={handleEditTaskOpenChange}>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>{t('editEvent')}</AlertDialogTitle>
+                <AlertDialogTitle>{t('editTask')}</AlertDialogTitle>
               </AlertDialogHeader>
-              {selectedEvent && (
+              {selectedTask && (
                 <>
-                  <EventForm
-                    key={`event-${selectedEvent.id}`}
-                    event={selectedEvent}
+                  <TaskForm
+                    key={`task-${selectedTask.id}`}
+                    task={selectedTask}
                     onSuccess={() => {
-                      setEditEventDialogOpen(false);
-                      setSelectedEvent(null);
+                      setEditTaskDialogOpen(false);
+                      setSelectedTask(null);
                       loadData();
                     }}
                   />
@@ -379,10 +394,10 @@ export default function CalendarPage() {
                       type="button"
                       variant="destructive"
                       onClick={() => {
-                        setEditEventDialogOpen(false);
+                        setEditTaskDialogOpen(false);
                         requestDelete({
-                          id: selectedEvent.id,
-                          title: selectedEvent.title,
+                          id: selectedTask.id,
+                          title: selectedTask.title,
                         });
                       }}
                     >
@@ -396,23 +411,34 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      <div className="mb-4 gap-4 flex flex-row md:flex-col">
+      <div className="mb-4 gap-2 flex flex-row md:flex-col">
         {/* Status Filter */}
         <div className="flex items-center gap-3">
-          <span className="text-sm hidden font-medium text-muted-foreground md:inline min-w-[60px]">
+          <span className="text-sm font-medium text-muted-foreground hidden md:inline min-w-[60px]">
             {t('statusLabel')}:
           </span>
           <div className="flex gap-2">
             <Button
-              variant={statusFilters.scheduled ? 'popout' : 'hollow'}
+              variant={statusFilters.pending ? 'popout' : 'hollow'}
               size="icon-sm"
-              onClick={() => toggleStatus('scheduled')}
-              aria-label={t('status.scheduled')}
-              aria-pressed={statusFilters.scheduled}
-              title={t('status.scheduled')}
+              onClick={() => toggleStatus('pending')}
+              aria-label={t('status.pending')}
+              aria-pressed={statusFilters.pending}
+              title={t('status.pending')}
               className='p-4'
             >
               <HugeiconsIcon icon={Clock01Icon} strokeWidth={2} />
+            </Button>
+            <Button
+              variant={statusFilters.inProgress ? 'popout' : 'hollow'}
+              size="icon-sm"
+              onClick={() => toggleStatus('inProgress')}
+              aria-label={t('status.inProgress')}
+              aria-pressed={statusFilters.inProgress}
+              title={t('status.inProgress')}
+              className='p-4'
+            >
+              <HugeiconsIcon icon={Loading03Icon} strokeWidth={2} />
             </Button>
             <Button
               variant={statusFilters.completed ? 'popout' : 'hollow'}
@@ -503,7 +529,7 @@ export default function CalendarPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {t('deleteEventTitle')}
+              {t('deleteTaskTitle')}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {deleteTarget?.title}
@@ -533,7 +559,7 @@ export default function CalendarPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Event Detail Sheet */}
+      {/* Task Detail Sheet */}
       <EventDetailSheet
         open={detailSheetOpen}
         onOpenChange={setDetailSheetOpen}
