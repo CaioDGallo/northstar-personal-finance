@@ -10,7 +10,6 @@ describe('Event Actions - Create Event', () => {
   let db: ReturnType<typeof getTestDb>;
 
   let createEvent: EventsActions['createEvent'];
-  let getEvents: EventsActions['getEvents'];
 
   let getCurrentUserIdMock: ReturnType<typeof vi.fn>;
 
@@ -31,7 +30,6 @@ describe('Event Actions - Create Event', () => {
 
     const eventActions = await import('@/lib/actions/events');
     createEvent = eventActions.createEvent;
-    getEvents = eventActions.getEvents;
   });
 
   afterAll(async () => {

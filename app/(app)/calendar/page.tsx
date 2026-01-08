@@ -40,7 +40,6 @@ import {
   CircleIcon,
   Tick02Icon,
 } from '@hugeicons/core-free-icons';
-import { cn } from '@/lib/utils';
 
 function toDate(value: Date | string): Date {
   return value instanceof Date ? value : new Date(value);
@@ -245,11 +244,11 @@ export default function CalendarPage() {
   }, [detailSheetData]);
 
   // Handlers for custom event item context menu
-  const handleEventItemEdit = useCallback((id: number, type: 'event' | 'task') => {
+  const handleEventItemEdit = useCallback((id: number) => {
     handleCalendarEventClick({ id: `event-${id}`, calendarId: 'events' });
   }, [handleCalendarEventClick]);
 
-  const handleEventItemDelete = useCallback((id: number, type: 'event' | 'task') => {
+  const handleEventItemDelete = useCallback((id: number) => {
     const item = eventsRef.current.find((e) => e.id === id);
 
     if (!item) return;
@@ -538,6 +537,7 @@ export default function CalendarPage() {
         open={detailSheetOpen}
         onOpenChange={setDetailSheetOpen}
         event={detailSheetData}
+        timeZone={timeZone}
         onEdit={handleDetailSheetEdit}
         onDelete={handleDetailSheetDelete}
       />

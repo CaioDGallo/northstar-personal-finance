@@ -250,11 +250,11 @@ export default function TasksPage() {
   }, [detailSheetData]);
 
   // Handlers for custom event item context menu
-  const handleEventItemEdit = useCallback((id: number, type: 'event' | 'task') => {
+  const handleEventItemEdit = useCallback((id: number) => {
     handleCalendarEventClick({ id: `task-${id}`, calendarId: 'tasks' });
   }, [handleCalendarEventClick]);
 
-  const handleEventItemDelete = useCallback((id: number, type: 'event' | 'task') => {
+  const handleEventItemDelete = useCallback((id: number) => {
     const item = tasksRef.current.find((t) => t.id === id);
 
     if (!item) return;
@@ -564,6 +564,7 @@ export default function TasksPage() {
         open={detailSheetOpen}
         onOpenChange={setDetailSheetOpen}
         event={detailSheetData}
+        timeZone={timeZone}
         onEdit={handleDetailSheetEdit}
         onDelete={handleDetailSheetDelete}
       />

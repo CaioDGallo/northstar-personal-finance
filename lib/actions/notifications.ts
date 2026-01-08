@@ -7,6 +7,7 @@ import { revalidateTag } from 'next/cache';
 import { getCurrentUserId } from '@/lib/auth';
 import { t } from '@/lib/i18n/server-errors';
 import { handleDbError } from '@/lib/db-errors';
+import { getUserSettings } from '@/lib/actions/user-settings';
 
 type ActionResult = { success: true } | { success: false; error: string };
 
@@ -118,6 +119,11 @@ export async function getNotificationsByItem(itemType: 'event' | 'task', itemId:
 
 export async function scheduleNotificationJobs(itemType: 'event' | 'task', itemId: number, triggerDate: Date) {
   try {
+    const settings = await getUserSettings();
+    if (settings?.notificationsEnabled === false) {
+      return;
+    }
+
     const notificationConfigs = await getNotificationsByItem(itemType, itemId);
 
     for (const config of notificationConfigs) {

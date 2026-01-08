@@ -13,6 +13,21 @@ type NotificationJob = typeof notificationJobs.$inferSelect;
 type EventItem = typeof events.$inferSelect;
 type TaskItem = typeof tasks.$inferSelect;
 
+function formatDateTimeForUser(date: Date, timeZone?: string | null): string {
+  const resolvedTimeZone = timeZone || 'UTC';
+
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: 'full',
+      timeStyle: 'short',
+      timeZone: resolvedTimeZone,
+      timeZoneName: 'short',
+    }).format(date);
+  } catch {
+    return date.toLocaleString();
+  }
+}
+
 export async function processPendingNotificationJobs(): Promise<ProcessNotificationJobResult> {
   let processed = 0;
   let failed = 0;
@@ -178,6 +193,7 @@ async function sendEmailNotification(job: NotificationJob, itemData: EventItem |
 
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@northstar.app';
     const toEmail = settings.notificationEmail;
+    const timeZone = settings.timezone || 'UTC';
     
     const subject = job.itemType === 'event' 
       ? `Event Reminder: ${itemData?.title}`
@@ -186,10 +202,13 @@ async function sendEmailNotification(job: NotificationJob, itemData: EventItem |
     let body = '';
     if (job.itemType === 'event' && itemData && 'startAt' in itemData) {
       const eventItem = itemData as EventItem;
-      body = `You have an upcoming event: ${eventItem.title}\n\nTime: ${new Date(eventItem.startAt).toLocaleString()}\n\nView your calendar at ${process.env.NEXT_PUBLIC_APP_URL || 'https://northstar.app'}/calendar`;
+      const eventTime = formatDateTimeForUser(new Date(eventItem.startAt), timeZone);
+      body = `You have an upcoming event: ${eventItem.title}\n\nTime: ${eventTime}\n\nView your calendar at ${process.env.NEXT_PUBLIC_APP_URL || 'https://northstar.app'}/calendar`;
     } else if (itemData) {
       const taskItem = itemData as TaskItem;
-      const dueDate = taskItem.dueAt ? new Date(taskItem.dueAt).toLocaleString() : 'N/A';
+      const dueDate = taskItem.dueAt
+        ? formatDateTimeForUser(new Date(taskItem.dueAt), timeZone)
+        : 'N/A';
       body = `You have a task due: ${taskItem.title}\n\nDue: ${dueDate}\n\nView your calendar at ${process.env.NEXT_PUBLIC_APP_URL || 'https://northstar.app'}/calendar`;
     }
     

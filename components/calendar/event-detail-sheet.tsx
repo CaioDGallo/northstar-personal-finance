@@ -41,6 +41,7 @@ interface EventDetailSheetProps {
     type: 'event' | 'task'
     durationMinutes?: number | null
   } | null
+  timeZone?: string
   onEdit?: () => void
   onDelete?: () => void
 }
@@ -87,9 +88,11 @@ function getStatusConfig(status: string, type: string) {
 }
 
 // Helper: Format date/time
-function formatDateTime(date: Date, isAllDay?: boolean): string {
+function formatDateTime(date: Date, isAllDay?: boolean, timeZone?: string): string {
+  const options: Intl.DateTimeFormatOptions = timeZone ? { timeZone } : {}
   if (isAllDay) {
     return date.toLocaleDateString(undefined, {
+      ...options,
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -98,6 +101,7 @@ function formatDateTime(date: Date, isAllDay?: boolean): string {
   }
 
   return date.toLocaleString(undefined, {
+    ...options,
     weekday: 'short',
     year: 'numeric',
     month: 'short',
@@ -126,6 +130,7 @@ export function EventDetailSheet({
   open,
   onOpenChange,
   event,
+  timeZone,
   onEdit,
   onDelete,
 }: EventDetailSheetProps) {
@@ -171,11 +176,11 @@ export function EventDetailSheet({
               />
               <div className="flex-1">
                 <div className="text-xs font-medium">
-                  {formatDateTime(event.startAt, event.isAllDay)}
+                  {formatDateTime(event.startAt, event.isAllDay, timeZone)}
                 </div>
                 {!event.isAllDay && (
                   <div className="text-[10px] text-muted-foreground mt-1">
-                    to {formatDateTime(event.endAt, event.isAllDay)}
+                    to {formatDateTime(event.endAt, event.isAllDay, timeZone)}
                   </div>
                 )}
               </div>
