@@ -20,6 +20,35 @@ export async function getTasks() {
   }
 }
 
+export async function getTasksWithRecurrence() {
+  try {
+    const userId = await getCurrentUserId();
+    const rows = await db
+      .select({
+        task: tasks,
+        recurrenceRule: recurrenceRules.rrule,
+      })
+      .from(tasks)
+      .leftJoin(
+        recurrenceRules,
+        and(
+          eq(recurrenceRules.itemId, tasks.id),
+          eq(recurrenceRules.itemType, 'task')
+        )
+      )
+      .where(eq(tasks.userId, userId))
+      .orderBy(asc(tasks.dueAt));
+
+    return rows.map((row) => ({
+      ...row.task,
+      recurrenceRule: row.recurrenceRule ?? null,
+    }));
+  } catch (error) {
+    console.error('[tasks:getWithRecurrence] Failed:', error);
+    return [];
+  }
+}
+
 export async function getTaskById(id: number) {
   try {
     const userId = await getCurrentUserId();
