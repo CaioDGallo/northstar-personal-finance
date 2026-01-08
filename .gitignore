@@ -24,6 +24,7 @@ local.db
 # misc
 .DS_Store
 *.pem
+NU_88458319_01DEZ2025_29DEZ2025.csv
 
 # debug
 npm-debug.log*
