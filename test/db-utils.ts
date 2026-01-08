@@ -35,11 +35,15 @@ export async function teardownTestDb() {
 
 export async function clearAllTables() {
   // Clear in reverse FK order to avoid constraint violations
+  await db.delete(schema.notificationJobs);
+  await db.delete(schema.notifications);
+  await db.delete(schema.recurrenceRules);
   await db.delete(schema.income);
   await db.delete(schema.entries);
   await db.delete(schema.transactions);
   await db.delete(schema.budgets);
   await db.delete(schema.monthlyBudgets);
+  await db.delete(schema.events);
   await db.delete(schema.categories);
   await db.delete(schema.accounts);
 }
