@@ -222,7 +222,10 @@ describe('Event Actions - Create Event', () => {
         endAt: new Date('2026-02-01T11:00:00Z'),
       });
 
-      expect(result).toEqual({ success: true });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data?.id).toEqual(expect.any(Number));
+      }
     });
 
     it('returns error result when creation fails', async () => {

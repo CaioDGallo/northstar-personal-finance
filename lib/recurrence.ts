@@ -9,9 +9,12 @@ export interface RecurrenceOccurrence {
   dueAt?: Date;
 }
 
-export function parseRRule(rruleString: string): RRule {
+export function parseRRule(
+  rruleString: string,
+  options?: { dtstart?: Date }
+): RRule {
   try {
-    return rrulestr(rruleString);
+    return rrulestr(rruleString, options);
   } catch (error) {
     throw new Error(`Invalid RRULE: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
@@ -27,7 +30,7 @@ export function expandOccurrences(
   baseDueAt?: Date,
   durationMinutes?: number
 ): RecurrenceOccurrence[] {
-  const rule = parseRRule(rruleString);
+  const rule = parseRRule(rruleString, { dtstart: baseStartAt });
   const occurrences = rule.between(startDate, endDate, true);
   
   return occurrences.map((date, index) => {
@@ -57,8 +60,8 @@ export function expandOccurrences(
   });
 }
 
-export function getNextOccurrence(rruleString: string, fromDate: Date): Date | null {
-  const rule = parseRRule(rruleString);
+export function getNextOccurrence(rruleString: string, fromDate: Date, dtstart?: Date): Date | null {
+  const rule = parseRRule(rruleString, dtstart ? { dtstart } : undefined);
   
   try {
     const next = rule.after(fromDate);
@@ -71,9 +74,10 @@ export function getNextOccurrence(rruleString: string, fromDate: Date): Date | n
 export function getAllOccurrencesBetween(
   rruleString: string,
   startDate: Date,
-  endDate: Date
+  endDate: Date,
+  dtstart?: Date
 ): Date[] {
-  const rule = parseRRule(rruleString);
+  const rule = parseRRule(rruleString, dtstart ? { dtstart } : undefined);
   return rule.between(startDate, endDate, true);
 }
 

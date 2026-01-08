@@ -12,9 +12,10 @@ import {
 import { createEventsServicePlugin } from '@schedule-x/events-service';
 import 'temporal-polyfill/global';
 import '@schedule-x/theme-shadcn/dist/index.css';
-import { deleteEvent, getEvents } from '@/lib/actions/events';
+import { deleteEvent, getEventsWithRecurrence } from '@/lib/actions/events';
 import { getUserSettings } from '@/lib/actions/user-settings';
 import { type Event, type UserSettings } from '@/lib/schema';
+import { parseRRule } from '@/lib/recurrence';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -71,9 +72,46 @@ function toZonedDateTime(date: Date, timeZone: string) {
   return Temporal.Instant.from(date.toISOString()).toZonedDateTimeISO(timeZone);
 }
 
+type EventWithRecurrence = Event & { recurrenceRule?: string | null };
+
+function addMonthsToDate(date: Date, months: number): Date {
+  const next = new Date(date);
+  next.setMonth(next.getMonth() + months);
+  return next;
+}
+
+function resolveRecurrenceWindow(rule: ReturnType<typeof parseRRule>, baseStartAt: Date) {
+  const now = new Date();
+  const lookBack = addMonthsToDate(now, -1);
+
+  if (rule.options.until || rule.options.count) {
+    const rangeStart = baseStartAt;
+    let rangeEnd = baseStartAt;
+
+    if (rule.options.until) {
+      rangeEnd = new Date(rule.options.until);
+    } else if (rule.options.count) {
+      const all = rule.all();
+      rangeEnd = all[all.length - 1] ?? baseStartAt;
+    }
+
+    if (rangeEnd < rangeStart) {
+      rangeEnd = rangeStart;
+    }
+
+    return { rangeStart, rangeEnd };
+  }
+
+  const anchor = baseStartAt > now ? baseStartAt : now;
+  const rangeStart = baseStartAt > now ? baseStartAt : lookBack;
+  const rangeEnd = addMonthsToDate(anchor, 6);
+
+  return { rangeStart, rangeEnd };
+}
+
 export default function CalendarPage() {
   const eventsService = useState(() => createEventsServicePlugin())[0];
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<EventWithRecurrence[]>([]);
   const [timeZone, setTimeZone] = useState(() => getBrowserTimeZone());
   const [statusFilters, setStatusFilters] = useState({
     scheduled: true,
@@ -118,7 +156,8 @@ export default function CalendarPage() {
     type: 'event' | 'task';
     durationMinutes?: number | null;
   } | null>(null);
-  const eventsRef = useRef<Event[]>([]);
+  const eventsRef = useRef<EventWithRecurrence[]>([]);
+  const occurrenceOverridesRef = useRef(new Map<string, { startAt: Date; endAt: Date }>());
   const t = useTranslations('calendar');
   const tCommon = useTranslations('common');
   const [theme] = useState<Theme>(() => {
@@ -130,12 +169,13 @@ export default function CalendarPage() {
   const loadData = useCallback(async () => {
     setIsLoading(true);
     const [eventsData, settings] = await Promise.all([
-      getEvents(),
+      getEventsWithRecurrence(),
       getUserSettings(),
     ]);
     setTimeZone(resolveTimeZone(settings));
     const normalizedEvents = eventsData.map((event) => ({
       ...event,
+      recurrenceRule: event.recurrenceRule ?? null,
       startAt: toDate(event.startAt),
       endAt: toDate(event.endAt),
       createdAt: toOptionalDate(event.createdAt),
@@ -152,8 +192,10 @@ export default function CalendarPage() {
 
   const handleCalendarEventClick = useCallback((calendarEvent: { id: string | number; calendarId?: string }) => {
     function parseCalendarId(id: string | number) {
-      if (typeof id === 'number') return id;
-      const parsed = Number(id.replace(/^event-/, ''));
+      const raw = typeof id === 'number' ? `event-${id}` : id;
+      const match = /^event-(\d+)/.exec(raw);
+      if (!match) return null;
+      const parsed = Number(match[1]);
       return Number.isNaN(parsed) ? null : parsed;
     }
 
@@ -162,13 +204,17 @@ export default function CalendarPage() {
 
     const event = eventsRef.current.find((item) => item.id === parsedId);
     if (!event) return;
+    const eventKey = typeof calendarEvent.id === 'number' ? `event-${calendarEvent.id}` : calendarEvent.id;
+    const occurrenceOverride = occurrenceOverridesRef.current.get(eventKey);
+    const startAt = occurrenceOverride?.startAt ?? event.startAt;
+    const endAt = occurrenceOverride?.endAt ?? event.endAt;
     setDetailSheetData({
       id: event.id,
       title: event.title,
       description: event.description,
       location: event.location,
-      startAt: event.startAt,
-      endAt: event.endAt,
+      startAt,
+      endAt,
       isAllDay: event.isAllDay,
       priority: event.priority,
       status: event.status,
@@ -285,13 +331,13 @@ export default function CalendarPage() {
     });
   }, [events, statusFilters, priorityFilters]);
 
-  const scheduleEvents = useMemo(() => {
-    return filteredEvents.map((event) => {
-      const startAt = toDate(event.startAt);
-      const endAt = toDate(event.endAt);
+  const scheduleData = useMemo(() => {
+    const occurrenceOverrides = new Map<string, { startAt: Date; endAt: Date }>();
 
+    const buildScheduleEvent = (event: EventWithRecurrence, id: string, startAt: Date, endAt: Date) => {
+      occurrenceOverrides.set(id, { startAt, endAt });
       return {
-        id: `event-${event.id}`,
+        id,
         title: event.title,
         start: toZonedDateTime(startAt, timeZone),
         end: toZonedDateTime(endAt, timeZone),
@@ -304,13 +350,56 @@ export default function CalendarPage() {
         itemId: event.id,
         isAllDay: event.isAllDay,
       };
+    };
+
+    const scheduleEvents = filteredEvents.flatMap((event) => {
+      const baseStartAt = toDate(event.startAt);
+      const baseEndAt = toDate(event.endAt);
+      const baseId = `event-${event.id}`;
+
+      if (!event.recurrenceRule) {
+        return [buildScheduleEvent(event, baseId, baseStartAt, baseEndAt)];
+      }
+
+      let rule: ReturnType<typeof parseRRule>;
+      try {
+        rule = parseRRule(event.recurrenceRule, { dtstart: baseStartAt });
+      } catch (error) {
+        console.error('[Calendar] Invalid recurrence rule:', {
+          eventId: event.id,
+          rrule: event.recurrenceRule,
+          error,
+        });
+        return [buildScheduleEvent(event, baseId, baseStartAt, baseEndAt)];
+      }
+
+      const { rangeStart, rangeEnd } = resolveRecurrenceWindow(rule, baseStartAt);
+      const occurrences = rule.between(rangeStart, rangeEnd, true);
+
+      if (occurrences.length === 0) {
+        return [buildScheduleEvent(event, baseId, baseStartAt, baseEndAt)];
+      }
+
+      const durationMs = baseEndAt.getTime() - baseStartAt.getTime();
+      return occurrences.map((occurrence) => {
+        const startAt = new Date(occurrence);
+        const endAt = new Date(startAt.getTime() + durationMs);
+        const occurrenceId = `event-${event.id}-occ-${startAt.getTime()}`;
+        return buildScheduleEvent(event, occurrenceId, startAt, endAt);
+      });
     });
+
+    return { scheduleEvents, occurrenceOverrides };
   }, [filteredEvents, timeZone]);
+
+  useEffect(() => {
+    occurrenceOverridesRef.current = scheduleData.occurrenceOverrides;
+  }, [scheduleData.occurrenceOverrides]);
 
   const calendar = useNextCalendarApp({
     theme: 'shadcn',
     views: [createViewMonthAgenda(), createViewDay(), createViewWeek(), createViewMonthGrid()],
-    events: scheduleEvents,
+    events: scheduleData.scheduleEvents,
     plugins: [eventsService],
     timezone: timeZone,
     isDark: theme === 'dark' || (theme === 'system' && prefersDark),
@@ -337,8 +426,8 @@ export default function CalendarPage() {
 
   useEffect(() => {
     if (!calendar) return;
-    eventsService.set(scheduleEvents);
-  }, [calendar, eventsService, scheduleEvents]);
+    eventsService.set(scheduleData.scheduleEvents);
+  }, [calendar, eventsService, scheduleData.scheduleEvents]);
 
   return (
     <div className="p-4">

@@ -20,6 +20,35 @@ export async function getEvents() {
   }
 }
 
+export async function getEventsWithRecurrence() {
+  try {
+    const userId = await getCurrentUserId();
+    const rows = await db
+      .select({
+        event: events,
+        recurrenceRule: recurrenceRules.rrule,
+      })
+      .from(events)
+      .leftJoin(
+        recurrenceRules,
+        and(
+          eq(recurrenceRules.itemId, events.id),
+          eq(recurrenceRules.itemType, 'event')
+        )
+      )
+      .where(eq(events.userId, userId))
+      .orderBy(asc(events.startAt));
+
+    return rows.map((row) => ({
+      ...row.event,
+      recurrenceRule: row.recurrenceRule ?? null,
+    }));
+  } catch (error) {
+    console.error('[events:getWithRecurrence] Failed:', error);
+    return [];
+  }
+}
+
 export async function getEventById(id: number) {
   try {
     const userId = await getCurrentUserId();
