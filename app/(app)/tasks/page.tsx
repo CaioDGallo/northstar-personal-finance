@@ -360,7 +360,7 @@ export default function TasksPage() {
     <div className="p-4">
       <div className="flex items-center justify-between mb-6 flex-col md:flex-row space-y-4 md:space-y-0">
         <h1 className="text-2xl font-bold">{tNav('tasks')}</h1>
-        <div className="flex gap-2 w-full justify-end">
+        <div className="flex gap-2 w-full justify-start">
           <AlertDialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen}>
             <AlertDialogTrigger asChild>
               <Button variant="hollow">{t('addTask')}</Button>

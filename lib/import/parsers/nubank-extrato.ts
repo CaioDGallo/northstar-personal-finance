@@ -1,4 +1,5 @@
 import type { ImportTemplate, ParseResult, ValidatedImportRow, ImportRowError } from '../types';
+import { simplifyDescription } from './nubank-extrato-simplify';
 
 export const nubankExtratoParser: ImportTemplate = {
   id: 'nubank-extrato',
@@ -93,7 +94,7 @@ export const nubankExtratoParser: ImportTemplate = {
 
       rows.push({
         date: isoDate,
-        description: description.trim(),
+        description: simplifyDescription(description.trim()).simplified,
         amountCents,
         rowIndex: index + 1,
         externalId: identifier,

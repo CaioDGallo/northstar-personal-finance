@@ -345,7 +345,7 @@ export default function CalendarPage() {
     <div className="p-4">
       <div className="flex items-center justify-between mb-6 flex-col md:flex-row space-y-4 md:space-y-0">
         <h1 className="text-2xl font-bold">{t('title')}</h1>
-        <div className="flex gap-2 w-full justify-end">
+        <div className="flex gap-2 w-full justify-start">
           <AlertDialog open={eventDialogOpen} onOpenChange={setEventDialogOpen}>
             <AlertDialogTrigger asChild>
               <Button variant="hollow">{t('addEvent')}</Button>
