@@ -494,7 +494,8 @@
     "statusPending": "Pending",
     "statusInProgress": "In Progress",
     "statusCompleted": "Completed",
-    "statusCancelled": "Cancelled"
+    "statusCancelled": "Cancelled",
+    "invalidDateTime": "Start time must be before due time"
   },
   "preferences": {
     "title": "Preferences",

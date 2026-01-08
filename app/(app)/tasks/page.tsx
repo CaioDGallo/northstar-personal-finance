@@ -62,6 +62,7 @@ export default function TasksPage() {
     pending: true,
     inProgress: true,
     completed: true,
+    cancelled: false,
   });
   const [priorityFilters, setPriorityFilters] = useState({
     low: true,
@@ -70,7 +71,7 @@ export default function TasksPage() {
     critical: true,
   });
 
-  const toggleStatus = (key: 'pending' | 'inProgress' | 'completed') => {
+  const toggleStatus = (key: 'pending' | 'inProgress' | 'completed' | 'cancelled') => {
     setStatusFilters(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
@@ -403,6 +404,17 @@ export default function TasksPage() {
               className='p-4'
             >
               <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} />
+            </Button>
+            <Button
+              variant={statusFilters.cancelled ? 'popout' : 'hollow'}
+              size="icon-sm"
+              onClick={() => toggleStatus('cancelled')}
+              aria-label={t('status.cancelled')}
+              aria-pressed={statusFilters.cancelled}
+              title={t('status.cancelled')}
+              className='p-4'
+            >
+              <HugeiconsIcon icon={CircleIcon} strokeWidth={2} />
             </Button>
           </div>
         </div>

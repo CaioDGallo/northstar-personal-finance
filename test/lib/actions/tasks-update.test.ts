@@ -167,7 +167,7 @@ describe('Task Actions - Update Task', () => {
     expect(jobs).toHaveLength(0);
   });
 
-  it('fails when status completed has no completedAt', async () => {
+  it('sets completedAt when status changes to completed', async () => {
     const [task] = await db
       .insert(schema.tasks)
       .values(createTestTask({ title: 'Incomplete Completion' }))
@@ -175,10 +175,10 @@ describe('Task Actions - Update Task', () => {
 
     const result = await updateTask(task.id, { status: 'completed' });
 
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
 
     const [unchanged] = await db.select().from(schema.tasks).where(eq(schema.tasks.id, task.id));
-    expect(unchanged.status).toBe('pending');
-    expect(unchanged.completedAt).toBeNull();
+    expect(unchanged.status).toBe('completed');
+    expect(unchanged.completedAt).toBeInstanceOf(Date);
   });
 });

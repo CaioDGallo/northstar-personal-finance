@@ -133,40 +133,23 @@ export async function deleteRecurrenceRule(id: number): Promise<ActionResult> {
 export async function getRecurrenceRuleByItem(itemType: 'event' | 'task', itemId: number) {
   try {
     const userId = await getCurrentUserId();
-    const [rule] = await db
-      .select()
-      .from(recurrenceRules)
-      .where(and(
-        eq(recurrenceRules.itemType, itemType),
-        eq(recurrenceRules.itemId, itemId)
-      ))
-      .limit(1);
-
-    if (!rule) {
-      return undefined;
-    }
-
     if (itemType === 'event') {
-      const [event] = await db
-        .select()
-        .from(events)
-        .where(and(eq(events.id, itemId), eq(events.userId, userId)))
+      const [row] = await db
+        .select({ rule: recurrenceRules })
+        .from(recurrenceRules)
+        .innerJoin(events, and(eq(events.id, recurrenceRules.itemId), eq(events.userId, userId)))
+        .where(and(eq(recurrenceRules.itemType, 'event'), eq(recurrenceRules.itemId, itemId)))
         .limit(1);
-      if (!event) {
-        return undefined;
-      }
-    } else {
-      const [task] = await db
-        .select()
-        .from(tasks)
-        .where(and(eq(tasks.id, itemId), eq(tasks.userId, userId)))
-        .limit(1);
-      if (!task) {
-        return undefined;
-      }
+      return row?.rule;
     }
 
-    return rule;
+    const [row] = await db
+      .select({ rule: recurrenceRules })
+      .from(recurrenceRules)
+      .innerJoin(tasks, and(eq(tasks.id, recurrenceRules.itemId), eq(tasks.userId, userId)))
+      .where(and(eq(recurrenceRules.itemType, 'task'), eq(recurrenceRules.itemId, itemId)))
+      .limit(1);
+    return row?.rule;
   } catch (error) {
     console.error('[recurrence:getByItem] Failed:', error);
     return undefined;

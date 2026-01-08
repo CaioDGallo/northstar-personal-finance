@@ -494,7 +494,8 @@
     "statusPending": "Pendente",
     "statusInProgress": "Em Progresso",
     "statusCompleted": "Concluído",
-    "statusCancelled": "Cancelado"
+    "statusCancelled": "Cancelado",
+    "invalidDateTime": "O horário de início deve ser antes do vencimento"
   },
   "preferences": {
     "title": "Preferências",

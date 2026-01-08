@@ -92,17 +92,19 @@ describe('Task Actions - Create Task', () => {
       expect(task.status).toBe('pending');
     });
 
-    it('fails when status completed has no completedAt', async () => {
+    it('sets completedAt when status is completed', async () => {
       const result = await createTask({
         title: 'Completed Task',
         dueAt: new Date('2026-02-01T10:00:00Z'),
         status: 'completed',
       });
 
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
 
       const tasks = await db.select().from(schema.tasks);
-      expect(tasks).toHaveLength(0);
+      expect(tasks).toHaveLength(1);
+      expect(tasks[0].status).toBe('completed');
+      expect(tasks[0].completedAt).toBeInstanceOf(Date);
     });
 
     it('revalidates calendar and tasks paths', async () => {

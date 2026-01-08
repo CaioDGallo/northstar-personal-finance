@@ -67,7 +67,13 @@ export async function getTaskById(id: number) {
 export async function createTask(data: Omit<NewTask, 'id' | 'userId' | 'createdAt' | 'updatedAt'>): Promise<ActionResult> {
   try {
     const userId = await getCurrentUserId();
-    const [task] = await db.insert(tasks).values({ ...data, userId }).returning();
+    const completedAt = data.status === 'completed'
+      ? (data.completedAt ?? new Date())
+      : null;
+    const [task] = await db
+      .insert(tasks)
+      .values({ ...data, userId, completedAt })
+      .returning();
     await scheduleNotificationJobs('task', task.id, task.dueAt);
     revalidatePath('/calendar');
     revalidatePath('/tasks');
@@ -92,7 +98,21 @@ export async function updateTask(id: number, data: Partial<Omit<NewTask, 'id' | 
       return { success: false, error: await t('errors.notFound') };
     }
     
-    await db.update(tasks).set({ ...data, updatedAt: new Date() }).where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
+    const nextStatus = data.status ?? task.status;
+    let nextCompletedAt = data.completedAt ?? task.completedAt ?? null;
+
+    if (nextStatus === 'completed') {
+      if (!nextCompletedAt) {
+        nextCompletedAt = new Date();
+      }
+    } else {
+      nextCompletedAt = null;
+    }
+
+    await db
+      .update(tasks)
+      .set({ ...data, completedAt: nextCompletedAt, updatedAt: new Date() })
+      .where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
     
     if (data.dueAt) {
       await scheduleNotificationJobs('task', id, data.dueAt);
@@ -166,7 +186,10 @@ export async function completeTask(id: number): Promise<ActionResult> {
 export async function cancelTask(id: number): Promise<ActionResult> {
   try {
     const userId = await getCurrentUserId();
-    await db.update(tasks).set({ status: 'cancelled', updatedAt: new Date() }).where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
+    await db
+      .update(tasks)
+      .set({ status: 'cancelled', completedAt: null, updatedAt: new Date() })
+      .where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
     revalidatePath('/calendar');
     revalidatePath('/tasks');
     revalidateTag('tasks', 'default');
@@ -180,7 +203,10 @@ export async function cancelTask(id: number): Promise<ActionResult> {
 export async function startTask(id: number): Promise<ActionResult> {
   try {
     const userId = await getCurrentUserId();
-    await db.update(tasks).set({ status: 'in_progress', updatedAt: new Date() }).where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
+    await db
+      .update(tasks)
+      .set({ status: 'in_progress', completedAt: null, updatedAt: new Date() })
+      .where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
     revalidatePath('/calendar');
     revalidatePath('/tasks');
     revalidateTag('tasks', 'default');

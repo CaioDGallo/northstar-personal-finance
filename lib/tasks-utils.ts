@@ -4,6 +4,7 @@ type TaskStatusFilters = {
   pending: boolean;
   inProgress: boolean;
   completed: boolean;
+  cancelled: boolean;
 };
 
 type TaskPriorityFilters = {
@@ -39,7 +40,8 @@ export function filterTasks<T extends Pick<Task, 'status' | 'priority'>>(
     const statusMatch =
       (task.status === 'pending' && statusFilters.pending) ||
       (task.status === 'in_progress' && statusFilters.inProgress) ||
-      (task.status === 'completed' && statusFilters.completed);
+      (task.status === 'completed' && statusFilters.completed) ||
+      (task.status === 'cancelled' && statusFilters.cancelled);
     if (!statusMatch) return false;
 
     return !!priorityFilters[task.priority];

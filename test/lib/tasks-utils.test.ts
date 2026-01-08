@@ -44,7 +44,7 @@ describe('tasks-utils', () => {
         priority: 'low' | 'medium' | 'high' | 'critical';
       }>;
 
-      const statusFilters = { pending: true, inProgress: true, completed: false };
+      const statusFilters = { pending: true, inProgress: true, completed: false, cancelled: false };
       const priorityFilters = { low: true, medium: true, high: true, critical: true };
 
       const filtered = filterTasks(tasks, statusFilters, priorityFilters);
@@ -62,7 +62,7 @@ describe('tasks-utils', () => {
         priority: 'low' | 'medium' | 'high' | 'critical';
       }>;
 
-      const statusFilters = { pending: true, inProgress: true, completed: true };
+      const statusFilters = { pending: true, inProgress: true, completed: true, cancelled: true };
       const priorityFilters = { low: false, medium: true, high: true, critical: true };
 
       const filtered = filterTasks(tasks, statusFilters, priorityFilters);

@@ -125,6 +125,11 @@ export function TaskForm({ task, onSuccess }: TaskFormProps) {
           })()
         : null;
 
+      if (startAtDateTime && startAtDateTime > dueDateTime) {
+        setError(t('invalidDateTime'));
+        return;
+      }
+
       const data = {
         title,
         description: description || null,

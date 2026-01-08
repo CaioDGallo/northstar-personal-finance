@@ -119,6 +119,12 @@ export async function getNotificationsByItem(itemType: 'event' | 'task', itemId:
 
 export async function scheduleNotificationJobs(itemType: 'event' | 'task', itemId: number, triggerDate: Date) {
   try {
+    await db.delete(notificationJobs).where(and(
+      eq(notificationJobs.itemType, itemType),
+      eq(notificationJobs.itemId, itemId),
+      eq(notificationJobs.status, 'pending')
+    ));
+
     const settings = await getUserSettings();
     if (settings?.notificationsEnabled === false) {
       return;
@@ -129,12 +135,6 @@ export async function scheduleNotificationJobs(itemType: 'event' | 'task', itemI
     if (notificationConfigs.length === 0) {
       return;
     }
-
-    await db.delete(notificationJobs).where(and(
-      eq(notificationJobs.itemType, itemType),
-      eq(notificationJobs.itemId, itemId),
-      eq(notificationJobs.status, 'pending')
-    ));
 
     for (const config of notificationConfigs) {
       if (!config.enabled) continue;
