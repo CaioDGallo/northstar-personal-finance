@@ -1,4 +1,4 @@
-import type { NewAccount, NewCategory, NewTransaction, NewEntry, NewIncome, NewEvent } from '@/lib/schema';
+import type { NewAccount, NewCategory, NewTransaction, NewEntry, NewIncome, NewEvent, NewTask } from '@/lib/schema';
 
 export const TEST_USER_ID = 'test-user-fixtures-id';
 
@@ -112,6 +112,16 @@ export function createTestEvent(overrides: Partial<NewEvent> = {}): NewEvent {
     title: 'Test Event',
     startAt,
     endAt,
+    ...overrides,
+  };
+}
+
+export function createTestTask(overrides: Partial<NewTask> = {}): NewTask {
+  const dueAt = new Date('2026-02-01T12:00:00Z');
+  return {
+    userId: TEST_USER_ID,
+    title: 'Test Task',
+    dueAt,
     ...overrides,
   };
 }

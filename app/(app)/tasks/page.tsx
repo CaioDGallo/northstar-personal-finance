@@ -16,6 +16,7 @@ import { deleteTask, getTasksWithRecurrence } from '@/lib/actions/tasks';
 import { getUserSettings } from '@/lib/actions/user-settings';
 import { type Task, type UserSettings } from '@/lib/schema';
 import { parseRRule } from '@/lib/recurrence';
+import { filterTasks, resolveTaskRange } from '@/lib/tasks-utils';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -108,19 +109,6 @@ function resolveRecurrenceWindow(rule: ReturnType<typeof parseRRule>, baseStartA
   const rangeEnd = addMonthsToDate(anchor, 6);
 
   return { rangeStart, rangeEnd };
-}
-
-function resolveTaskRange(task: Task) {
-  if (task.startAt && task.durationMinutes) {
-    const taskStart = toDate(task.startAt);
-    return {
-      startAt: taskStart,
-      endAt: new Date(taskStart.getTime() + task.durationMinutes * 60 * 1000),
-    };
-  }
-
-  const taskDue = toDate(task.dueAt);
-  return { startAt: taskDue, endAt: taskDue };
 }
 
 export default function TasksPage() {
@@ -334,19 +322,7 @@ export default function TasksPage() {
   }, [handleEventItemEdit, handleEventItemDelete]);
 
   const filteredTasks = useMemo(() => {
-    return tasks.filter((task) => {
-      // Status filter
-      const statusMatch =
-        (task.status === 'pending' && statusFilters.pending) ||
-        (task.status === 'in_progress' && statusFilters.inProgress) ||
-        (task.status === 'completed' && statusFilters.completed);
-      if (!statusMatch) return false;
-
-      // Priority filter
-      if (!priorityFilters[task.priority]) return false;
-
-      return true;
-    });
+    return filterTasks(tasks, statusFilters, priorityFilters);
   }, [tasks, statusFilters, priorityFilters]);
 
   const scheduleData = useMemo(() => {
