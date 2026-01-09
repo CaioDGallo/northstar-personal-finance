@@ -1,15 +1,23 @@
 import type { ParseResult, ImportRowWithSuggestion } from '@/lib/import/types';
-import { centsToDisplay, formatDate } from '@/lib/utils';
+import { centsToDisplay, formatDate, cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Tick02Icon } from '@hugeicons/core-free-icons';
+import { Button } from '@/components/ui/button';
 
 type Props = {
   parseResult: ParseResult;
   rowsWithSuggestions?: ImportRowWithSuggestion[];
+  selectedRows: Set<number>;
+  onToggleRow: (rowIndex: number) => void;
+  onSelectAll: () => void;
+  onDeselectAll: () => void;
 };
 
-export function ImportPreview({ parseResult, rowsWithSuggestions }: Props) {
+export function ImportPreview({ parseResult, rowsWithSuggestions, selectedRows, onToggleRow, onSelectAll, onDeselectAll }: Props) {
   const { rows, errors, skipped } = parseResult;
   const tParsers = useTranslations('parsers');
+  const t = useTranslations('import');
 
   const displayRows = rowsWithSuggestions && rowsWithSuggestions.length > 0 ? rowsWithSuggestions : rows;
   const hasSuggestions = rowsWithSuggestions && rowsWithSuggestions.length > 0;
@@ -45,6 +53,16 @@ export function ImportPreview({ parseResult, rowsWithSuggestions }: Props) {
             <span className="font-medium text-gray-500">{skipped}</span>
           </div>
         )}
+        <div className="flex items-center justify-between text-sm mt-2 pt-2 border-t dark:border-gray-800">
+          <span className="text-gray-600 dark:text-gray-400">{t('selectedCount', { selected: selectedRows.size, total: rows.length })}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={selectedRows.size === rows.length ? onDeselectAll : onSelectAll}
+          >
+            {selectedRows.size === rows.length ? t('deselectAll') : t('selectAll')}
+          </Button>
+        </div>
       </div>
 
       {/* Preview Table */}
@@ -54,6 +72,7 @@ export function ImportPreview({ parseResult, rowsWithSuggestions }: Props) {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0">
                 <tr>
+                  <th className="px-4 py-2 w-12"></th>
                   <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-400">Date</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-400">Description</th>
                   {hasSuggestions && (
@@ -65,8 +84,28 @@ export function ImportPreview({ parseResult, rowsWithSuggestions }: Props) {
               <tbody>
                 {displayRows.slice(0, 100).map((row) => {
                   const rowWithSuggestion = row as ImportRowWithSuggestion;
+                  const isSelected = selectedRows.has(row.rowIndex);
                   return (
                     <tr key={row.rowIndex} className="border-t dark:border-gray-800">
+                      <td className="px-4 py-2">
+                        <button
+                          onClick={() => onToggleRow(row.rowIndex)}
+                          className="flex items-center justify-center"
+                        >
+                          <div
+                            className={cn(
+                              'size-6 rounded-full border-2 flex items-center justify-center transition-all',
+                              isSelected
+                                ? 'bg-primary/85 border-green-600'
+                                : 'bg-gray-100/70 dark:bg-gray-800/70 border-gray-400 dark:border-gray-600'
+                            )}
+                          >
+                            {isSelected && (
+                              <HugeiconsIcon icon={Tick02Icon} className="size-3 text-green-600" strokeWidth={4} />
+                            )}
+                          </div>
+                        </button>
+                      </td>
                       <td className="px-4 py-2 text-gray-600 dark:text-gray-400 whitespace-nowrap">
                         {formatDate(row.date)}
                       </td>
@@ -123,7 +162,7 @@ export function ImportPreview({ parseResult, rowsWithSuggestions }: Props) {
                 })}
                 {displayRows.length > 100 && (
                   <tr>
-                    <td colSpan={hasSuggestions ? 4 : 3} className="px-4 py-2 text-center text-gray-500 text-xs">
+                    <td colSpan={hasSuggestions ? 5 : 4} className="px-4 py-2 text-center text-gray-500 text-xs">
                       ... and {displayRows.length - 100} more rows
                     </td>
                   </tr>

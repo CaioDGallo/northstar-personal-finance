@@ -31,6 +31,7 @@ export function ImportModal({ accounts, categories, trigger }: Props) {
   const [accountId, setAccountId] = useState(accounts[0]?.id?.toString() || '');
   const [categoryId, setCategoryId] = useState(categories[0]?.id?.toString() || '');
   const [isImporting, setIsImporting] = useState(false);
+  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
 
   const t = useTranslations('import');
   const tCommon = useTranslations('common');
@@ -74,24 +75,27 @@ export function ImportModal({ accounts, categories, trigger }: Props) {
   };
 
   const handleImport = async () => {
-    if (!parseResult || parseResult.rows.length === 0) return;
+    if (!parseResult || parseResult.rows.length === 0 || selectedRows.size === 0) return;
 
     setIsImporting(true);
 
     try {
+      // Filter rows by selected indices
+      const rowsToImport = parseResult.rows.filter((r) => selectedRows.has(r.rowIndex));
+
       // Use importMixed if any row has type info (parsers that distinguish income/expense)
-      const hasTypeInfo = parseResult.rows.some((r) => r.type !== undefined);
+      const hasTypeInfo = rowsToImport.some((r) => r.type !== undefined);
 
       if (hasTypeInfo) {
         const categoryOverrides: Record<number, number> = {};
         for (const row of rowsWithSuggestions) {
-          if (row.suggestedCategory) {
+          if (row.suggestedCategory && selectedRows.has(row.rowIndex)) {
             categoryOverrides[row.rowIndex] = row.suggestedCategory.id;
           }
         }
 
         const result = await importMixed({
-          rows: parseResult.rows,
+          rows: rowsToImport,
           accountId: parseInt(accountId),
           categoryOverrides,
         });
@@ -120,7 +124,7 @@ export function ImportModal({ accounts, categories, trigger }: Props) {
       } else {
         // Use importExpenses for single-type imports
         const result = await importExpenses({
-          rows: parseResult.rows,
+          rows: rowsToImport,
           accountId: parseInt(accountId),
           categoryId: parseInt(categoryId),
         });
@@ -145,6 +149,29 @@ export function ImportModal({ accounts, categories, trigger }: Props) {
     setStep('template');
     setSelectedTemplate(null);
     setParseResult(null);
+    setSelectedRows(new Set());
+  };
+
+  const handleToggleRow = (rowIndex: number) => {
+    setSelectedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(rowIndex)) {
+        next.delete(rowIndex);
+      } else {
+        next.add(rowIndex);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (parseResult) {
+      setSelectedRows(new Set(parseResult.rows.map((r) => r.rowIndex)));
+    }
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedRows(new Set());
   };
 
   return (
@@ -229,7 +256,14 @@ export function ImportModal({ accounts, categories, trigger }: Props) {
                 <span className="font-medium text-gray-900 dark:text-gray-100">{t('configure')}</span>
               </div>
 
-              <ImportPreview parseResult={parseResult} rowsWithSuggestions={rowsWithSuggestions} />
+              <ImportPreview
+                parseResult={parseResult}
+                rowsWithSuggestions={rowsWithSuggestions}
+                selectedRows={selectedRows}
+                onToggleRow={handleToggleRow}
+                onSelectAll={handleSelectAll}
+                onDeselectAll={handleDeselectAll}
+              />
 
               <FieldGroup>
                 <Field>
@@ -274,10 +308,10 @@ export function ImportModal({ accounts, categories, trigger }: Props) {
                 </Button>
                 <Button
                   onClick={handleImport}
-                  disabled={isImporting || parseResult.rows.length === 0}
+                  disabled={isImporting || selectedRows.size === 0}
                   className="flex-1"
                 >
-                  {isImporting ? tCommon('importing') : t('importExpenses', { count: parseResult.rows.length })}
+                  {isImporting ? tCommon('importing') : t('importExpenses', { count: selectedRows.size })}
                 </Button>
               </div>
             </div>
