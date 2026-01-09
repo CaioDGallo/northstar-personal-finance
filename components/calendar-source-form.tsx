@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { AlertDialogCancel, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { useTranslations } from 'next-intl';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Tick02Icon } from '@hugeicons/core-free-icons';
 
 type CalendarSourceFormProps = {
   source?: CalendarSource;
@@ -135,21 +137,46 @@ export function CalendarSourceForm({ source, onSuccess }: CalendarSourceFormProp
 
         <Field className='pb-6'>
           <FieldLabel>{t('color')}</FieldLabel>
-          <div className="flex gap-2">
-            {PRESET_COLORS.map((presetColor) => (
-              <button
-                key={presetColor}
-                type="button"
-                className="size-8 rounded-full border-2 transition-all"
-                style={{
-                  backgroundColor: presetColor,
-                  borderColor: color === presetColor ? '#000' : 'transparent',
-                  transform: color === presetColor ? 'scale(1.1)' : 'scale(1)',
-                }}
-                onClick={() => setColor(presetColor)}
-                aria-label={`Select color ${presetColor}`}
-              />
-            ))}
+          <div className="flex gap-3">
+            {PRESET_COLORS.map((presetColor) => {
+              const isSelected = color === presetColor;
+              return (
+                <button
+                  key={presetColor}
+                  type="button"
+                  className="relative size-8 rounded-full transition-all duration-200 hover:scale-110 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2"
+                  style={{
+                    backgroundColor: presetColor,
+                  }}
+                  onClick={() => setColor(presetColor)}
+                  aria-label={`Select color ${presetColor}`}
+                  aria-pressed={isSelected}
+                >
+                  {/* Selection indicator */}
+                  {isSelected && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <HugeiconsIcon
+                        icon={Tick02Icon}
+                        className="size-5 text-white drop-shadow-lg"
+                        strokeWidth={3}
+                      />
+                    </div>
+                  )}
+                  {/* Ring overlay for selected state */}
+                  {isSelected && (
+                    <div
+                      className="absolute -inset-1 rounded-full border-2 border-zinc-900 dark:border-zinc-100"
+                      aria-hidden="true"
+                    />
+                  )}
+                  {/* Hover ring */}
+                  <div
+                    className="absolute -inset-1 rounded-full border-2 border-zinc-400 opacity-0 transition-opacity hover:opacity-50"
+                    aria-hidden="true"
+                  />
+                </button>
+              );
+            })}
           </div>
         </Field>
       </FieldGroup>
