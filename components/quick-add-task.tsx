@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, KeyboardEvent, useRef } from 'react';
-import { parseTaskInput, type ParsedTask } from '@/lib/natural-language-parser';
-import { Input } from '@/components/ui/input';
+import { useState } from 'react';
+import { type ParsedTask } from '@/lib/natural-language-parser';
+import { QuickAddInput } from '@/components/quick-add-input';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -10,51 +10,48 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { TaskForm } from '@/components/task-form';
+import { EventForm } from '@/components/event-form';
 import { useTranslations } from 'next-intl';
-import { type Task } from '@/lib/schema';
+import { type Task, type Event } from '@/lib/schema';
 
 interface QuickAddTaskProps {
   onSuccess?: () => void;
+  /** Default type when no prefix specified */
+  defaultType?: 'task' | 'event';
 }
 
-export function QuickAddTask({ onSuccess }: QuickAddTaskProps) {
+export function QuickAddTask({ onSuccess, defaultType = 'task' }: QuickAddTaskProps) {
   const [input, setInput] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [parsedData, setParsedData] = useState<ParsedTask | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [itemType, setItemType] = useState<'task' | 'event'>('task');
   const t = useTranslations('quickAdd');
   const tCalendar = useTranslations('calendar');
 
-  function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter' && input.trim()) {
-      e.preventDefault();
-      const parsed = parseTaskInput(input.trim());
+  function handleSubmit(parsed: ParsedTask, type: 'task' | 'event') {
+    if (!parsed.title) return;
 
-      // Only open dialog if we have a title
-      if (parsed.title) {
-        setParsedData(parsed);
-        setDialogOpen(true);
-      }
-    }
+    setParsedData(parsed);
+    setItemType(type);
+    setDialogOpen(true);
   }
 
   function handleDialogClose(open: boolean) {
     setDialogOpen(open);
     if (!open) {
       setParsedData(null);
-      // Keep the input text so user can edit if needed
     }
   }
 
-  function handleTaskCreated() {
+  function handleCreated() {
     setDialogOpen(false);
     setParsedData(null);
-    setInput(''); // Clear input after successful creation
+    setInput('');
     onSuccess?.();
   }
 
-  // Convert parsed data to initial task values for TaskForm
-  const initialTask = parsedData ? {
+  // Convert parsed data to initial task values
+  const initialTask = parsedData && itemType === 'task' ? {
     title: parsedData.title,
     dueAt: parsedData.dueAt || new Date(),
     startAt: parsedData.startAt || null,
@@ -65,14 +62,29 @@ export function QuickAddTask({ onSuccess }: QuickAddTaskProps) {
     location: null,
   } : null;
 
+  // Convert parsed data to initial event values
+  const initialEvent = parsedData && itemType === 'event' ? {
+    title: parsedData.title,
+    startAt: parsedData.startAt || parsedData.dueAt || new Date(),
+    endAt: parsedData.dueAt || (() => {
+      const start = parsedData.startAt || new Date();
+      const duration = parsedData.durationMinutes || 60;
+      return new Date(start.getTime() + duration * 60 * 1000);
+    })(),
+    isAllDay: false,
+    priority: parsedData.priority || 'medium',
+    status: 'scheduled' as const,
+    description: null,
+    location: null,
+  } : null;
+
   return (
     <>
-      <Input
-        ref={inputRef}
-        type="text"
+      <QuickAddInput
         value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={handleKeyDown}
+        onChange={setInput}
+        onParsedSubmit={handleSubmit}
+        defaultType={defaultType}
         placeholder={t('placeholder')}
         className="max-w-md"
       />
@@ -80,12 +92,20 @@ export function QuickAddTask({ onSuccess }: QuickAddTaskProps) {
       <AlertDialog open={dialogOpen} onOpenChange={handleDialogClose}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{tCalendar('addTask')}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {itemType === 'task' ? tCalendar('addTask') : tCalendar('addEvent')}
+            </AlertDialogTitle>
           </AlertDialogHeader>
-          {initialTask && (
+          {itemType === 'task' && initialTask && (
             <TaskForm
               task={initialTask as Task}
-              onSuccess={handleTaskCreated}
+              onSuccess={handleCreated}
+            />
+          )}
+          {itemType === 'event' && initialEvent && (
+            <EventForm
+              event={initialEvent as Event}
+              onSuccess={handleCreated}
             />
           )}
         </AlertDialogContent>

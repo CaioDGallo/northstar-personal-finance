@@ -23,6 +23,21 @@ export interface ParsedTask {
   priority?: 'low' | 'medium' | 'high' | 'critical';
 }
 
+export interface TokenMatch {
+  type: 'prefix' | 'date' | 'duration' | 'priority' | 'text';
+  text: string;
+  start: number;
+  end: number;
+  isPartial?: boolean;
+  value: Date | number | string | null;
+}
+
+export interface ParsedInputWithTokens {
+  tokens: TokenMatch[];
+  parsed: ParsedTask;
+  inferredType: 'task' | 'event';
+}
+
 interface ExtractedPattern {
   pattern: string;
   start: number;
@@ -51,6 +66,52 @@ const PRIORITY_MAP: Record<string, 'low' | 'medium' | 'high' | 'critical'> = {
   '3': 'medium',
   '4': 'low',
 };
+
+/**
+ * Common date keywords for partial match detection
+ */
+const DATE_KEYWORDS = [
+  'today', 'tomorrow', 'tonight',
+  'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+  'next', 'week', 'month', 'year',
+  'january', 'february', 'march', 'april', 'may', 'june',
+  'july', 'august', 'september', 'october', 'november', 'december',
+];
+
+/**
+ * Detect partial matches for tentative highlighting
+ */
+function findPartialMatches(text: string): TokenMatch[] {
+  const partialTokens: TokenMatch[] = [];
+  const words = text.split(/\s+/);
+  let position = 0;
+
+  for (const word of words) {
+    const wordLower = word.toLowerCase();
+
+    // Check for partial date keyword matches (min 3 chars)
+    if (word.length >= 3) {
+      const matchedKeyword = DATE_KEYWORDS.find(
+        keyword => keyword.startsWith(wordLower) && keyword !== wordLower
+      );
+
+      if (matchedKeyword) {
+        partialTokens.push({
+          type: 'date',
+          text: word,
+          start: position,
+          end: position + word.length,
+          value: null,
+          isPartial: true,
+        });
+      }
+    }
+
+    position += word.length + 1; // +1 for space
+  }
+
+  return partialTokens;
+}
 
 /**
  * Parse natural language input into structured task data
@@ -147,5 +208,175 @@ export function parseTaskInput(
     startAt,
     durationMinutes,
     priority,
+  };
+}
+
+/**
+ * Parse input with position-aware token extraction
+ * Returns tokens with their positions for badge highlighting
+ */
+export function parseInputWithTokens(
+  text: string,
+  referenceDate: Date = new Date()
+): ParsedInputWithTokens {
+  const tokens: TokenMatch[] = [];
+  let workingText = text;
+
+  // 1. Extract prefix (event: or task:)
+  const prefixMatch = workingText.match(/^(event|task)\s*:\s*/i);
+  let explicitType: 'task' | 'event' | null = null;
+
+  if (prefixMatch) {
+    const prefixType = prefixMatch[1].toLowerCase() as 'task' | 'event';
+    explicitType = prefixType;
+    tokens.push({
+      type: 'prefix',
+      text: prefixMatch[0],
+      start: 0,
+      end: prefixMatch[0].length,
+      value: prefixType,
+      isPartial: false,
+    });
+    workingText = workingText.slice(prefixMatch[0].length);
+  }
+
+  // Adjust offset for removed prefix
+  const prefixOffset = prefixMatch ? prefixMatch[0].length : 0;
+
+  // 2. Extract duration
+  let durationMinutes: number | undefined;
+  const durationMatch = workingText.match(DURATION_REGEX);
+  if (durationMatch && durationMatch.index !== undefined) {
+    const value = parseInt(durationMatch[1]);
+    const unit = durationMatch[2].toLowerCase();
+    durationMinutes = unit.startsWith('h') ? value * 60 : value;
+
+    tokens.push({
+      type: 'duration',
+      text: durationMatch[0],
+      start: prefixOffset + durationMatch.index,
+      end: prefixOffset + durationMatch.index + durationMatch[0].length,
+      value: durationMinutes,
+      isPartial: false,
+    });
+  }
+
+  // 3. Extract date/time using chrono
+  const chronoResults = chrono.parse(workingText, referenceDate, { forwardDate: true });
+  let dueAt: Date | undefined;
+  let startAt: Date | undefined;
+
+  const dateResult = chronoResults.find(result => {
+    // Skip if overlaps with duration
+    if (durationMatch && result.index === durationMatch.index) {
+      return false;
+    }
+    return true;
+  });
+
+  if (dateResult) {
+    dueAt = dateResult.start.date();
+
+    // If duration present and we have time, adjust startAt/dueAt
+    if (durationMinutes && dateResult.start.isCertain('hour')) {
+      startAt = dueAt;
+      dueAt = new Date(startAt.getTime() + durationMinutes * 60 * 1000);
+    }
+
+    tokens.push({
+      type: 'date',
+      text: dateResult.text,
+      start: prefixOffset + dateResult.index,
+      end: prefixOffset + dateResult.index + dateResult.text.length,
+      value: dateResult.start.date(),
+      isPartial: false,
+    });
+  }
+
+  // 4. Extract priority
+  let priority: ParsedTask['priority'] | undefined;
+  const priorityMatch = workingText.match(PRIORITY_REGEX);
+  if (priorityMatch && priorityMatch.index !== undefined) {
+    priority = PRIORITY_MAP[priorityMatch[1]];
+
+    tokens.push({
+      type: 'priority',
+      text: priorityMatch[0],
+      start: prefixOffset + priorityMatch.index,
+      end: prefixOffset + priorityMatch.index + priorityMatch[0].length,
+      value: priority,
+      isPartial: false,
+    });
+  }
+
+  // 5. Build cleaned title (same logic as original)
+  const extractedPatterns: ExtractedPattern[] = [];
+  if (durationMatch) {
+    extractedPatterns.push({
+      pattern: durationMatch[0],
+      start: durationMatch.index!,
+      end: durationMatch.index! + durationMatch[0].length,
+    });
+  }
+  if (dateResult) {
+    extractedPatterns.push({
+      pattern: dateResult.text,
+      start: dateResult.index,
+      end: dateResult.index + dateResult.text.length,
+    });
+  }
+  if (priorityMatch) {
+    extractedPatterns.push({
+      pattern: priorityMatch[0],
+      start: priorityMatch.index!,
+      end: priorityMatch.index! + priorityMatch[0].length,
+    });
+  }
+
+  let cleanedTitle = workingText;
+  const sortedPatterns = extractedPatterns.sort((a, b) => b.start - a.start);
+  for (const pattern of sortedPatterns) {
+    cleanedTitle = cleanedTitle.slice(0, pattern.start) + cleanedTitle.slice(pattern.end);
+  }
+  cleanedTitle = cleanedTitle.replace(/\s+/g, ' ').trim();
+
+  // 6. Infer type (event if time + duration, else task)
+  let inferredType: 'task' | 'event' = 'task';
+  if (explicitType) {
+    inferredType = explicitType;
+  } else if (durationMinutes && dateResult?.start.isCertain('hour')) {
+    inferredType = 'event';
+  }
+
+  // 7. Add partial matches for words not yet fully matched
+  const partialMatches = findPartialMatches(workingText);
+  for (const partial of partialMatches) {
+    // Only add if position doesn't overlap with existing tokens
+    const overlaps = tokens.some(
+      t => (partial.start >= t.start && partial.start < t.end) ||
+           (partial.end > t.start && partial.end <= t.end)
+    );
+    if (!overlaps) {
+      tokens.push({
+        ...partial,
+        start: prefixOffset + partial.start,
+        end: prefixOffset + partial.end,
+      });
+    }
+  }
+
+  // 8. Sort tokens by position
+  tokens.sort((a, b) => a.start - b.start);
+
+  return {
+    tokens,
+    parsed: {
+      title: cleanedTitle,
+      dueAt,
+      startAt,
+      durationMinutes,
+      priority,
+    },
+    inferredType,
   };
 }
