@@ -7,6 +7,8 @@ export interface UseTokenizedInputOptions {
   defaultType?: 'task' | 'event';
   /** Input ref for cursor management */
   inputRef: RefObject<HTMLInputElement | null>;
+  /** External controlled value - if provided, parsing uses this instead of internal state */
+  value?: string;
 }
 
 export interface UseTokenizedInputReturn {
@@ -35,10 +37,13 @@ export interface UseTokenizedInputReturn {
 export function useTokenizedInput(
   options: UseTokenizedInputOptions
 ): UseTokenizedInputReturn {
-  const { defaultType = 'task', inputRef } = options;
+  const { defaultType = 'task', inputRef, value: controlledValue } = options;
 
-  const [value, setValue] = useState('');
+  const [internalValue, setInternalValue] = useState('');
   const [dissolvedRanges, setDissolvedRanges] = useState<Set<string>>(new Set());
+
+  // Use controlled value if provided, otherwise internal value
+  const value = controlledValue !== undefined ? controlledValue : internalValue;
 
   // Defer parsing to not block typing
   const deferredValue = useDeferredValue(value);
@@ -64,7 +69,7 @@ export function useTokenizedInput(
   }, [parseResult.tokens, dissolvedRanges]);
 
   const onChange = useCallback((newValue: string) => {
-    setValue(newValue);
+    setInternalValue(newValue);
 
     // Clear dissolved ranges when text changes significantly
     // (allows re-highlighting of edited text)

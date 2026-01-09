@@ -22,19 +22,24 @@ export interface QuickAddInputProps
 export const QuickAddInput = forwardRef<HTMLInputElement, QuickAddInputProps>(
   ({ value: controlledValue, onChange: controlledOnChange, onParsedSubmit, defaultType = 'task', className, onKeyDown: userOnKeyDown, ...props }, forwardedRef) => {
     const internalInputRef = useRef<HTMLInputElement>(null);
+    const isControlled = controlledValue !== undefined;
 
     const {
-      value,
-      onChange,
+      value: internalValue,
+      onChange: internalOnChange,
       tokens,
       parsedResult,
       itemType,
       handleKeyDown: handleTokenKeyDown,
-    } = useTokenizedInput({ defaultType, inputRef: internalInputRef });
+    } = useTokenizedInput({
+      defaultType,
+      inputRef: internalInputRef,
+      value: isControlled ? controlledValue : undefined,
+    });
 
-    // Support controlled mode
-    const effectiveValue = controlledValue !== undefined ? controlledValue : value;
-    const effectiveOnChange = controlledOnChange || onChange;
+    // Use controlled value/onChange if provided, otherwise use internal
+    const effectiveValue = isControlled ? controlledValue : internalValue;
+    const effectiveOnChange = controlledOnChange || internalOnChange;
 
     const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
       // Handle token dissolve logic
