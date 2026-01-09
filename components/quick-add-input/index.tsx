@@ -31,6 +31,7 @@ export const QuickAddInput = forwardRef<HTMLInputElement, QuickAddInputProps>(
       parsedResult,
       itemType,
       handleKeyDown: handleTokenKeyDown,
+      handleSelectionChange,
     } = useTokenizedInput({
       defaultType,
       inputRef: internalInputRef,
@@ -77,6 +78,9 @@ export const QuickAddInput = forwardRef<HTMLInputElement, QuickAddInputProps>(
           value={effectiveValue}
           onChange={(e) => effectiveOnChange(e.target.value)}
           onKeyDown={handleKeyDown}
+          onSelect={handleSelectionChange}
+          onKeyUp={handleSelectionChange}
+          onClick={handleSelectionChange}
           data-slot="input"
           className={cn(
             // Base input styles (from Input component)

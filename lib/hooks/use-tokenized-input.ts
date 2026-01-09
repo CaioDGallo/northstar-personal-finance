@@ -18,8 +18,8 @@ export interface UseTokenizedInputReturn {
   onChange: (value: string) => void;
   /** Detected tokens with positions */
   tokens: TokenMatch[];
-  /** Set of dissolved token ranges ("start-end" format) */
-  dissolvedRanges: Set<string>;
+  /** Map of dissolved token ranges ("start-end" format) to original text */
+  dissolvedRanges: Map<string, string>;
   /** Parsed result from natural language parser */
   parsedResult: ParsedTask | null;
   /** Inferred or explicit item type */
@@ -27,7 +27,9 @@ export interface UseTokenizedInputReturn {
   /** Handle keyboard events (backspace dissolve logic) */
   handleKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
   /** Manually dissolve a token */
-  dissolveToken: (tokenKey: string) => void;
+  dissolveToken: (tokenKey: string, tokenText: string) => void;
+  /** Handle selection change (track cursor position) */
+  handleSelectionChange: () => void;
 }
 
 /**
@@ -40,7 +42,8 @@ export function useTokenizedInput(
   const { defaultType = 'task', inputRef, value: controlledValue } = options;
 
   const [internalValue, setInternalValue] = useState('');
-  const [dissolvedRanges, setDissolvedRanges] = useState<Set<string>>(new Set());
+  const [dissolvedRanges, setDissolvedRanges] = useState<Map<string, string>>(new Map());
+  const [cursorPos, setCursorPos] = useState<number | null>(null);
 
   // Use controlled value if provided, otherwise internal value
   const value = controlledValue !== undefined ? controlledValue : internalValue;
@@ -60,35 +63,51 @@ export function useTokenizedInput(
     return parseInputWithTokens(deferredValue);
   }, [deferredValue, defaultType]);
 
-  // Filter out dissolved tokens
+  // Filter out dissolved tokens and tokens being actively edited
   const visibleTokens = useMemo(() => {
     return parseResult.tokens.filter(token => {
       const key = `${token.start}-${token.end}`;
-      return !dissolvedRanges.has(key);
+
+      // Hide if dissolved
+      if (dissolvedRanges.has(key)) return false;
+
+      // Hide if cursor is at end of token (user still typing)
+      if (cursorPos !== null && token.end === cursorPos) {
+        return false;
+      }
+
+      return true;
     });
-  }, [parseResult.tokens, dissolvedRanges]);
+  }, [parseResult.tokens, dissolvedRanges, cursorPos]);
 
   const onChange = useCallback((newValue: string) => {
     setInternalValue(newValue);
 
-    // Clear dissolved ranges when text changes significantly
-    // (allows re-highlighting of edited text)
+    // Clear dissolved ranges when text at those positions changes
+    // (allows re-highlighting when user retypes same pattern)
     setDissolvedRanges(prev => {
-      const newSet = new Set<string>();
-      prev.forEach(range => {
+      const newMap = new Map<string, string>();
+      prev.forEach((originalText, range) => {
         const [start, end] = range.split('-').map(Number);
-        // Keep dissolved range if positions still valid
-        if (start < newValue.length && end <= newValue.length) {
-          newSet.add(range);
+        // Keep dissolved range only if text at position is SAME
+        if (end <= newValue.length) {
+          const currentText = newValue.slice(start, end);
+          if (currentText === originalText) {
+            newMap.set(range, originalText);
+          }
         }
       });
-      return newSet;
+      return newMap;
     });
   }, []);
 
-  const dissolveToken = useCallback((tokenKey: string) => {
-    setDissolvedRanges(prev => new Set([...prev, tokenKey]));
+  const dissolveToken = useCallback((tokenKey: string, tokenText: string) => {
+    setDissolvedRanges(prev => new Map([...prev, [tokenKey, tokenText]]));
   }, []);
+
+  const handleSelectionChange = useCallback(() => {
+    setCursorPos(inputRef.current?.selectionStart ?? null);
+  }, [inputRef]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== 'Backspace') return;
@@ -109,7 +128,7 @@ export function useTokenizedInput(
       e.preventDefault();
 
       // Dissolve the token instead of deleting
-      dissolveToken(`${tokenAtCursor.start}-${tokenAtCursor.end}`);
+      dissolveToken(`${tokenAtCursor.start}-${tokenAtCursor.end}`, tokenAtCursor.text);
     }
   }, [inputRef, parseResult.tokens, dissolvedRanges, dissolveToken]);
 
@@ -122,5 +141,6 @@ export function useTokenizedInput(
     itemType: parseResult.inferredType,
     handleKeyDown,
     dissolveToken,
+    handleSelectionChange,
   };
 }
