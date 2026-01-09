@@ -159,9 +159,13 @@ export function EventDetailSheet({
             {event.title}
           </SheetTitle>
 
-          {event.description && (
+          {event.description ? (
             <SheetDescription className="text-xs text-foreground/80 pt-2">
               {event.description}
+            </SheetDescription>
+          ) : (
+            <SheetDescription className="sr-only">
+              {event.type} details
             </SheetDescription>
           )}
         </SheetHeader>
