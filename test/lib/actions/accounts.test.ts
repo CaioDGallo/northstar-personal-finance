@@ -147,40 +147,50 @@ describe('Account Actions', () => {
     });
 
     it('validates required name', async () => {
-      await expect(createAccount({ name: '', type: 'checking' })).rejects.toThrow(
-        'Account name is required'
-      );
+      const result1 = await createAccount({ name: '', type: 'checking' });
+      expect(result1).toEqual({
+        success: false,
+        error: expect.stringContaining('Account name is required'),
+      });
 
-      await expect(createAccount({ name: '   ', type: 'checking' })).rejects.toThrow(
-        'Account name is required'
-      );
+      const result2 = await createAccount({ name: '   ', type: 'checking' });
+      expect(result2).toEqual({
+        success: false,
+        error: expect.stringContaining('Account name is required'),
+      });
     });
 
     it('validates account type', async () => {
       const invalidType = 'brokerage' as unknown as CreateAccountData['type'];
-      await expect(createAccount({ name: 'Invalid', type: invalidType })).rejects.toThrow(
-        'Invalid account type'
-      );
+      const result = await createAccount({ name: 'Invalid', type: invalidType });
+      expect(result).toEqual({
+        success: false,
+        error: expect.stringContaining('Invalid account type'),
+      });
     });
 
     it('validates billing day ranges', async () => {
-      await expect(
-        createAccount({
-          name: 'Bad Closing',
-          type: 'credit_card',
-          closingDay: 0,
-          paymentDueDay: 5,
-        })
-      ).rejects.toThrow('Closing day must be between 1 and 28');
+      const result1 = await createAccount({
+        name: 'Bad Closing',
+        type: 'credit_card',
+        closingDay: 0,
+        paymentDueDay: 5,
+      });
+      expect(result1).toEqual({
+        success: false,
+        error: expect.stringContaining('Closing day must be between 1 and 28'),
+      });
 
-      await expect(
-        createAccount({
-          name: 'Bad Due',
-          type: 'credit_card',
-          closingDay: 10,
-          paymentDueDay: 29,
-        })
-      ).rejects.toThrow('Payment due day must be between 1 and 28');
+      const result2 = await createAccount({
+        name: 'Bad Due',
+        type: 'credit_card',
+        closingDay: 10,
+        paymentDueDay: 29,
+      });
+      expect(result2).toEqual({
+        success: false,
+        error: expect.stringContaining('Payment due day must be between 1 and 28'),
+      });
     });
   });
 
@@ -239,7 +249,11 @@ describe('Account Actions', () => {
     });
 
     it('validates account id', async () => {
-      await expect(updateAccount(0, { name: 'Test' })).rejects.toThrow('Invalid account ID');
+      const result = await updateAccount(0, { name: 'Test' });
+      expect(result).toEqual({
+        success: false,
+        error: expect.stringContaining('Invalid account ID'),
+      });
     });
 
     it('validates billing day ranges on update', async () => {
@@ -248,9 +262,11 @@ describe('Account Actions', () => {
         .values(testAccounts.creditCard)
         .returning();
 
-      await expect(updateAccount(account.id, { closingDay: 0 })).rejects.toThrow(
-        'Closing day must be between 1 and 28'
-      );
+      const result = await updateAccount(account.id, { closingDay: 0 });
+      expect(result).toEqual({
+        success: false,
+        error: expect.stringContaining('Closing day must be between 1 and 28'),
+      });
     });
 
     it('validates empty name on update', async () => {
@@ -259,9 +275,11 @@ describe('Account Actions', () => {
         .values(testAccounts.checking)
         .returning();
 
-      await expect(updateAccount(account.id, { name: '   ' })).rejects.toThrow(
-        'Account name is required'
-      );
+      const result = await updateAccount(account.id, { name: '   ' });
+      expect(result).toEqual({
+        success: false,
+        error: expect.stringContaining('Account name is required'),
+      });
     });
   });
 

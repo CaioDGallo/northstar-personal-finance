@@ -21,16 +21,17 @@ export default function CalendarsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const t = useTranslations('calendarSources');
 
-  useEffect(() => {
-    loadSources();
-  }, []);
-
   async function loadSources() {
     setIsLoading(true);
     const data = await getCalendarSources();
     setSources(data);
     setIsLoading(false);
   }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadSources();
+  }, []);
 
   return (
     <div>

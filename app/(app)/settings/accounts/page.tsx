@@ -21,16 +21,17 @@ export default function AccountsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const t = useTranslations('accounts');
 
-  useEffect(() => {
-    loadAccounts();
-  }, []);
-
   async function loadAccounts() {
     setIsLoading(true);
     const data = await getAccountsWithBalances();
     setAccounts(data);
     setIsLoading(false);
   }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadAccounts();
+  }, []);
 
   // Group accounts by type
   const creditCardAccounts = accounts.filter(acc => acc.type === 'credit_card');

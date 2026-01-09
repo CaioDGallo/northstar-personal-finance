@@ -114,7 +114,7 @@ export function ConvertToFaturaDialog({
               {t('faturaSelectionLabel')}
             </label>
             <Select value={selectedFaturaId} onValueChange={setSelectedFaturaId}>
-              <SelectTrigger className="w-full h-24">
+              <SelectTrigger size='default' className="w-full min-h-14 h-auto">
                 <SelectValue placeholder={t('selectFatura')} />
               </SelectTrigger>
               <SelectContent>

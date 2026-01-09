@@ -218,6 +218,9 @@ export async function createAccount(data: Omit<NewAccount, 'id' | 'userId' | 'cr
     return { success: true };
   } catch (error) {
     console.error('[accounts:create] Failed:', error);
+    if (error instanceof Error) {
+      return { success: false, error: error.message };
+    }
     return { success: false, error: await handleDbError(error, 'errors.failedToCreate') };
   }
 }
@@ -252,6 +255,9 @@ export async function updateAccount(id: number, data: Partial<Omit<NewAccount, '
     return { success: true };
   } catch (error) {
     console.error('[accounts:update] Failed:', error);
+    if (error instanceof Error) {
+      return { success: false, error: error.message };
+    }
     return { success: false, error: await handleDbError(error, 'errors.failedToUpdate') };
   }
 }
