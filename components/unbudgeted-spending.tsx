@@ -3,6 +3,8 @@ import { formatCurrency } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { CategoryIcon } from '@/components/icon-picker';
 import { useTranslations } from 'next-intl';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Add01Icon } from '@hugeicons/core-free-icons';
 
 type UnbudgetedSpendingProps = {
   categoryName: string;
@@ -41,9 +43,10 @@ export function UnbudgetedSpending({
           </div>
           <Link
             href={`/settings/budgets?month=${yearMonth}`}
-            className="text-xs text-blue-600 hover:underline whitespace-nowrap"
+            className="text-blue-600 hover:bg-blue-50 rounded-full p-1.5 transition-colors"
+            title={t('addBudget')}
           >
-            {t('addBudget')}
+            <HugeiconsIcon icon={Add01Icon} className="size-5" />
           </Link>
         </div>
       </CardContent>
