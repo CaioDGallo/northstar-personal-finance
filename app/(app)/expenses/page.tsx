@@ -60,12 +60,6 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
         </div>
       </div>
 
-      <ExpenseFilters
-        accounts={accounts}
-        categories={categories}
-        currentMonth={currentMonth}
-      />
-
       <ExpenseListProvider
         initialExpenses={expenses}
         accounts={accounts}
@@ -73,6 +67,11 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
         filters={filters}
         unpaidFaturas={unpaidFaturas}
       >
+        <ExpenseFilters
+          accounts={accounts}
+          categories={categories}
+          currentMonth={currentMonth}
+        />
         <ExpenseFilterSummary />
         <ExpenseList />
       </ExpenseListProvider>

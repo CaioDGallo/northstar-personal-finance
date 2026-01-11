@@ -58,18 +58,17 @@ export default async function IncomePage({ searchParams }: PageProps) {
         </div>
       </div>
 
-      <IncomeFilters
-        accounts={accounts}
-        categories={categories}
-        currentMonth={currentMonth}
-      />
-
       <IncomeListProvider
         initialIncome={income}
         accounts={accounts}
         categories={categories}
         filters={filters}
       >
+        <IncomeFilters
+          accounts={accounts}
+          categories={categories}
+          currentMonth={currentMonth}
+        />
         <IncomeFilterSummary />
         <IncomeList />
       </IncomeListProvider>
