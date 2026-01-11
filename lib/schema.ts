@@ -145,6 +145,7 @@ export const transfers = pgTable('transfers', {
   type: transferTypeEnum('type').notNull(),
   faturaId: integer('fatura_id').references(() => faturas.id),
   description: text('description'),
+  externalId: text('external_id'), // UUID from bank statement - preserves idempotency when expenses are converted to fatura payments
   createdAt: timestamp('created_at').defaultNow(),
 });
 

@@ -1,0 +1,1 @@
+ALTER TABLE "transfers" ADD COLUMN "external_id" text;

@@ -859,5 +859,63 @@ describe('Fatura Actions', () => {
       // Credit card balance should be 0 (paid off)
       expect(updatedCard.currentBalance).toBe(0);
     });
+
+    it('preserves externalId in transfer for duplicate detection on reimport', async () => {
+      const { fatura, amount } = await seedFaturaWithEntry({ amount: 10000 });
+      const checking = await seedAccount(testAccounts.checking);
+      const category = await seedCategory();
+      const externalId = 'bank-uuid-12345';
+
+      // Create transaction with externalId (simulating an import)
+      const [transaction] = await db
+        .insert(schema.transactions)
+        .values({
+          userId: TEST_USER_ID,
+          description: 'Imported Expense',
+          totalAmount: amount,
+          totalInstallments: 1,
+          categoryId: category.id,
+          externalId,
+        })
+        .returning();
+
+      const [entry] = await db
+        .insert(schema.entries)
+        .values({
+          userId: TEST_USER_ID,
+          transactionId: transaction.id,
+          accountId: checking.id,
+          amount,
+          purchaseDate: '2025-01-10',
+          faturaMonth: '2025-01',
+          dueDate: '2025-01-10',
+          installmentNumber: 1,
+        })
+        .returning();
+
+      await convertExpenseToFaturaPayment(entry.id, fatura.id);
+
+      // Verify transaction is deleted
+      const deletedTransaction = await db
+        .select()
+        .from(schema.transactions)
+        .where(and(eq(schema.transactions.userId, TEST_USER_ID), eq(schema.transactions.id, transaction.id)));
+
+      expect(deletedTransaction).toHaveLength(0);
+
+      // Verify externalId is preserved in the transfer
+      const [transfer] = await db
+        .select()
+        .from(schema.transfers)
+        .where(and(eq(schema.transfers.userId, TEST_USER_ID), eq(schema.transfers.faturaId, fatura.id)));
+
+      expect(transfer).toMatchObject({
+        fromAccountId: checking.id,
+        toAccountId: fatura.accountId,
+        amount,
+        type: 'fatura_payment',
+        externalId,
+      });
+    });
   });
 });

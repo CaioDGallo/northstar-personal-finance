@@ -415,6 +415,7 @@ export async function convertExpenseToFaturaPayment(entryId: number, faturaId: n
         .select({
           id: transactions.id,
           totalInstallments: transactions.totalInstallments,
+          externalId: transactions.externalId,
         })
         .from(transactions)
         .where(and(eq(transactions.userId, userId), eq(transactions.id, entry[0].transactionId)))
@@ -462,7 +463,7 @@ export async function convertExpenseToFaturaPayment(entryId: number, faturaId: n
         throw new Error(await t('errors.amountMismatch'));
       }
 
-      // 4. Create fatura_payment transfer
+      // 4. Create fatura_payment transfer (preserve externalId for duplicate detection on reimport)
       const paymentDate = entry[0].purchaseDate;
       const paymentTimestamp = new Date(paymentDate);
 
@@ -475,6 +476,7 @@ export async function convertExpenseToFaturaPayment(entryId: number, faturaId: n
         type: 'fatura_payment',
         faturaId: faturaId,
         description: `Fatura ${fatura[0].yearMonth}`,
+        externalId: transaction[0].externalId,
       });
 
       // 5. Mark fatura paid

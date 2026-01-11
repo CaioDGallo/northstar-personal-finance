@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { transactions, entries, accounts, categories, income } from '@/lib/schema';
+import { transactions, entries, accounts, categories, income, transfers } from '@/lib/schema';
 import { eq, and, inArray, desc } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import type { ValidatedImportRow, CategorySuggestion } from '@/lib/import/types';
@@ -291,6 +291,7 @@ export async function importMixed(data: ImportMixedData): Promise<ImportMixedRes
     const externalIds = rows.map((r) => r.externalId).filter((id): id is string => !!id);
 
     // Query existing records with these external IDs
+    // Also check transfers table - expenses converted to fatura payments preserve their externalId there
     let existingIds = new Set<string>();
 
     if (externalIds.length > 0) {
@@ -304,9 +305,16 @@ export async function importMixed(data: ImportMixedData): Promise<ImportMixedRes
         .from(income)
         .where(and(eq(income.userId, userId), inArray(income.externalId, externalIds)));
 
+      // Check transfers for externalIds from expenses that were converted to fatura payments
+      const existingTransfers = await db
+        .select({ externalId: transfers.externalId })
+        .from(transfers)
+        .where(and(eq(transfers.userId, userId), inArray(transfers.externalId, externalIds)));
+
       existingIds = new Set([
         ...existingTransactions.map((t) => t.externalId).filter((id): id is string => !!id),
         ...existingIncome.map((i) => i.externalId).filter((id): id is string => !!id),
+        ...existingTransfers.map((t) => t.externalId).filter((id): id is string => !!id),
       ]);
     }
 
