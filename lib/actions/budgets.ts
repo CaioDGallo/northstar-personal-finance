@@ -194,7 +194,8 @@ export const getBudgetsWithSpending = cache(async (yearMonth: string): Promise<B
       })
       .from(budgets)
       .innerJoin(categories, eq(budgets.categoryId, categories.id))
-      .where(and(eq(budgets.userId, userId), eq(budgets.yearMonth, yearMonth)));
+      .where(and(eq(budgets.userId, userId), eq(budgets.yearMonth, yearMonth)))
+      .orderBy(categories.name);
 
     // 2. Get spending by category for the month (using purchaseDate for budget impact)
     const spending = await db
