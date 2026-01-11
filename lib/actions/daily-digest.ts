@@ -1,5 +1,6 @@
 'use server';
 
+import { Temporal } from 'temporal-polyfill';
 import { db } from '@/lib/db';
 import { events, tasks, userSettings } from '@/lib/schema';
 import { eq, and, gte, lte, or } from 'drizzle-orm';
@@ -455,39 +456,21 @@ async function sendDailyDigestEmail(
 }
 
 function getStartAndEndOfDay(date: Date, timeZone: string): { start: Date; end: Date } {
-  // Create a date string in the user's timezone
-  const formatter = new Intl.DateTimeFormat('en-CA', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
-  const dateStr = formatter.format(date); // YYYY-MM-DD format
+  // Convert the current date to a ZonedDateTime in the user's timezone
+  const instant = Temporal.Instant.from(date.toISOString());
+  const zonedDateTime = instant.toZonedDateTimeISO(timeZone);
 
-  // Parse the date parts
-  const [year, month, day] = dateStr.split('-').map(Number);
+  // Get start of day (00:00:00.000) in user's timezone
+  const startOfDay = zonedDateTime.startOfDay();
 
-  // Create start and end of day in user's timezone
-  // We need to find the UTC times that correspond to 00:00 and 23:59:59 in user's TZ
-  const startLocal = new Date(`${dateStr}T00:00:00`);
-  const endLocal = new Date(`${dateStr}T23:59:59.999`);
+  // Get end of day (23:59:59.999) in user's timezone
+  const endOfDay = startOfDay.add({ hours: 23, minutes: 59, seconds: 59, milliseconds: 999 });
 
-  // Get the offset for the user's timezone
-  const tempDate = new Date(year, month - 1, day, 12); // noon to avoid DST edge cases
-  const utcOffset = getTimezoneOffset(tempDate, timeZone);
-
-  // Adjust to UTC
-  const start = new Date(startLocal.getTime() - utcOffset);
-  const end = new Date(endLocal.getTime() - utcOffset);
-
-  return { start, end };
-}
-
-function getTimezoneOffset(date: Date, timeZone: string): number {
-  // Get the offset in milliseconds
-  const utcDate = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
-  const tzDate = new Date(date.toLocaleString('en-US', { timeZone }));
-  return tzDate.getTime() - utcDate.getTime();
+  // Convert back to Date objects (UTC-based)
+  return {
+    start: new Date(startOfDay.epochMilliseconds),
+    end: new Date(endOfDay.epochMilliseconds),
+  };
 }
 
 export async function processDailyDigests(): Promise<DailyDigestResult> {

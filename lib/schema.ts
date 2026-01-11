@@ -277,8 +277,8 @@ export const userSettings = pgTable(
     notificationsEnabled: boolean('notifications_enabled').default(true),
     defaultEventOffsetMinutes: integer('default_event_offset_minutes').default(60),
     defaultTaskOffsetMinutes: integer('default_task_offset_minutes').default(60),
-    dailyDigestEnabled: boolean('daily_digest_enabled').default(true),
-    dailyDigestTime: text('daily_digest_time').default('08:00'), // HH:MM format in user's timezone
+    dailyDigestEnabled: boolean('daily_digest_enabled').notNull().default(true),
+    dailyDigestTime: text('daily_digest_time').notNull().default('08:00'), // HH:MM format in user's timezone
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
   },

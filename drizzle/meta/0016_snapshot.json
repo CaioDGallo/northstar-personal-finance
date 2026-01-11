@@ -1,5 +1,5 @@
 {
-  "id": "83f38a2a-048c-4b5e-8a53-206e4ee964e7",
+  "id": "e566e854-5600-47a9-91d5-890551b74d10",
   "prevId": "5377c651-dbfc-47d8-9e1f-1eebb6e8ee64",
   "version": "7",
   "dialect": "postgresql",
@@ -1396,14 +1396,14 @@
           "name": "daily_digest_enabled",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "default": true
         },
         "daily_digest_time": {
           "name": "daily_digest_time",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "default": "'08:00'"
         },
         "created_at": {
