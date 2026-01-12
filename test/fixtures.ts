@@ -1,4 +1,16 @@
-import type { NewAccount, NewCategory, NewTransaction, NewEntry, NewIncome, NewEvent, NewTask, NewCalendarSource } from '@/lib/schema';
+import type {
+  NewAccount,
+  NewCategory,
+  NewTransaction,
+  NewEntry,
+  NewIncome,
+  NewEvent,
+  NewTask,
+  NewCalendarSource,
+  NewTransfer,
+  NewFatura,
+  NewMonthlyBudget,
+} from '@/lib/schema';
 
 export const TEST_USER_ID = 'test-user-fixtures-id';
 
@@ -75,6 +87,71 @@ export function createTestIncome(overrides: Partial<NewIncome> = {}): NewIncome 
     accountId: 1,
     receivedDate: new Date().toISOString().split('T')[0],
     receivedAt: null,
+    ...overrides,
+  };
+}
+
+type TransferVariant = 'internal' | 'deposit' | 'withdrawal';
+
+export function createTestTransfer(
+  variant: TransferVariant = 'internal',
+  overrides: Partial<NewTransfer> = {}
+): NewTransfer {
+  const date = new Date().toISOString().split('T')[0];
+  const base: NewTransfer = {
+    userId: TEST_USER_ID,
+    amount: 15000, // R$ 150
+    date,
+    type: 'internal_transfer',
+    fromAccountId: 1,
+    toAccountId: 2,
+    description: 'Test Transfer',
+  };
+
+  if (variant === 'deposit') {
+    return {
+      ...base,
+      type: 'deposit',
+      fromAccountId: null,
+      toAccountId: 1,
+      ...overrides,
+    };
+  }
+
+  if (variant === 'withdrawal') {
+    return {
+      ...base,
+      type: 'withdrawal',
+      fromAccountId: 1,
+      toAccountId: null,
+      ...overrides,
+    };
+  }
+
+  return {
+    ...base,
+    ...overrides,
+  };
+}
+
+export function createTestFatura(overrides: Partial<NewFatura> = {}): NewFatura {
+  const dueDate = new Date().toISOString().split('T')[0];
+  return {
+    userId: TEST_USER_ID,
+    accountId: 1,
+    yearMonth: dueDate.slice(0, 7),
+    totalAmount: 20000, // R$ 200
+    dueDate,
+    ...overrides,
+  };
+}
+
+export function createTestMonthlyBudget(overrides: Partial<NewMonthlyBudget> = {}): NewMonthlyBudget {
+  const yearMonth = new Date().toISOString().slice(0, 7);
+  return {
+    userId: TEST_USER_ID,
+    yearMonth,
+    amount: 50000, // R$ 500
     ...overrides,
   };
 }
