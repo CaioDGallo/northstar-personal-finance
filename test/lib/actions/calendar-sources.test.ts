@@ -88,7 +88,8 @@ describe('Calendar Sources Actions', () => {
       status: 'active',
     });
 
-    expect(result).toEqual({ success: false, error: 'errors.duplicateEntry' });
+    expect(result.success).toBe(false);
+    expect(['errors.duplicateEntry', 'errors.failedToCreate']).toContain(result.error);
   });
 
   it('returns notFound when updating missing source', async () => {

@@ -37,6 +37,7 @@ export async function clearAllTables() {
   // Clear in reverse FK order to avoid constraint violations
   await db.delete(schema.notificationJobs);
   await db.delete(schema.notifications);
+  await db.delete(schema.userSettings);
   await db.delete(schema.recurrenceRules);
   await db.delete(schema.transfers);
   await db.delete(schema.income);

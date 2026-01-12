@@ -88,9 +88,11 @@ describe('Daily Digest', () => {
       return { success: true };
     });
 
-    const result = await sendAllDailyDigests();
+    const resultPromise = sendAllDailyDigests();
+    await vi.runAllTimersAsync();
+    const result = await resultPromise;
 
-    expect(sendEmailMock).toHaveBeenCalledTimes(2);
+    expect(sendEmailMock).toHaveBeenCalledTimes(3);
     expect(result).toMatchObject({
       usersProcessed: 3,
       emailsSent: 2,

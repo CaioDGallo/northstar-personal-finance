@@ -100,7 +100,7 @@ describe('Notification Jobs', () => {
   it('cancels job when task status is not eligible', async () => {
     const [task] = await db
       .insert(schema.tasks)
-      .values(createTestTask({ status: 'completed' }))
+      .values(createTestTask({ status: 'cancelled' }))
       .returning();
 
     const [job] = await db
