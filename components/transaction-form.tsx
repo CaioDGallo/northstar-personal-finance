@@ -15,6 +15,7 @@ import {
   AlertDialog,
   AlertDialogCancel,
   AlertDialogContent,
+  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -213,6 +214,9 @@ export function TransactionForm({
       >
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription className="sr-only">
+            {t('dialogDescription')}
+          </AlertDialogDescription>
         </AlertDialogHeader>
 
         <form onSubmit={handleSubmit}>

@@ -246,7 +246,8 @@
       "expense": "Compras no mercado",
       "income": "Salário mensal"
     },
-    "amountPlaceholder": "0,00"
+    "amountPlaceholder": "0,00",
+    "dialogDescription": "Preencha os detalhes abaixo."
   },
   "accounts": {
     "title": "Contas",

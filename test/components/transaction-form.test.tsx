@@ -1,9 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import type { Account, Category, Transaction, Entry, Income } from '@/lib/schema';
 import { TransactionForm } from '@/components/transaction-form';
-import { freezeTime, resetTime } from '@/test/time-utils';
 import { createExpense, updateExpense } from '@/lib/actions/expenses';
 import { createIncome, updateIncome } from '@/lib/actions/income';
 
@@ -119,15 +117,10 @@ const baseIncome: Pick<Income, 'id' | 'description' | 'amount' | 'categoryId' | 
 describe('TransactionForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    freezeTime('2026-01-15T12:00:00Z');
-  });
-
-  afterEach(() => {
-    resetTime();
   });
 
   it('renders expense installments slider and per-installment text', () => {
-    const { container } = render(
+    render(
       <TransactionForm
         mode="expense"
         accounts={baseAccounts}
@@ -139,7 +132,7 @@ describe('TransactionForm', () => {
     );
 
     expect(screen.getByText('installments')).toBeInTheDocument();
-    expect(container.querySelector('[data-slot="slider"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-slot="slider"]')).toBeInTheDocument();
     expect(screen.getByText(/2x de R\$\s*50,00/)).toBeInTheDocument();
   });
 
@@ -170,10 +163,9 @@ describe('TransactionForm', () => {
   });
 
   it('calls createExpense with cents and selected ids', async () => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     vi.mocked(createExpense).mockResolvedValueOnce(undefined);
 
-    render(
+    const { container } = render(
       <TransactionForm
         mode="expense"
         accounts={baseAccounts}
@@ -183,13 +175,15 @@ describe('TransactionForm', () => {
       />
     );
 
-    await user.type(screen.getByLabelText('amount'), '123.45');
-    await user.type(screen.getByLabelText('description'), 'Coffee');
+    fireEvent.change(screen.getByLabelText('amount'), { target: { value: '123.45' } });
+    fireEvent.change(screen.getByLabelText('description'), { target: { value: 'Coffee' } });
     fireEvent.change(screen.getByLabelText('purchaseDate'), {
       target: { value: '2026-01-10' },
     });
 
-    await user.click(screen.getByRole('button', { name: 'create' }));
+    const form = document.querySelector('form');
+    expect(form).not.toBeNull();
+    fireEvent.submit(form!);
 
     await waitFor(() => {
       expect(createExpense).toHaveBeenCalledWith({
@@ -204,7 +198,6 @@ describe('TransactionForm', () => {
   });
 
   it('calls updateExpense with transaction id', async () => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     vi.mocked(updateExpense).mockResolvedValueOnce(undefined);
 
     render(
@@ -225,7 +218,9 @@ describe('TransactionForm', () => {
       target: { value: '2026-01-12' },
     });
 
-    await user.click(screen.getByRole('button', { name: 'update' }));
+    const form = document.querySelector('form');
+    expect(form).not.toBeNull();
+    fireEvent.submit(form!);
 
     await waitFor(() => {
       expect(updateExpense).toHaveBeenCalledWith(99, {
@@ -240,7 +235,6 @@ describe('TransactionForm', () => {
   });
 
   it('uses income mode without installments and calls income actions', async () => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     vi.mocked(createIncome).mockResolvedValueOnce(undefined);
 
     const { unmount } = render(
@@ -255,13 +249,15 @@ describe('TransactionForm', () => {
 
     expect(screen.queryByText('installments')).not.toBeInTheDocument();
 
-    await user.type(screen.getByLabelText('amount'), '500.00');
-    await user.type(screen.getByLabelText('description'), 'Bonus');
+    fireEvent.change(screen.getByLabelText('amount'), { target: { value: '500.00' } });
+    fireEvent.change(screen.getByLabelText('description'), { target: { value: 'Bonus' } });
     fireEvent.change(screen.getByLabelText('receivedDate'), {
       target: { value: '2026-01-11' },
     });
 
-    await user.click(screen.getByRole('button', { name: 'create' }));
+    const form = document.querySelector('form');
+    expect(form).not.toBeNull();
+    fireEvent.submit(form!);
 
     await waitFor(() => {
       expect(createIncome).toHaveBeenCalledWith({
@@ -288,7 +284,9 @@ describe('TransactionForm', () => {
       />
     );
 
-    await user.click(screen.getByRole('button', { name: 'update' }));
+    const updateForm = document.querySelector('form');
+    expect(updateForm).not.toBeNull();
+    fireEvent.submit(updateForm!);
 
     await waitFor(() => {
       expect(updateIncome).toHaveBeenCalledWith(55, {

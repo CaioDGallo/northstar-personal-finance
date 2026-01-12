@@ -246,7 +246,8 @@
       "expense": "Groceries at Walmart",
       "income": "Monthly salary"
     },
-    "amountPlaceholder": "0.00"
+    "amountPlaceholder": "0.00",
+    "dialogDescription": "Fill in the details below."
   },
   "accounts": {
     "title": "Accounts",
