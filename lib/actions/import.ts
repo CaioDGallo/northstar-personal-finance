@@ -2,7 +2,7 @@
 
 import { db } from '@/lib/db';
 import { transactions, entries, accounts, categories, income, transfers } from '@/lib/schema';
-import { eq, and, inArray, desc } from 'drizzle-orm';
+import { eq, and, inArray, desc, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import type { ValidatedImportRow, CategorySuggestion } from '@/lib/import/types';
 import { getFaturaMonth, getFaturaPaymentDueDate } from '@/lib/fatura-utils';
@@ -240,6 +240,192 @@ type ImportMixedResult =
       error: string;
     };
 
+// Helper: Find existing installment transaction by description and total installments
+async function findExistingInstallmentTransaction(
+  userId: string,
+  baseDescription: string,
+  totalInstallments: number
+): Promise<{ id: number; existingEntryNumbers: number[] } | null> {
+  // Find transaction by description pattern (case-insensitive) and installment count
+  const results = await db
+    .select({
+      id: transactions.id,
+    })
+    .from(transactions)
+    .where(
+      and(
+        eq(transactions.userId, userId),
+        eq(transactions.totalInstallments, totalInstallments),
+        sql`LOWER(${transactions.description}) LIKE LOWER(${'%' + baseDescription + '%'})`
+      )
+    )
+    .limit(1);
+
+  if (results.length === 0) return null;
+
+  const tx = results[0];
+
+  // Get existing entry numbers for this transaction
+  const existingEntries = await db
+    .select({ installmentNumber: entries.installmentNumber })
+    .from(entries)
+    .where(eq(entries.transactionId, tx.id));
+
+  return {
+    id: tx.id,
+    existingEntryNumbers: existingEntries.map((e) => e.installmentNumber),
+  };
+}
+
+// Helper: Compute entry dates for installment
+type EntryDateInfo = {
+  purchaseDate: string; // YYYY-MM-DD
+  faturaMonth: string; // YYYY-MM
+  dueDate: string; // YYYY-MM-DD
+};
+
+type AccountInfo = {
+  type: string;
+  closingDay: number | null;
+  paymentDueDay: number | null;
+};
+
+function computeEntryDates(
+  basePurchaseDate: string,
+  installmentNumber: number,
+  account: AccountInfo
+): EntryDateInfo {
+  // Calculate purchase date for this installment
+  const baseDate = new Date(basePurchaseDate + 'T00:00:00Z');
+  const installmentDate = new Date(baseDate);
+  installmentDate.setUTCMonth(installmentDate.getUTCMonth() + (installmentNumber - 1));
+
+  const purchaseDate = installmentDate.toISOString().split('T')[0];
+
+  const hasBillingConfig =
+    account.type === 'credit_card' && account.closingDay && account.paymentDueDay;
+
+  if (hasBillingConfig) {
+    const faturaMonth = getFaturaMonth(installmentDate, account.closingDay!);
+    const dueDate = getFaturaPaymentDueDate(faturaMonth, account.paymentDueDay!, account.closingDay!);
+    return { purchaseDate, faturaMonth, dueDate };
+  }
+
+  // Fallback for non-CC accounts
+  return {
+    purchaseDate,
+    faturaMonth: purchaseDate.slice(0, 7),
+    dueDate: purchaseDate,
+  };
+}
+
+// Helper: Calculate base purchase date from imported rows
+function calculateBasePurchaseDate(rows: ValidatedImportRow[]): string {
+  // Find earliest installment in import
+  const earliest = rows.reduce((min, r) =>
+    r.installmentInfo!.current < min.installmentInfo!.current ? r : min,
+    rows[0]
+  );
+
+  const info = earliest.installmentInfo!;
+  const importedDate = new Date(earliest.date + 'T00:00:00Z');
+
+  // Work backwards: Parcela 3 date - 2 months = Parcela 1 date
+  const baseDate = new Date(importedDate);
+  baseDate.setUTCMonth(baseDate.getUTCMonth() - (info.current - 1));
+
+  return baseDate.toISOString().split('T')[0];
+}
+
+// Helper: Process a group of installment rows
+async function processInstallmentGroup(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  userId: string,
+  rows: ValidatedImportRow[],
+  account: AccountInfo & { id: number },
+  categoryOverrides: Record<number, number>,
+  expenseCategoryId: number,
+  affectedFaturas: Set<string>
+) {
+  // All rows in group have same baseDescription and total
+  const firstRow = rows[0];
+  const { baseDescription, total } = firstRow.installmentInfo!;
+
+  // Sort by installment number
+  rows.sort((a, b) => a.installmentInfo!.current - b.installmentInfo!.current);
+
+  // Check if transaction already exists
+  const existing = await findExistingInstallmentTransaction(userId, baseDescription, total);
+
+  // Calculate total amount from per-installment amount
+  const installmentAmount = firstRow.amountCents;
+  const totalAmount = installmentAmount * total;
+
+  let transactionId: number;
+  let entriesToCreate: number[];
+
+  if (existing) {
+    // Transaction exists - only create missing entries
+    transactionId = existing.id;
+    const existingSet = new Set(existing.existingEntryNumbers);
+    entriesToCreate = rows
+      .map((r) => r.installmentInfo!.current)
+      .filter((n) => !existingSet.has(n));
+  } else {
+    // Determine which entries to create based on imported parcelas
+    const minInstallment = rows[0].installmentInfo!.current;
+
+    if (minInstallment === 1) {
+      // Parcela 1 present: create all N entries
+      entriesToCreate = Array.from({ length: total }, (_, i) => i + 1);
+    } else {
+      // Parcela M>1 only: create entries from M to N
+      entriesToCreate = Array.from(
+        { length: total - minInstallment + 1 },
+        (_, i) => minInstallment + i
+      );
+    }
+
+    // Get category from first row
+    const categoryId = categoryOverrides[firstRow.rowIndex] ?? expenseCategoryId;
+
+    // Create transaction
+    const [transaction] = await tx
+      .insert(transactions)
+      .values({
+        userId,
+        description: firstRow.description, // Keep full description with "Parcela X/Y"
+        totalAmount,
+        totalInstallments: total,
+        categoryId,
+        externalId: firstRow.externalId,
+      })
+      .returning();
+
+    transactionId = transaction.id;
+  }
+
+  // Create entries for each installment
+  const baseDate = calculateBasePurchaseDate(rows);
+
+  for (const installmentNumber of entriesToCreate) {
+    const dates = computeEntryDates(baseDate, installmentNumber, account);
+    affectedFaturas.add(dates.faturaMonth);
+
+    await tx.insert(entries).values({
+      userId,
+      transactionId,
+      accountId: account.id,
+      amount: installmentAmount,
+      purchaseDate: dates.purchaseDate,
+      faturaMonth: dates.faturaMonth,
+      dueDate: dates.dueDate,
+      installmentNumber,
+      paidAt: null,
+    });
+  }
+}
+
 export async function importMixed(data: ImportMixedData): Promise<ImportMixedResult> {
   const { rows, accountId, categoryOverrides = {} } = data;
 
@@ -330,10 +516,38 @@ export async function importMixed(data: ImportMixedData): Promise<ImportMixedRes
     // Track affected fatura months for credit card accounts
     const affectedFaturas = new Set<string>();
 
+    // Separate installment and regular expenses
+    const installmentExpenses = newExpenses.filter((r) => r.installmentInfo);
+    const regularExpenses = newExpenses.filter((r) => !r.installmentInfo);
+
+    // Group installment expenses by base description + total
+    const installmentGroups = new Map<string, ValidatedImportRow[]>();
+    for (const row of installmentExpenses) {
+      const info = row.installmentInfo!;
+      const key = `${info.baseDescription.toLowerCase()}|${info.total}`;
+      if (!installmentGroups.has(key)) {
+        installmentGroups.set(key, []);
+      }
+      installmentGroups.get(key)!.push(row);
+    }
+
     // Import all new records in a transaction
     await db.transaction(async (tx) => {
-      // Insert expenses
-      for (const row of newExpenses) {
+      // Process installment groups
+      for (const [, rows] of installmentGroups) {
+        await processInstallmentGroup(
+          tx,
+          userId,
+          rows,
+          account[0],
+          categoryOverrides,
+          expenseCategoryId,
+          affectedFaturas
+        );
+      }
+
+      // Insert regular expenses
+      for (const row of regularExpenses) {
         const categoryId = categoryOverrides[row.rowIndex] ?? expenseCategoryId;
 
         let faturaMonth: string;

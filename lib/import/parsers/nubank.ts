@@ -1,4 +1,39 @@
-import type { ImportTemplate, ParseResult, ValidatedImportRow, ImportRowError } from '../types';
+import type { ImportTemplate, ParseResult, ValidatedImportRow, ImportRowError, InstallmentInfo } from '../types';
+
+const PARCELA_REGEX = /^(.+?)\s*-\s*Parcela\s+(\d+)\/(\d+)$/i;
+
+function parseInstallmentInfo(description: string): InstallmentInfo | null {
+  const match = description.match(PARCELA_REGEX);
+  if (!match) return null;
+
+  const [, baseDescription, currentStr, totalStr] = match;
+  const current = parseInt(currentStr, 10);
+  const total = parseInt(totalStr, 10);
+
+  // Validate: current must be 1-total, total > 1
+  if (current < 1 || current > total || total < 2) return null;
+
+  return {
+    current,
+    total,
+    baseDescription: baseDescription.trim(),
+  };
+}
+
+function generateSyntheticExternalId(date: string, description: string, amountCents: number): string {
+  // Create deterministic string
+  const input = `${date}|${description}|${amountCents}`;
+
+  // Use DJB2 hash - fast, deterministic, good distribution
+  let hash = 5381;
+  for (let i = 0; i < input.length; i++) {
+    hash = ((hash << 5) + hash) ^ input.charCodeAt(i);
+  }
+
+  // Convert to hex format
+  const hex = Math.abs(hash).toString(16).padStart(8, '0');
+  return `cc-${date}-${hex}`;
+}
 
 export const nubankParser: ImportTemplate = {
   id: 'nubank',
@@ -85,12 +120,18 @@ export const nubankParser: ImportTemplate = {
       const isIncome = amount < 0;
       const amountCents = Math.round(Math.abs(amount) * 100);
 
+      const description = title.trim();
+      const installmentInfo = parseInstallmentInfo(description);
+      const externalId = generateSyntheticExternalId(dateStr, description, amountCents);
+
       rows.push({
         date: dateStr,
-        description: title.trim(),
+        description,
         amountCents,
         rowIndex: index + 1,
         type: isIncome ? 'income' : 'expense',
+        externalId,
+        installmentInfo: installmentInfo ?? undefined,
       });
     });
 
