@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   centsToDisplay,
   displayToCents,
@@ -20,6 +20,7 @@ describe('Money Utilities', () => {
 
     it('handles negative values', () => {
       expect(centsToDisplay(-5000)).toBe('-50.00');
+      expect(centsToDisplay(-1)).toBe('-0.01');
     });
 
     it('handles large values', () => {
@@ -39,6 +40,15 @@ describe('Money Utilities', () => {
       expect(displayToCents('0.30')).toBe(30);
       expect(displayToCents('100.99')).toBe(10099);
     });
+
+    it('returns NaN for invalid input', () => {
+      expect(Number.isNaN(displayToCents(''))).toBe(true);
+      expect(Number.isNaN(displayToCents('abc'))).toBe(true);
+    });
+
+    it('handles extra whitespace', () => {
+      expect(displayToCents('  10.50  ')).toBe(1050);
+    });
   });
 
   describe('formatCurrency', () => {
@@ -51,6 +61,10 @@ describe('Money Utilities', () => {
 
     it('handles large values with thousand separators', () => {
       expect(formatCurrency(100000000)).toBe('R$\u00A01.000.000,00');
+    });
+
+    it('handles negative values', () => {
+      expect(formatCurrency(-5000)).toBe('-R$\u00A050,00');
     });
   });
 
@@ -96,6 +110,15 @@ describe('Date Utilities', () => {
     it('returns current year-month in YYYY-MM format', () => {
       const result = getCurrentYearMonth();
       expect(result).toMatch(/^\d{4}-\d{2}$/);
+    });
+
+    it('handles next month across year boundary', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(2026, 11, 15));
+
+      expect(getCurrentYearMonth(true)).toBe('2027-01');
+
+      vi.useRealTimers();
     });
   });
 

@@ -353,16 +353,19 @@ export function parseInputWithTokens(
   // 7. Add partial matches for words not yet fully matched
   const partialMatches = findPartialMatches(workingText);
   for (const partial of partialMatches) {
+    const start = prefixOffset + partial.start;
+    const end = prefixOffset + partial.end;
+
     // Only add if position doesn't overlap with existing tokens
     const overlaps = tokens.some(
-      t => (partial.start >= t.start && partial.start < t.end) ||
-           (partial.end > t.start && partial.end <= t.end)
+      t => (start >= t.start && start < t.end) ||
+           (end > t.start && end <= t.end)
     );
     if (!overlaps) {
       tokens.push({
         ...partial,
-        start: prefixOffset + partial.start,
-        end: prefixOffset + partial.end,
+        start,
+        end,
       });
     }
   }

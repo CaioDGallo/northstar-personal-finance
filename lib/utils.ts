@@ -51,9 +51,11 @@ export function formatCurrencyWithLocale(cents: number, locale: string): string 
  */
 export function getCurrentYearMonth(next?: boolean): string {
   const now = new Date();
+  if (next) {
+    now.setMonth(now.getMonth() + 1);
+  }
   const year = now.getFullYear();
-  const leap = next == true ? 1 : 0;
-  const month = String(now.getMonth() + 1 + leap).padStart(2, '0');
+  const month = String(now.getMonth() + 1).padStart(2, '0');
   return `${year}-${month}`;
 }
 

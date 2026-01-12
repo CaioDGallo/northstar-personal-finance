@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { parseTaskInput } from './natural-language-parser';
+import { parseInputWithTokens, parseTaskInput } from './natural-language-parser';
 
 describe('Natural Language Parser', () => {
   let referenceDate: Date;
@@ -263,6 +263,54 @@ describe('Natural Language Parser', () => {
 
       expect(result.title).toBe('Submit report');
       expect(result.dueAt).toBeDefined();
+    });
+  });
+
+  describe('Tokenized parsing', () => {
+    it('extracts prefix/date/duration/priority tokens with correct positions', () => {
+      const input = 'event: Dentist tomorrow at 9 for 30m p1';
+      const result = parseInputWithTokens(input, referenceDate);
+
+      expect(result.parsed.title).toBe('Dentist');
+      expect(result.inferredType).toBe('event');
+
+      const tokenTypes = result.tokens.map(token => token.type);
+      expect(tokenTypes).toEqual(['prefix', 'date', 'duration', 'priority']);
+
+      for (const token of result.tokens) {
+        expect(input.slice(token.start, token.end)).toBe(token.text);
+        expect(token.isPartial).toBe(false);
+      }
+
+      const prefixToken = result.tokens[0];
+      expect(prefixToken.start).toBe(0);
+      expect(prefixToken.value).toBe('event');
+    });
+
+    it('adds partial date tokens when keywords are incomplete', () => {
+      const input = 'task: call tom';
+      const result = parseInputWithTokens(input, referenceDate);
+
+      expect(result.inferredType).toBe('task');
+      expect(result.parsed.title).toBe('call tom');
+
+      const dateTokens = result.tokens.filter(token => token.type === 'date');
+      expect(dateTokens).toHaveLength(1);
+      expect(dateTokens[0].isPartial).toBe(true);
+      expect(dateTokens[0].value).toBeNull();
+      expect(input.slice(dateTokens[0].start, dateTokens[0].end)).toBe('tom');
+    });
+
+    it('infers event when time and duration are present', () => {
+      const result = parseInputWithTokens('Review tomorrow at 9 for 30m', referenceDate);
+      expect(result.inferredType).toBe('event');
+      expect(result.parsed.durationMinutes).toBe(30);
+      expect(result.parsed.startAt).toBeDefined();
+    });
+
+    it('respects defaultType when provided', () => {
+      const result = parseInputWithTokens('Review tomorrow at 9 for 30m', referenceDate, 'task');
+      expect(result.inferredType).toBe('task');
     });
   });
 });
