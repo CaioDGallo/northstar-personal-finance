@@ -28,6 +28,13 @@ export default async function RootLayout({
     <html lang={locale} className={jetbrainsMono.variable} suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
+
+        {/* Favicons */}
+        <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+        <link rel="shortcut icon" href="/icons/icon-32.png" />
+
         <meta name="theme-color" content="#09090b" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
