@@ -3,22 +3,35 @@ import { setupTestDb, teardownTestDb, clearAllTables, getTestDb } from '@/test/d
 import { TEST_USER_ID, createTestEvent, createTestTask } from '@/test/fixtures';
 import * as schema from '@/lib/schema';
 
-type DailyDigestActions = typeof import('@/lib/actions/daily-digest');
+const { sendEmailMock, getDb, setDb } = vi.hoisted(() => {
+  let testDb: ReturnType<typeof getTestDb>;
+  return {
+    sendEmailMock: vi.fn(),
+    getDb: () => testDb,
+    setDb: (db: ReturnType<typeof getTestDb>) => {
+      testDb = db;
+    },
+  };
+});
+
+vi.mock('@/lib/email/send', () => ({
+  sendEmail: sendEmailMock,
+}));
+
+vi.mock('@/lib/db', () => ({
+  get db() {
+    return getDb();
+  },
+}));
+
+import { sendAllDailyDigests } from '@/lib/actions/daily-digest';
+
+let testDb: ReturnType<typeof getTestDb>;
 
 describe('Daily Digest', () => {
-  let db: ReturnType<typeof getTestDb>;
-  let sendAllDailyDigests: DailyDigestActions['sendAllDailyDigests'];
-  let sendEmailMock: ReturnType<typeof vi.fn>;
-
   beforeAll(async () => {
-    db = await setupTestDb();
-
-    sendEmailMock = vi.fn();
-    vi.doMock('@/lib/db', () => ({ db }));
-    vi.doMock('@/lib/email/send', () => ({ sendEmail: sendEmailMock }));
-
-    const actions = await import('@/lib/actions/daily-digest');
-    sendAllDailyDigests = actions.sendAllDailyDigests;
+    testDb = await setupTestDb();
+    setDb(testDb);
   });
 
   afterAll(async () => {
@@ -37,33 +50,33 @@ describe('Daily Digest', () => {
   });
 
   it('skips users without notification email and aggregates counts', async () => {
-    await db.insert(schema.userSettings).values({
+    await testDb.insert(schema.userSettings).values({
       userId: 'no-email-user',
       notificationsEnabled: true,
     });
 
-    await db.insert(schema.userSettings).values({
+    await testDb.insert(schema.userSettings).values({
       userId: 'fail-user',
       notificationEmail: 'fail@example.com',
       notificationsEnabled: true,
       timezone: 'UTC',
     });
 
-    await db.insert(schema.userSettings).values({
+    await testDb.insert(schema.userSettings).values({
       userId: 'empty-user',
       notificationEmail: 'empty@example.com',
       notificationsEnabled: true,
       timezone: 'UTC',
     });
 
-    await db.insert(schema.userSettings).values({
+    await testDb.insert(schema.userSettings).values({
       userId: 'success-user',
       notificationEmail: 'success@example.com',
       notificationsEnabled: true,
       timezone: 'UTC',
     });
 
-    await db.insert(schema.events).values({
+    await testDb.insert(schema.events).values({
       ...createTestEvent({
         userId: 'fail-user',
         title: 'Fail Event',
@@ -72,7 +85,7 @@ describe('Daily Digest', () => {
       }),
     });
 
-    await db.insert(schema.events).values({
+    await testDb.insert(schema.events).values({
       ...createTestEvent({
         userId: 'success-user',
         title: 'Success Event',
@@ -101,7 +114,7 @@ describe('Daily Digest', () => {
   });
 
   it('considers empty day a success without sending email', async () => {
-    await db.insert(schema.userSettings).values({
+    await testDb.insert(schema.userSettings).values({
       userId: TEST_USER_ID,
       notificationEmail: 'user@example.com',
       notificationsEnabled: true,
@@ -119,14 +132,14 @@ describe('Daily Digest', () => {
   });
 
   it('includes items within user local day boundaries', async () => {
-    await db.insert(schema.userSettings).values({
+    await testDb.insert(schema.userSettings).values({
       userId: TEST_USER_ID,
       notificationEmail: 'user@example.com',
       notificationsEnabled: true,
       timezone: 'America/Sao_Paulo',
     });
 
-    await db.insert(schema.events).values({
+    await testDb.insert(schema.events).values({
       ...createTestEvent({
         userId: TEST_USER_ID,
         title: 'Local Day Event',
@@ -135,7 +148,7 @@ describe('Daily Digest', () => {
       }),
     });
 
-    await db.insert(schema.events).values({
+    await testDb.insert(schema.events).values({
       ...createTestEvent({
         userId: TEST_USER_ID,
         title: 'Previous Day Event',
@@ -157,14 +170,14 @@ describe('Daily Digest', () => {
   it('includes recurring events and tasks occurring today', async () => {
     vi.setSystemTime(new Date('2026-02-02T12:00:00Z'));
 
-    await db.insert(schema.userSettings).values({
+    await testDb.insert(schema.userSettings).values({
       userId: TEST_USER_ID,
       notificationEmail: 'user@example.com',
       notificationsEnabled: true,
       timezone: 'UTC',
     });
 
-    const [event] = await db
+    const [event] = await testDb
       .insert(schema.events)
       .values(createTestEvent({
         userId: TEST_USER_ID,
@@ -174,7 +187,7 @@ describe('Daily Digest', () => {
       }))
       .returning();
 
-    const [task] = await db
+    const [task] = await testDb
       .insert(schema.tasks)
       .values(createTestTask({
         userId: TEST_USER_ID,
@@ -184,13 +197,13 @@ describe('Daily Digest', () => {
       }))
       .returning();
 
-    await db.insert(schema.recurrenceRules).values({
+    await testDb.insert(schema.recurrenceRules).values({
       itemType: 'event',
       itemId: event.id,
       rrule: 'FREQ=DAILY;INTERVAL=1',
     });
 
-    await db.insert(schema.recurrenceRules).values({
+    await testDb.insert(schema.recurrenceRules).values({
       itemType: 'task',
       itemId: task.id,
       rrule: 'FREQ=DAILY;INTERVAL=1',
@@ -206,14 +219,14 @@ describe('Daily Digest', () => {
   });
 
   it('retries sendEmail failures with backoff', async () => {
-    await db.insert(schema.userSettings).values({
+    await testDb.insert(schema.userSettings).values({
       userId: TEST_USER_ID,
       notificationEmail: 'user@example.com',
       notificationsEnabled: true,
       timezone: 'UTC',
     });
 
-    await db.insert(schema.events).values({
+    await testDb.insert(schema.events).values({
       ...createTestEvent({
         userId: TEST_USER_ID,
         title: 'Retry Event',
