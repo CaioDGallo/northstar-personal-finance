@@ -4,11 +4,12 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { signIn } from 'next-auth/react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { login } from '@/lib/actions/auth';
+import { validateLoginAttempt } from '@/lib/actions/auth';
 import { Turnstile } from '@marsidev/react-turnstile';
 
 function LoginForm() {
@@ -48,18 +49,31 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      const result = await login(email, password, captchaToken);
+      // Step 1: Validate rate limit + CAPTCHA
+      const validation = await validateLoginAttempt(email, captchaToken);
+      if (!validation.allowed) {
+        setError(validation.error || t('unexpectedError'));
+        setCaptchaToken(null);
+        return;
+      }
 
-      if (result.error) {
-        setError(result.error);
-        setCaptchaToken(null); // Reset captcha on error
+      // Step 2: Authenticate with NextAuth
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError(t('authenticationFailed'));
+        setCaptchaToken(null);
       } else {
         router.push('/dashboard');
         router.refresh();
       }
     } catch {
       setError(t('unexpectedError'));
-      setCaptchaToken(null); // Reset captcha on error
+      setCaptchaToken(null);
     } finally {
       setLoading(false);
     }

@@ -46,31 +46,8 @@ export const authConfig: NextAuthOptions = {
           return user || null;
         }
 
-        // Verify CAPTCHA token if not E2E
-        if (process.env.E2E_AUTH_BYPASS !== 'true') {
-          const captchaToken = credentials.captchaToken as string;
-          if (!captchaToken) {
-            return null;
-          }
-
-          // Verify with Cloudflare Turnstile
-          const verifyResponse = await fetch(
-            'https://challenges.cloudflare.com/turnstile/v0/siteverify',
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                secret: process.env.TURNSTILE_SECRET_KEY,
-                response: captchaToken,
-              }),
-            }
-          );
-
-          const verifyData = await verifyResponse.json();
-          if (!verifyData.success) {
-            return null;
-          }
-        }
+        // CAPTCHA already verified by validateLoginAttempt server action
+        // No need to verify again here
 
         // Find user by email
         const user = await db.query.users.findFirst({

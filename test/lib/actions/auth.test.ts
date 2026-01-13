@@ -1,93 +1,126 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 type AuthActions = typeof import('@/lib/actions/auth');
 
-describe('Auth Actions', () => {
-  const signInWithPassword = vi.fn();
-  const resetPasswordForEmail = vi.fn();
-  const updateUser = vi.fn();
-  const signOut = vi.fn();
-  const getUser = vi.fn();
+const checkLoginRateLimitMock = vi.fn();
+const checkPasswordResetRateLimitMock = vi.fn();
+const tMock = vi.fn(async (key: string, params?: Record<string, string | number>) => {
+  if (params && 'retryAfter' in params) {
+    return `${key}:${params.retryAfter}`;
+  }
+  return key;
+});
 
-  const createClientMock = vi.fn(async () => ({
-    auth: {
-      signInWithPassword,
-      resetPasswordForEmail,
-      updateUser,
-      signOut,
-      getUser,
+const redirectMock = vi.fn();
+const getCurrentUserIdMock = vi.fn();
+const sendEmailMock = vi.fn();
+const fetchMock = vi.fn();
+
+const dbQueryFindFirstMock = vi.fn();
+const dbInsertValuesMock = vi.fn();
+const dbInsertMock = vi.fn(() => ({ values: dbInsertValuesMock }));
+const dbUpdateWhereMock = vi.fn();
+const dbUpdateSetMock = vi.fn(() => ({ where: dbUpdateWhereMock }));
+const dbUpdateMock = vi.fn(() => ({ set: dbUpdateSetMock }));
+const dbDeleteWhereMock = vi.fn();
+const dbDeleteMock = vi.fn(() => ({ where: dbDeleteWhereMock }));
+
+const hashMock = vi.fn();
+const compareMock = vi.fn();
+
+const loadActions = async (): Promise<AuthActions> => {
+  vi.doMock('@/lib/rate-limit', () => ({
+    checkLoginRateLimit: checkLoginRateLimitMock,
+    checkPasswordResetRateLimit: checkPasswordResetRateLimitMock,
+  }));
+  vi.doMock('@/lib/i18n/server-errors', () => ({ t: tMock }));
+  vi.doMock('next/navigation', () => ({ redirect: redirectMock }));
+  vi.doMock('@/lib/auth', () => ({ getCurrentUserId: getCurrentUserIdMock }));
+  vi.doMock('@/lib/db', () => ({
+    db: {
+      query: { users: { findFirst: dbQueryFindFirstMock } },
+      insert: dbInsertMock,
+      update: dbUpdateMock,
+      delete: dbDeleteMock,
     },
   }));
+  vi.doMock('@/lib/email/send', () => ({ sendEmail: sendEmailMock }));
+  vi.doMock('bcryptjs', () => ({
+    default: { hash: hashMock, compare: compareMock },
+    hash: hashMock,
+    compare: compareMock,
+  }));
 
-  const checkLoginRateLimitMock = vi.fn();
-  const checkPasswordResetRateLimitMock = vi.fn();
+  return await import('@/lib/actions/auth');
+};
 
-  const tMock = vi.fn(async (key: string, params?: Record<string, string | number>) => {
-    if (params && 'retryAfter' in params) {
-      return `${key}:${params.retryAfter}`;
-    }
-    return key;
-  });
+let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
-  const redirectMock = vi.fn();
-
-  const loadActions = async (): Promise<AuthActions> => {
-    vi.doMock('@/lib/supabase/server', () => ({ createClient: createClientMock }));
-    vi.doMock('@/lib/rate-limit', () => ({
-      checkLoginRateLimit: checkLoginRateLimitMock,
-      checkPasswordResetRateLimit: checkPasswordResetRateLimitMock,
-    }));
-    vi.doMock('@/lib/i18n/server-errors', () => ({ t: tMock }));
-    vi.doMock('next/navigation', () => ({ redirect: redirectMock }));
-
-    return await import('@/lib/actions/auth');
-  };
-
+describe('Auth Actions', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
 
+    process.env.NEXTAUTH_URL = 'http://localhost:3000';
     delete process.env.E2E_AUTH_BYPASS;
+
+    fetchMock.mockResolvedValue({ json: async () => ({ ok: true }) });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
 
     checkLoginRateLimitMock.mockResolvedValue({ allowed: true });
     checkPasswordResetRateLimitMock.mockResolvedValue({ allowed: true });
+    getCurrentUserIdMock.mockResolvedValue('user-123');
+    dbQueryFindFirstMock.mockResolvedValue(null);
+    dbInsertValuesMock.mockResolvedValue(undefined);
+    dbUpdateWhereMock.mockResolvedValue(undefined);
+    dbDeleteWhereMock.mockResolvedValue(undefined);
+    hashMock.mockResolvedValue('hashed-value');
+    compareMock.mockResolvedValue(true);
+    sendEmailMock.mockResolvedValue(undefined);
 
-    signInWithPassword.mockResolvedValue({ error: null });
-    resetPasswordForEmail.mockResolvedValue({ error: null });
-    updateUser.mockResolvedValue({ error: null });
-    signOut.mockResolvedValue({ error: null });
-    getUser.mockResolvedValue({ data: { user: { id: 'user' } } });
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
-  it('login returns translated error when rate limit denied', async () => {
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('validateLoginAttempt returns error when rate limit denied', async () => {
     checkLoginRateLimitMock.mockResolvedValue({ allowed: false, retryAfter: 30 });
 
-    const { login } = await loadActions();
-    const result = await login('user@example.com', 'pass', 'captcha');
+    const { validateLoginAttempt } = await loadActions();
+    const result = await validateLoginAttempt('user@example.com', 'captcha');
 
-    expect(result).toEqual({ error: 'errors.tooManyAttempts:30' });
-    expect(createClientMock).not.toHaveBeenCalled();
+    expect(result).toEqual({ allowed: false, error: 'errors.tooManyAttempts:30' });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('login returns authenticationFailed on Supabase error', async () => {
-    signInWithPassword.mockResolvedValue({ error: { message: 'invalid' } });
+  it('validateLoginAttempt returns allowed when rate limit and CAPTCHA pass', async () => {
+    fetchMock.mockResolvedValue({ json: async () => ({ success: true }) });
 
-    const { login } = await loadActions();
-    const result = await login('user@example.com', 'pass', 'captcha');
+    const { validateLoginAttempt } = await loadActions();
+    const result = await validateLoginAttempt('user@example.com', 'valid-captcha');
 
-    expect(result).toEqual({ error: 'login.authenticationFailed' });
-    expect(signInWithPassword).toHaveBeenCalledWith({
-      email: 'user@example.com',
-      password: 'pass',
-      options: { captchaToken: 'captcha' },
-    });
+    expect(result).toEqual({ allowed: true, error: null });
   });
 
-  it('login succeeds when Supabase returns success', async () => {
-    const { login } = await loadActions();
-    const result = await login('user@example.com', 'pass', 'captcha');
+  it('validateLoginAttempt returns error when CAPTCHA fails', async () => {
+    fetchMock.mockResolvedValue({ json: async () => ({ success: false }) });
 
-    expect(result).toEqual({ error: null });
+    const { validateLoginAttempt } = await loadActions();
+    const result = await validateLoginAttempt('user@example.com', 'invalid-captcha');
+
+    expect(result).toEqual({ allowed: false, error: 'login.captchaFailed' });
+  });
+
+  it('validateLoginAttempt bypasses checks in E2E mode', async () => {
+    process.env.E2E_AUTH_BYPASS = 'true';
+
+    const { validateLoginAttempt } = await loadActions();
+    const result = await validateLoginAttempt('user@example.com', '');
+
+    expect(result).toEqual({ allowed: true, error: null });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('forgotPassword returns translated error when rate limit denied', async () => {
@@ -97,34 +130,39 @@ describe('Auth Actions', () => {
     const result = await forgotPassword('user@example.com');
 
     expect(result).toEqual({ error: 'errors.tooManyAttempts:15' });
-    expect(createClientMock).not.toHaveBeenCalled();
+    expect(dbInsertMock).not.toHaveBeenCalled();
   });
 
-  it('forgotPassword returns success even on Supabase error', async () => {
-    resetPasswordForEmail.mockResolvedValue({ error: { message: 'failed' } });
+  it('forgotPassword returns success when user exists and email is sent', async () => {
+    dbQueryFindFirstMock.mockResolvedValue({ id: 'user-1', email: 'user@example.com' });
 
     const { forgotPassword } = await loadActions();
     const result = await forgotPassword('user@example.com');
 
     expect(result).toEqual({ error: null });
-    expect(console.error).toHaveBeenCalled();
+    expect(dbInsertMock).toHaveBeenCalled();
+    expect(sendEmailMock).toHaveBeenCalled();
   });
 
-  it('forgotPassword returns success when Supabase succeeds', async () => {
+  it('forgotPassword returns success even when email sending fails', async () => {
+    dbQueryFindFirstMock.mockResolvedValue({ id: 'user-1', email: 'user@example.com' });
+    sendEmailMock.mockRejectedValue(new Error('Send failed'));
+
     const { forgotPassword } = await loadActions();
     const result = await forgotPassword('user@example.com');
 
     expect(result).toEqual({ error: null });
+    expect(consoleErrorSpy).toHaveBeenCalled();
   });
 
   it('updatePassword returns notAuthenticated when user missing', async () => {
-    getUser.mockResolvedValue({ data: { user: null } });
+    getCurrentUserIdMock.mockRejectedValue(new Error('Unauthorized'));
 
     const { updatePassword } = await loadActions();
     const result = await updatePassword('Password123');
 
     expect(result).toEqual({ error: 'errors.notAuthenticated' });
-    expect(updateUser).not.toHaveBeenCalled();
+    expect(dbUpdateMock).not.toHaveBeenCalled();
   });
 
   it('updatePassword validates minimum length', async () => {
@@ -132,7 +170,7 @@ describe('Auth Actions', () => {
     const result = await updatePassword('Short1');
 
     expect(result).toEqual({ error: 'errors.passwordTooShort' });
-    expect(updateUser).not.toHaveBeenCalled();
+    expect(dbUpdateMock).not.toHaveBeenCalled();
   });
 
   it('updatePassword validates letter and number requirements', async () => {
@@ -140,32 +178,34 @@ describe('Auth Actions', () => {
     const result = await updatePassword('12345678');
 
     expect(result).toEqual({ error: 'errors.passwordRequirementsNotMet' });
-    expect(updateUser).not.toHaveBeenCalled();
+    expect(dbUpdateMock).not.toHaveBeenCalled();
   });
 
-  it('updatePassword returns unexpectedError on Supabase failure', async () => {
-    updateUser.mockResolvedValue({ error: { message: 'failed' } });
+  it('updatePassword returns unexpectedError on database failure', async () => {
+    dbUpdateWhereMock.mockRejectedValue(new Error('db failed'));
 
     const { updatePassword } = await loadActions();
     const result = await updatePassword('Password123');
 
     expect(result).toEqual({ error: 'errors.unexpectedError' });
+    expect(consoleErrorSpy).toHaveBeenCalled();
   });
 
   it('updatePassword returns success on valid password', async () => {
+    hashMock.mockResolvedValue('hashed-password');
+
     const { updatePassword } = await loadActions();
     const result = await updatePassword('Password123');
 
     expect(result).toEqual({ error: null });
-    expect(updateUser).toHaveBeenCalledWith({ password: 'Password123' });
+    expect(dbUpdateSetMock).toHaveBeenCalledWith({ passwordHash: 'hashed-password' });
   });
 
-  it('logout signs out and redirects', async () => {
+  it('logout redirects to NextAuth signout', async () => {
     const { logout } = await loadActions();
 
     await logout();
 
-    expect(signOut).toHaveBeenCalled();
-    expect(redirectMock).toHaveBeenCalledWith('/login');
+    expect(redirectMock).toHaveBeenCalledWith('/api/auth/signout');
   });
 });
