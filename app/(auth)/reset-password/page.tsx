@@ -1,47 +1,47 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { updatePassword } from '@/lib/actions/auth';
-import { createClient } from '@/lib/supabase/client';
+import { updatePasswordWithToken } from '@/lib/actions/auth';
 
 function ResetPasswordForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const t = useTranslations('resetPassword');
+
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [checking, setChecking] = useState(true);
+  const [tokenValid, setTokenValid] = useState(false);
 
-  // Check if user has a valid recovery session
+  const tokenId = searchParams.get('token');
+  const rawToken = searchParams.get('code');
+
+  // Check if token parameters are present
   useEffect(() => {
-    async function checkSession() {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        // No session, redirect to forgot-password
-        router.push('/forgot-password');
-        return;
-      }
-      setChecking(false);
+    if (!tokenId || !rawToken) {
+      router.push('/forgot-password');
+      return;
     }
-    checkSession();
-  }, [router]);
+    setTokenValid(true);
+  }, [tokenId, rawToken, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+
+    if (!tokenId || !rawToken) {
+      setError(t('invalidToken'));
+      return;
+    }
 
     // Client-side validation
     if (password.length < 8) {
@@ -60,7 +60,7 @@ function ResetPasswordForm() {
     setLoading(true);
 
     try {
-      const result = await updatePassword(password);
+      const result = await updatePasswordWithToken(tokenId, rawToken, password);
 
       if (result.error) {
         setError(result.error);
@@ -74,7 +74,7 @@ function ResetPasswordForm() {
     }
   }
 
-  if (checking) {
+  if (!tokenValid) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
         <Card className="w-full max-w-md">
@@ -100,8 +100,8 @@ function ResetPasswordForm() {
                 {t('successDescription')}
               </p>
             </div>
-            <Link href="/dashboard">
-              <Button className="w-full">{t('continueToDashboard')}</Button>
+            <Link href="/login">
+              <Button className="w-full">{t('continueToLogin')}</Button>
             </Link>
           </CardContent>
         </Card>

@@ -1,6 +1,9 @@
 import { boolean, date, integer, pgEnum, pgTable, serial, text, timestamp, unique, check } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
+// Export Auth.js schema tables
+export * from './auth-schema';
+
 // Enum for account types
 export const accountTypeEnum = pgEnum('account_type', ['credit_card', 'checking', 'savings', 'cash']);
 

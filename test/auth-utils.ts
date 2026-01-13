@@ -9,5 +9,9 @@ import { TEST_USER_ID } from './fixtures';
 export function mockAuth() {
   vi.doMock('@/lib/auth', () => ({
     getCurrentUserId: vi.fn().mockResolvedValue(TEST_USER_ID),
+    getSession: vi.fn().mockResolvedValue({
+      user: { id: TEST_USER_ID, email: 'test@example.com', name: 'Test User' },
+      expires: new Date(Date.now() + 86400000).toISOString(),
+    }),
   }));
 }
