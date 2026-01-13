@@ -2,8 +2,9 @@ import 'dotenv/config';
 
 import { db } from '../lib/db';
 import { getFaturaMonth, getFaturaPaymentDueDate } from '../lib/fatura-utils';
-import { accounts, budgets, categories, entries, faturas, income, transactions } from '../lib/schema';
+import { accounts, budgets, categories, entries, faturas, income, transactions, users } from '../lib/schema';
 import { addMonths, getCurrentYearMonth } from '../lib/utils';
+import bcrypt from 'bcryptjs';
 
 // Production safety check
 if (process.env.NODE_ENV === 'production') {
@@ -11,9 +12,24 @@ if (process.env.NODE_ENV === 'production') {
   process.exit(1);
 }
 
-// Test user ID for development seeding
-// Hardcoded from auth.users table (caiogallo88@gmail.com)
-const TEST_USER_ID = 'f58dd388-190e-4d12-9d8f-126add711507';
+// Default users for seeding
+const DEFAULT_USERS = [
+  {
+    id: 'f58dd388-190e-4d12-9d8f-126add711507',
+    email: 'caiogallo88@gmail.com',
+    password: 'Test123@',
+    name: 'Caio Gallo',
+  },
+  {
+    id: 'e2e-test-user-id',
+    email: 'e2e@example.com',
+    password: 'Password123',
+    name: 'E2E Test User',
+  },
+];
+
+// Primary test user ID for seeding data
+const TEST_USER_ID = DEFAULT_USERS[0].id;
 
 // Date helpers
 const CURRENT_MONTH = getCurrentYearMonth();
@@ -339,9 +355,25 @@ async function seed() {
     await db.delete(budgets);
     await db.delete(categories);
     await db.delete(accounts);
+    await db.delete(users);
     console.log('  ✓ Data cleared\n');
 
-    // 2. Insert accounts
+    // 2. Create default users
+    console.log('  👤 Creating users...');
+    const userRecords = await Promise.all(
+      DEFAULT_USERS.map(async (user) => ({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        passwordHash: await bcrypt.hash(user.password, 10),
+        emailVerified: new Date(),
+        createdAt: new Date(),
+      }))
+    );
+    await db.insert(users).values(userRecords);
+    console.log(`  ✓ ${userRecords.length} users created\n`);
+
+    // 3. Insert accounts
     console.log('  💳 Inserting accounts...');
     const insertedAccounts = await db.insert(accounts).values(
       accountsData.map(a => ({ ...a, userId: TEST_USER_ID }))
@@ -352,7 +384,7 @@ async function seed() {
     );
     console.log(`  ✓ ${insertedAccounts.length} accounts created\n`);
 
-    // 3. Insert categories
+    // 4. Insert categories
     console.log('  🏷️  Inserting categories...');
     const insertedCategories = await db.insert(categories).values(
       categoriesData.map(c => ({ ...c, userId: TEST_USER_ID }))
@@ -360,13 +392,13 @@ async function seed() {
     const categoryMap = Object.fromEntries(insertedCategories.map(c => [c.name, c.id]));
     console.log(`  ✓ ${insertedCategories.length} categories created\n`);
 
-    // 4. Insert budgets
+    // 5. Insert budgets
     console.log('  💰 Inserting budgets...');
     const budgetRecords = createBudgets(categoryMap, TEST_USER_ID);
     await db.insert(budgets).values(budgetRecords);
     console.log(`  ✓ ${budgetRecords.length} budgets created\n`);
 
-    // 5. Insert transactions and entries
+    // 6. Insert transactions and entries
     console.log('  📝 Inserting transactions and entries...');
     let totalEntries = 0;
 
@@ -387,7 +419,7 @@ async function seed() {
     console.log(`  ✓ ${transactionsData.length} transactions created`);
     console.log(`  ✓ ${totalEntries} entries created\n`);
 
-    // 6. Insert faturas (credit card statements)
+    // 7. Insert faturas (credit card statements)
     console.log('  💳 Creating faturas...');
     const allEntries = await db.query.entries.findMany();
 
@@ -446,7 +478,7 @@ async function seed() {
     }
     console.log(`  ✓ ${faturaRecords.length} faturas created\n`);
 
-    // 7. Insert income
+    // 8. Insert income
     console.log('  💵 Inserting income...');
     const incomeRecords = incomeData.map(inc => ({
       userId: TEST_USER_ID,
@@ -462,6 +494,7 @@ async function seed() {
 
     console.log('✅ Seeding complete!\n');
     console.log('📊 Summary:');
+    console.log(`   Users: ${userRecords.length}`);
     console.log(`   Accounts: ${insertedAccounts.length}`);
     console.log(`   Categories: ${insertedCategories.length}`);
     console.log(`   Budgets: ${budgetRecords.length}`);
