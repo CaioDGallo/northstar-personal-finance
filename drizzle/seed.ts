@@ -74,6 +74,8 @@ const idCounters: Record<SeedTableKey, number> = {
   income: 0,
 };
 
+const tableSchema = (tableKey: SeedTableKey) => ({ [tableKey]: seedSchema[tableKey] });
+
 function assignIds<T extends SeedRow>(tableKey: SeedTableKey, rows: T[]) {
   if (!serialTables.has(tableKey)) {
     return rows;
@@ -86,13 +88,7 @@ function assignIds<T extends SeedRow>(tableKey: SeedTableKey, rows: T[]) {
 }
 
 async function seedRow(tableKey: SeedTableKey, row: SeedRow) {
-  await seed(db, seedSchema).refine((funcs) => {
-    const refinements: Record<string, { count?: number; columns?: Record<string, unknown> }> = {};
-
-    for (const key of Object.keys(seedSchema)) {
-      refinements[key] = { count: 0 };
-    }
-
+  await seed(db, tableSchema(tableKey)).refine((funcs) => {
     const columns = Object.fromEntries(
       Object.entries(row)
         .filter(([, value]) => value !== undefined)
@@ -102,17 +98,21 @@ async function seedRow(tableKey: SeedTableKey, row: SeedRow) {
         ])
     );
 
-    refinements[tableKey] = {
-      count: 1,
-      columns,
+    return {
+      [tableKey]: {
+        count: 1,
+        columns,
+      },
     };
-
-    return refinements;
   });
 }
 
 async function seedRows(tableKey: SeedTableKey, rows: SeedRow[]) {
   const rowsWithIds = assignIds(tableKey, rows);
+
+  if (rowsWithIds.length === 0) {
+    return rowsWithIds;
+  }
 
   for (const row of rowsWithIds) {
     await seedRow(tableKey, row);
@@ -702,6 +702,7 @@ async function seedDatabase() {
           totalAmount: group.total,
           dueDate,
           paidAt: null,
+          paidFromAccountId: null,
         });
       }
     }
@@ -721,6 +722,7 @@ async function seedDatabase() {
       accountId: accountMap[inc.accountName],
       receivedDate: getRelativeDate(inc.monthOffset, inc.day),
       receivedAt: inc.received ? new Date(getRelativeDate(inc.monthOffset, inc.day)) : null,
+      externalId: null,
     }));
     await seedRows('income', incomeRecords);
     console.log(`  ✓ ${incomeRecords.length} income entries created\n`);
