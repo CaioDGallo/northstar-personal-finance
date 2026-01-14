@@ -392,20 +392,43 @@ async function processInstallmentGroup(
   // Sort by installment number
   rows.sort((a, b) => a.installmentInfo!.current - b.installmentInfo!.current);
 
+  const rowAmounts = new Map<number, number>();
+  for (const row of rows) {
+    rowAmounts.set(row.installmentInfo!.current, row.amountCents);
+  }
+
   // Check if transaction already exists
   const existing = await findExistingInstallmentTransaction(userId, baseDescription, total);
 
-  // Calculate total amount from per-installment amount
-  const installmentAmount = firstRow.amountCents;
-  const totalAmount = installmentAmount * total;
+  const fallbackAmount = firstRow.amountCents;
+  const getInstallmentAmount = (
+    installmentNumber: number,
+    existingAmounts: Map<number, number>
+  ) => rowAmounts.get(installmentNumber) ?? existingAmounts.get(installmentNumber) ?? fallbackAmount;
 
   let transactionId: number;
   let entriesToCreate: number[];
+  let existingAmounts = new Map<number, number>();
+  let existingEntryIds = new Map<number, number>();
 
   if (existing) {
     // Transaction exists - only create missing entries
     transactionId = existing.id;
-    const existingSet = new Set(existing.existingEntryNumbers);
+    const existingEntries = await tx
+      .select({
+        id: entries.id,
+        installmentNumber: entries.installmentNumber,
+        amount: entries.amount,
+      })
+      .from(entries)
+      .where(eq(entries.transactionId, transactionId));
+
+    existingAmounts = new Map(
+      existingEntries.map((entry) => [entry.installmentNumber, entry.amount])
+    );
+    existingEntryIds = new Map(existingEntries.map((entry) => [entry.installmentNumber, entry.id]));
+
+    const existingSet = new Set(existingEntries.map((entry) => entry.installmentNumber));
     entriesToCreate = rows
       .map((r) => r.installmentInfo!.current)
       .filter((n) => !existingSet.has(n));
@@ -427,6 +450,10 @@ async function processInstallmentGroup(
     // Get category from first row
     const categoryId = categoryOverrides[firstRow.rowIndex] ?? expenseCategoryId;
 
+    const totalAmount = Array.from({ length: total }, (_, i) =>
+      getInstallmentAmount(i + 1, existingAmounts)
+    ).reduce((sum, amount) => sum + amount, 0);
+
     // Create transaction
     const [transaction] = await tx
       .insert(transactions)
@@ -446,6 +473,27 @@ async function processInstallmentGroup(
   // Create entries for each installment
   const baseDate = calculateBasePurchaseDate(rows);
 
+  if (existing) {
+    for (const row of rows) {
+      const installmentNumber = row.installmentInfo!.current;
+      const entryId = existingEntryIds.get(installmentNumber);
+      if (!entryId) continue;
+
+      const existingAmount = existingAmounts.get(installmentNumber);
+      if (existingAmount === row.amountCents) continue;
+
+      await tx
+        .update(entries)
+        .set({ amount: row.amountCents })
+        .where(eq(entries.id, entryId));
+
+      existingAmounts.set(installmentNumber, row.amountCents);
+
+      const dates = computeEntryDates(baseDate, installmentNumber, account);
+      affectedFaturas.add(dates.faturaMonth);
+    }
+  }
+
   for (const installmentNumber of entriesToCreate) {
     const dates = computeEntryDates(baseDate, installmentNumber, account);
     affectedFaturas.add(dates.faturaMonth);
@@ -454,13 +502,23 @@ async function processInstallmentGroup(
       userId,
       transactionId,
       accountId: account.id,
-      amount: installmentAmount,
+      amount: getInstallmentAmount(installmentNumber, existingAmounts),
       purchaseDate: dates.purchaseDate,
       faturaMonth: dates.faturaMonth,
       dueDate: dates.dueDate,
       installmentNumber,
       paidAt: null,
     });
+
+    existingAmounts.set(installmentNumber, getInstallmentAmount(installmentNumber, existingAmounts));
+  }
+
+  if (existing) {
+    const totalAmount = Array.from({ length: total }, (_, i) =>
+      getInstallmentAmount(i + 1, existingAmounts)
+    ).reduce((sum, amount) => sum + amount, 0);
+
+    await tx.update(transactions).set({ totalAmount }).where(eq(transactions.id, transactionId));
   }
 }
 
