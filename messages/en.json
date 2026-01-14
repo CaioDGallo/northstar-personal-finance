@@ -72,6 +72,7 @@
     "noDefaultExpenseCategory": "No default expense category configured. Go to Settings > Categories to set one.",
     "noDefaultIncomeCategory": "No default income category configured. Go to Settings > Categories to set one.",
     "invalidTimezone": "Invalid timezone identifier",
+    "invalidLocale": "Invalid locale",
     "invalidEmail": "Invalid email address format",
     "invalidOffsetMinutes": "Notification offset must be between 0 and 10080 minutes (1 week)",
     "duplicateEntry": "This entry already exists",
@@ -691,5 +692,46 @@
     "notify2DaysBefore": "2 days before",
     "notify1DayBefore": "1 day before",
     "notifyOnDueDay": "On due day"
+  },
+  "emails": {
+    "digest": {
+      "subject": "Your Daily Digest - {{date}}",
+      "title": "Your Daily Digest",
+      "eventsTitle": "Today's Events ({{count}})",
+      "tasksTitle": "Tasks Due Today ({{count}})",
+      "overdueTitle": "Overdue ({{count}})",
+      "viewCalendar": "View Calendar",
+      "viewCalendarText": "View your calendar at:",
+      "footer": "Northstar - Your Personal Finance & Calendar",
+      "allDay": "All day",
+      "noTime": "No time set",
+      "noDate": "No date set",
+      "due": "Due",
+      "wasDue": "Was due",
+      "location": "Location",
+      "priority": "Priority",
+      "status": "Status",
+      "inProgress": "IN PROGRESS",
+      "time": "Time",
+      "textTitle": "YOUR DAILY DIGEST",
+      "textEventsTitle": "TODAY'S EVENTS ({{count}})",
+      "textTasksTitle": "TASKS DUE TODAY ({{count}})",
+      "textOverdueTitle": "OVERDUE ({{count}})"
+    },
+    "billReminder": {
+      "subject": "Bill Reminder: {{name}}",
+      "title": "Bill Reminder",
+      "dueToday": "Due Today",
+      "dueTomorrow": "Due Tomorrow",
+      "dueInTwoDays": "Due in 2 Days",
+      "category": "Category",
+      "due": "Due",
+      "at": "at",
+      "viewReminders": "View Reminders",
+      "viewRemindersText": "View your reminders:",
+      "footer": "You're receiving this because you have notifications enabled for this bill reminder.",
+      "amount": "Amount",
+      "textHeading": "BILL REMINDER: {{urgency}}"
+    }
   }
 }

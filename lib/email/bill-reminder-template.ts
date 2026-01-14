@@ -1,3 +1,7 @@
+import { type Locale, defaultLocale } from '@/lib/i18n/config';
+import { translateWithLocale } from '@/lib/i18n/server-errors';
+import { formatCurrencyWithLocale } from '@/lib/utils';
+
 export interface BillReminderEmailData {
   reminderName: string;
   amount: number | null;
@@ -7,6 +11,7 @@ export interface BillReminderEmailData {
   dueTime: string | null;
   daysUntilDue: number; // 0, 1, or 2
   appUrl: string;
+  locale?: Locale;
 }
 
 const COLORS = {
@@ -38,24 +43,32 @@ export function generateBillReminderHtml(data: BillReminderEmailData): string {
         ? COLORS.high
         : COLORS.medium;
 
+  const locale = data.locale ?? defaultLocale;
+  const t = (key: string, params?: Record<string, string | number>) =>
+    translateWithLocale(locale, key, params);
+
   const urgencyText =
     data.daysUntilDue === 0
-      ? 'Due Today'
+      ? t('emails.billReminder.dueToday')
       : data.daysUntilDue === 1
-        ? 'Due Tomorrow'
-        : 'Due in 2 Days';
+        ? t('emails.billReminder.dueTomorrow')
+        : t('emails.billReminder.dueInTwoDays');
 
-  const amountDisplay = data.amount
-    ? `R$ ${(data.amount / 100).toFixed(2).replace('.', ',')}`
-    : '';
+  const amountDisplay = data.amount ? formatCurrencyWithLocale(data.amount, locale) : '';
+  const dueLabel = t('emails.billReminder.due');
+  const categoryLabel = t('emails.billReminder.category');
+  const atLabel = t('emails.billReminder.at');
+  const title = t('emails.billReminder.title');
+  const viewRemindersLabel = t('emails.billReminder.viewReminders');
+  const footerText = t('emails.billReminder.footer');
 
   return `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${locale}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bill Reminder: ${escapeHtml(data.reminderName)}</title>
+  <title>${title}: ${escapeHtml(data.reminderName)}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -64,7 +77,7 @@ export function generateBillReminderHtml(data: BillReminderEmailData): string {
   <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
     <!-- Header -->
     <div style="border-bottom: 2px solid ${COLORS.fg}; padding-bottom: 12px; margin-bottom: 24px;">
-      <h1 style="margin: 0 0 8px 0; color: ${COLORS.fg}; font-size: 24px; font-weight: 700;">Bill Reminder</h1>
+      <h1 style="margin: 0 0 8px 0; color: ${COLORS.fg}; font-size: 24px; font-weight: 700;">${title}</h1>
       <span style="display: inline-block; background: ${urgencyColor}; color: white; padding: 4px 8px; font-size: 12px; font-weight: 700;">
         ${urgencyText}
       </span>
@@ -79,23 +92,23 @@ export function generateBillReminderHtml(data: BillReminderEmailData): string {
       }
       <h2 style="margin: 0 0 8px 0; color: ${COLORS.fg}; font-size: 18px; font-weight: 500;">${escapeHtml(data.reminderName)}</h2>
       ${amountDisplay ? `<p style="font-size: 28px; margin: 8px 0; color: ${COLORS.fg}; font-weight: 700;">${amountDisplay}</p>` : ''}
-      ${data.categoryName ? `<p style="color: ${COLORS.muted}; font-size: 12px; margin: 4px 0;">Category: ${escapeHtml(data.categoryName)}</p>` : ''}
+      ${data.categoryName ? `<p style="color: ${COLORS.muted}; font-size: 12px; margin: 4px 0;">${categoryLabel}: ${escapeHtml(data.categoryName)}</p>` : ''}
       <p style="margin: 8px 0 0 0; color: ${COLORS.fg}; font-weight: 500;">
-        Due: ${escapeHtml(data.dueDate)}${data.dueTime ? ` at ${escapeHtml(data.dueTime)}` : ''}
+        ${dueLabel}: ${escapeHtml(data.dueDate)}${data.dueTime ? ` ${atLabel} ${escapeHtml(data.dueTime)}` : ''}
       </p>
     </div>
 
     <!-- CTA Button -->
     <div style="text-align: center; margin-bottom: 24px;">
       <a href="${data.appUrl}/reminders" style="display: inline-block; background: ${COLORS.fg}; color: ${COLORS.bg}; padding: 12px 24px; text-decoration: none; font-weight: 700; border: 2px solid ${COLORS.fg};">
-        View Reminders
+        ${viewRemindersLabel}
       </a>
     </div>
 
     <!-- Footer -->
     <div style="border-top: 1px solid ${COLORS.border}; padding-top: 16px; text-align: center;">
       <p style="color: ${COLORS.muted}; font-size: 12px; margin: 0;">
-        You're receiving this because you have notifications enabled for this bill reminder.
+        ${footerText}
       </p>
     </div>
   </div>
@@ -105,28 +118,36 @@ export function generateBillReminderHtml(data: BillReminderEmailData): string {
 }
 
 export function generateBillReminderText(data: BillReminderEmailData): string {
+  const locale = data.locale ?? defaultLocale;
+  const t = (key: string, params?: Record<string, string | number>) =>
+    translateWithLocale(locale, key, params);
+
   const urgencyText =
     data.daysUntilDue === 0
-      ? 'DUE TODAY'
+      ? t('emails.billReminder.dueToday')
       : data.daysUntilDue === 1
-        ? 'DUE TOMORROW'
-        : 'DUE IN 2 DAYS';
+        ? t('emails.billReminder.dueTomorrow')
+        : t('emails.billReminder.dueInTwoDays');
 
-  const amountDisplay = data.amount
-    ? `R$ ${(data.amount / 100).toFixed(2).replace('.', ',')}`
-    : '';
+  const amountDisplay = data.amount ? formatCurrencyWithLocale(data.amount, locale) : '';
+  const dueLabel = t('emails.billReminder.due');
+  const categoryLabel = t('emails.billReminder.category');
+  const atLabel = t('emails.billReminder.at');
+  const heading = t('emails.billReminder.textHeading', { urgency: urgencyText });
+  const viewRemindersText = t('emails.billReminder.viewRemindersText');
+  const footerText = t('emails.billReminder.footer');
 
   return `
-BILL REMINDER: ${urgencyText}
+${heading}
 
 ${data.reminderName}
-${amountDisplay ? `Amount: ${amountDisplay}` : ''}
-${data.categoryName ? `Category: ${data.categoryName}` : ''}
-Due: ${data.dueDate}${data.dueTime ? ` at ${data.dueTime}` : ''}
+${amountDisplay ? `${t('emails.billReminder.amount')}: ${amountDisplay}` : ''}
+${data.categoryName ? `${categoryLabel}: ${data.categoryName}` : ''}
+${dueLabel}: ${data.dueDate}${data.dueTime ? ` ${atLabel} ${data.dueTime}` : ''}
 
-View your reminders: ${data.appUrl}/reminders
+${viewRemindersText} ${data.appUrl}/reminders
 
 ---
-You're receiving this because you have notifications enabled for this bill reminder.
+${footerText}
   `.trim();
 }

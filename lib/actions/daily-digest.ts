@@ -8,6 +8,8 @@ import { generateDigestHtml, generateDigestText, type DigestEvent, type DigestTa
 import { getAllOccurrencesBetween } from '@/lib/recurrence';
 import { logError, logForDebugging } from '@/lib/logger';
 import { ErrorIds } from '@/constants/errorIds';
+import { defaultLocale, type Locale } from '@/lib/i18n/config';
+import { translateWithLocale } from '@/lib/i18n/server-errors';
 
 export interface DigestResult {
   success: boolean;
@@ -286,6 +288,7 @@ async function sendUserDigest(
 ): Promise<boolean> {
   try {
     const timezone = settings.timezone || 'UTC';
+    const locale: Locale = (settings.locale as Locale) || defaultLocale;
     const { start, end, localDateStr } = getUserTodayRange(timezone);
 
     logForDebugging('digest', 'Calculating digest for user', {
@@ -310,7 +313,7 @@ async function sendUserDigest(
     }
 
     // Format date for display
-    const dateFormatter = new Intl.DateTimeFormat('en-US', {
+    const dateFormatter = new Intl.DateTimeFormat(locale, {
       timeZone: timezone,
       weekday: 'long',
       year: 'numeric',
@@ -328,6 +331,7 @@ async function sendUserDigest(
       overdueTasks,
       appUrl,
       timezone,
+      locale,
     };
 
     const html = generateDigestHtml(digestData);
@@ -340,7 +344,7 @@ async function sendUserDigest(
     while (attempts < MAX_RETRIES) {
       const result = await sendEmail({
         to: settings.notificationEmail!,
-        subject: `Your Daily Digest - ${formattedDate}`,
+        subject: translateWithLocale(locale, 'emails.digest.subject', { date: formattedDate }),
         html,
         text,
       });

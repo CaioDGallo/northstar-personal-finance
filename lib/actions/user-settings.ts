@@ -6,7 +6,8 @@ import { userSettings, type NewUserSettings } from '@/lib/schema';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { getCurrentUserId } from '@/lib/auth';
-import { t } from '@/lib/i18n/server-errors';
+import { locales, type Locale } from '@/lib/i18n/config';
+import { getLocale, t } from '@/lib/i18n/server-errors';
 
 type ActionResult = { success: true } | { success: false; error: string };
 
@@ -36,9 +37,10 @@ export async function getOrCreateUserSettings() {
       .limit(1);
 
     if (!settings) {
+      const locale = await getLocale();
       [settings] = await db
         .insert(userSettings)
-        .values({ userId })
+        .values({ userId, locale })
         .returning();
     }
 
@@ -75,6 +77,11 @@ export async function updateUserSettings(data: Partial<Omit<NewUserSettings, 'id
     // Validate notification email if provided
     if (data.notificationEmail !== undefined && data.notificationEmail !== null && !isValidEmail(data.notificationEmail)) {
       return { success: false, error: await t('errors.invalidEmail') };
+    }
+
+    // Validate locale if provided
+    if (data.locale !== undefined && data.locale !== null && !locales.includes(data.locale as Locale)) {
+      return { success: false, error: await t('errors.invalidLocale') };
     }
 
     // Validate default event offset minutes (0-10080 = 1 week)

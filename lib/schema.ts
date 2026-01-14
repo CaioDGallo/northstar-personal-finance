@@ -277,6 +277,7 @@ export const userSettings = pgTable(
     id: serial('id').primaryKey(),
     userId: text('user_id').notNull(),
     timezone: text('timezone').default('UTC'),
+    locale: text('locale').default('pt-BR'),
     notificationEmail: text('notification_email'),
     notificationsEnabled: boolean('notifications_enabled').default(true),
     defaultEventOffsetMinutes: integer('default_event_offset_minutes').default(60),

@@ -5,7 +5,8 @@ import { notificationJobs, events, tasks, userSettings, billReminders, categorie
 import { eq, and, lte } from 'drizzle-orm';
 import { generateBillReminderHtml, generateBillReminderText } from '@/lib/email/bill-reminder-template';
 import { calculateNextDueDate } from '@/lib/utils/bill-reminders';
-import { defaultLocale } from '@/lib/i18n/config';
+import { defaultLocale, type Locale } from '@/lib/i18n/config';
+import { translateWithLocale } from '@/lib/i18n/server-errors';
 
 interface ProcessNotificationJobResult {
   processed: number;
@@ -207,6 +208,7 @@ async function sendEmailNotification(job: NotificationJob, itemData: EventItem |
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@northstar.app';
     const toEmail = settings.notificationEmail;
     const timeZone = settings.timezone || 'UTC';
+    const locale: Locale = (settings.locale as Locale) || defaultLocale;
     
     let subject = '';
     let body = '';
@@ -246,7 +248,7 @@ async function sendEmailNotification(job: NotificationJob, itemData: EventItem |
         amount: reminderItem.amount,
         categoryName: category?.name || null,
         categoryColor: category?.color || null,
-        dueDate: new Intl.DateTimeFormat(defaultLocale, {
+        dueDate: new Intl.DateTimeFormat(locale, {
           month: 'short',
           day: 'numeric',
           year: 'numeric',
@@ -255,9 +257,10 @@ async function sendEmailNotification(job: NotificationJob, itemData: EventItem |
         dueTime: reminderItem.dueTime,
         daysUntilDue: daysUntil,
         appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://northstar.app',
+        locale,
       };
 
-      subject = `Bill Reminder: ${reminderItem.name}`;
+      subject = translateWithLocale(locale, 'emails.billReminder.subject', { name: reminderItem.name });
       body = generateBillReminderText(emailData);
       html = generateBillReminderHtml(emailData);
     }

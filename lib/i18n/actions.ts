@@ -2,6 +2,9 @@
 
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
+import { db } from '@/lib/db';
+import { userSettings } from '@/lib/schema';
+import { getCurrentUserId } from '@/lib/auth';
 import { type Locale, locales, LOCALE_COOKIE } from './config';
 
 export async function setLocale(locale: Locale) {
@@ -15,6 +18,19 @@ export async function setLocale(locale: Locale) {
     maxAge: 60 * 60 * 24 * 365, // 1 year
     sameSite: 'lax',
   });
+
+  try {
+    const userId = await getCurrentUserId();
+    await db
+      .insert(userSettings)
+      .values({ userId, locale })
+      .onConflictDoUpdate({
+        target: userSettings.userId,
+        set: { locale, updatedAt: new Date() },
+      });
+  } catch {
+    // No authenticated user, ignore
+  }
 
   revalidatePath('/', 'layout');
 }

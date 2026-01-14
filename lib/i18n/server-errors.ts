@@ -29,8 +29,11 @@ export async function getLocale(): Promise<Locale> {
   return locales.includes(cookieLocale as Locale) ? (cookieLocale as Locale) : defaultLocale;
 }
 
-export async function translateError(key: string, params?: Record<string, string | number>): Promise<string> {
-  const locale = await getLocale();
+export function translateWithLocale(
+  locale: Locale,
+  key: string,
+  params?: Record<string, string | number>
+): string {
   const message = getNestedValue(messages[locale], key);
 
   if (params) {
@@ -41,6 +44,11 @@ export async function translateError(key: string, params?: Record<string, string
   }
 
   return message;
+}
+
+export async function translateError(key: string, params?: Record<string, string | number>): Promise<string> {
+  const locale = await getLocale();
+  return translateWithLocale(locale, key, params);
 }
 
 export async function t(key: string, params?: Record<string, string | number>): Promise<string> {
