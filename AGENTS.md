@@ -30,6 +30,12 @@ If you find work that must be done while doing a task, file beads issues for it.
 
 While doing a code review, keep track of it and note your findings in a dedicated beads issue, so it can be later analyzed and worked on.
 
+## Coding Workflow
+
+1. Create a new branch named after your currenct bd issue (e.g. feat/northstar-3nf) or a short description if no bd issue (feat/bill-reminders).
+2. Work on this branch and land the plane on it at the end with everything being pushed and synced to the remote.
+3. Create the PR at the end using the github cli `gh`
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
