@@ -508,6 +508,12 @@
     "deleteEventTitle": "Excluir evento?",
     "deleteTaskTitle": "Excluir tarefa?",
     "loading": "Carregando...",
+    "filter": {
+      "events": "Eventos",
+      "tasks": "Tarefas",
+      "billReminders": "Contas",
+      "hideCompleted": "Ocultar concluídas"
+    },
     "status": {
       "scheduled": "Agendado",
       "pending": "Pendente",
@@ -670,7 +676,41 @@
     "activate": "Ativar",
     "bannerTitle": "Lembretes de contas vencendo em breve",
     "bannerDescription": "{count, plural, =1 {1 conta vencendo em breve} other {{count} contas vencendo em breve}}",
-    "acknowledge": "Confirmar"
+    "acknowledge": "Confirmar",
+    "detail": {
+      "sheetDescription": "Detalhes do lembrete de conta para {name}",
+      "amount": "Valor",
+      "category": "Categoria",
+      "thisOccurrence": "Esta ocorrência",
+      "nextDueDate": "Próximo vencimento",
+      "dueDay": "Dia {day}",
+      "atTime": "às {time}",
+      "recurrenceLabel": "Recorrência",
+      "ends": "Termina em {endMonth}",
+      "infoNote": "Lembretes de contas são somente leitura no calendário. Para editar este lembrete, visite a página de Lembretes.",
+      "status": {
+        "active": "Ativo",
+        "paused": "Pausado",
+        "completed": "Concluído"
+      },
+      "weekdays": {
+        "sunday": "domingo",
+        "monday": "segunda-feira",
+        "tuesday": "terça-feira",
+        "wednesday": "quarta-feira",
+        "thursday": "quinta-feira",
+        "friday": "sexta-feira",
+        "saturday": "sábado"
+      },
+      "recurrence": {
+        "once": "Uma vez em {startMonth}",
+        "weekly": "Toda {weekday}",
+        "biweekly": "A cada 2 semanas",
+        "monthly": "Mensal no dia {day}",
+        "quarterly": "A cada 3 meses no dia {day}",
+        "yearly": "Anual no dia {day} do mês {month}"
+      }
+    }
   },
   "billReminderForm": {
     "name": "Nome",

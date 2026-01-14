@@ -20,67 +20,78 @@ function generateOccurrences(
   viewEnd: Date,
   timeZone?: string
 ): Date[] {
-  const occurrences: Date[] = [];
+  try {
+    const occurrences: Date[] = [];
 
-  // Special handling for 'once' type - just return the single date if in range
-  if (reminder.recurrenceType === 'once') {
-    const dueDate = calculateNextDueDate(reminder, { timeZone });
-    if (dueDate >= viewStart && dueDate <= viewEnd) {
-      occurrences.push(dueDate);
+    // Special handling for 'once' type - just return the single date if in range
+    if (reminder.recurrenceType === 'once') {
+      const dueDate = calculateNextDueDate(reminder, { timeZone });
+      if (dueDate >= viewStart && dueDate <= viewEnd) {
+        occurrences.push(dueDate);
+      }
+      return occurrences;
     }
-    return occurrences;
+
+    // For recurring reminders, iterate from viewStart
+    let currentCheck = new Date(viewStart);
+    let safetyCounter = 0;
+    const MAX_ITERATIONS = 365; // Safety limit
+
+    while (currentCheck <= viewEnd && safetyCounter < MAX_ITERATIONS) {
+      safetyCounter++;
+
+      const nextDue = calculateNextDueDate(reminder, {
+        now: currentCheck,
+        timeZone,
+      });
+
+      if (nextDue > viewEnd) {
+        break;
+      }
+
+      if (nextDue >= viewStart) {
+        occurrences.push(nextDue);
+      }
+
+      // Move current check forward based on recurrence type
+      currentCheck = new Date(nextDue.getTime() + 1000); // 1 second after to avoid infinite loops
+
+      // Additional safety: skip ahead more aggressively
+      switch (reminder.recurrenceType) {
+        case 'weekly':
+          currentCheck = new Date(nextDue.getTime() + 7 * 24 * 60 * 60 * 1000);
+          break;
+        case 'biweekly':
+          currentCheck = new Date(nextDue.getTime() + 14 * 24 * 60 * 60 * 1000);
+          break;
+        case 'monthly':
+          currentCheck = new Date(nextDue.getTime() + 28 * 24 * 60 * 60 * 1000);
+          break;
+        case 'quarterly':
+          currentCheck = new Date(nextDue.getTime() + 90 * 24 * 60 * 60 * 1000);
+          break;
+        case 'yearly':
+          currentCheck = new Date(nextDue.getTime() + 365 * 24 * 60 * 60 * 1000);
+          break;
+        default:
+          console.error(
+            `[bill-reminders:schedule] Unsupported recurrence type: ${reminder.recurrenceType} (reminder ${reminder.id})`
+          );
+          currentCheck = new Date(nextDue.getTime() + 24 * 60 * 60 * 1000);
+          break;
+      }
+    }
+
+    // Remove duplicates (can happen with edge cases)
+    const uniqueOccurrences = Array.from(
+      new Set(occurrences.map(d => d.getTime()))
+    ).map(t => new Date(t));
+
+    return uniqueOccurrences;
+  } catch (error) {
+    console.error(`[bill-reminders:schedule] Failed for reminder ${reminder.id}:`, error);
+    return [];
   }
-
-  // For recurring reminders, iterate from viewStart
-  let currentCheck = new Date(viewStart);
-  let safetyCounter = 0;
-  const MAX_ITERATIONS = 365; // Safety limit
-
-  while (currentCheck <= viewEnd && safetyCounter < MAX_ITERATIONS) {
-    safetyCounter++;
-
-    const nextDue = calculateNextDueDate(reminder, {
-      now: currentCheck,
-      timeZone,
-    });
-
-    if (nextDue > viewEnd) {
-      break;
-    }
-
-    if (nextDue >= viewStart) {
-      occurrences.push(nextDue);
-    }
-
-    // Move current check forward based on recurrence type
-    currentCheck = new Date(nextDue.getTime() + 1000); // 1 second after to avoid infinite loops
-
-    // Additional safety: skip ahead more aggressively
-    switch (reminder.recurrenceType) {
-      case 'weekly':
-        currentCheck = new Date(nextDue.getTime() + 7 * 24 * 60 * 60 * 1000);
-        break;
-      case 'biweekly':
-        currentCheck = new Date(nextDue.getTime() + 14 * 24 * 60 * 60 * 1000);
-        break;
-      case 'monthly':
-        currentCheck = new Date(nextDue.getTime() + 28 * 24 * 60 * 60 * 1000);
-        break;
-      case 'quarterly':
-        currentCheck = new Date(nextDue.getTime() + 90 * 24 * 60 * 60 * 1000);
-        break;
-      case 'yearly':
-        currentCheck = new Date(nextDue.getTime() + 365 * 24 * 60 * 60 * 1000);
-        break;
-    }
-  }
-
-  // Remove duplicates (can happen with edge cases)
-  const uniqueOccurrences = Array.from(
-    new Set(occurrences.map(d => d.getTime()))
-  ).map(t => new Date(t));
-
-  return uniqueOccurrences;
 }
 
 export function buildBillReminderSchedule(

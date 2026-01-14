@@ -23,12 +23,17 @@ export const getBillReminders = cache(async () => {
 });
 
 export const getActiveBillReminders = cache(async (): Promise<BillReminder[]> => {
-  const userId = await getCurrentUserId();
-  return await db
-    .select()
-    .from(billReminders)
-    .where(and(eq(billReminders.userId, userId), eq(billReminders.status, 'active')))
-    .orderBy(billReminders.name);
+  try {
+    const userId = await getCurrentUserId();
+    return await db
+      .select()
+      .from(billReminders)
+      .where(and(eq(billReminders.userId, userId), eq(billReminders.status, 'active')))
+      .orderBy(billReminders.name);
+  } catch (error) {
+    console.error('[bill-reminders:getActive] Failed:', error);
+    return [];
+  }
 });
 
 export async function createBillReminder(

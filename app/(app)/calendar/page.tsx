@@ -43,6 +43,7 @@ import { EventDetailSheet } from '@/components/calendar/event-detail-sheet';
 import { BillReminderDetailSheet } from '@/components/calendar/bill-reminder-detail-sheet';
 import { QuickAddTask } from '@/components/quick-add-task';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { Theme } from '@/components/theme-toggle';
 import { Toggle } from '@/components/ui/toggle';
 import { Separator } from '@/components/ui/separator';
@@ -149,6 +150,7 @@ export default function CalendarPage() {
   const occurrenceOverridesRef = useRef(new Map<string, { startAt: Date; endAt: Date }>());
   const t = useTranslations('calendar');
   const tCommon = useTranslations('common');
+  const tErrors = useTranslations('errors');
   const [theme] = useState<Theme>(() => {
     if (typeof window === 'undefined') return 'system';
     return (localStorage.getItem('theme') as Theme | null) || 'system';
@@ -157,45 +159,51 @@ export default function CalendarPage() {
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
-    const [eventsData, tasksData, billRemindersData, settings] = await Promise.all([
-      getEventsWithRecurrence(),
-      getTasksWithRecurrence(),
-      getActiveBillReminders(),
-      getUserSettings(),
-    ]);
-    setTimeZone(resolveTimeZone(settings));
 
-    // Normalize events
-    const normalizedEvents = eventsData.map((event) => ({
-      ...event,
-      recurrenceRule: event.recurrenceRule ?? null,
-      startAt: toDate(event.startAt),
-      endAt: toDate(event.endAt),
-      createdAt: toOptionalDate(event.createdAt),
-      updatedAt: toOptionalDate(event.updatedAt),
-    }));
-    eventsRef.current = normalizedEvents;
-    setEvents(normalizedEvents);
+    try {
+      const [eventsData, tasksData, billRemindersData, settings] = await Promise.all([
+        getEventsWithRecurrence(),
+        getTasksWithRecurrence(),
+        getActiveBillReminders(),
+        getUserSettings(),
+      ]);
+      setTimeZone(resolveTimeZone(settings));
 
-    // Normalize tasks
-    const normalizedTasks = tasksData.map((task) => ({
-      ...task,
-      recurrenceRule: task.recurrenceRule ?? null,
-      dueAt: toDate(task.dueAt),
-      startAt: task.startAt ? toDate(task.startAt) : null,
-      completedAt: toOptionalDate(task.completedAt),
-      createdAt: toOptionalDate(task.createdAt),
-      updatedAt: toOptionalDate(task.updatedAt),
-    }));
-    tasksRef.current = normalizedTasks;
-    setTasks(normalizedTasks);
+      // Normalize events
+      const normalizedEvents = eventsData.map((event) => ({
+        ...event,
+        recurrenceRule: event.recurrenceRule ?? null,
+        startAt: toDate(event.startAt),
+        endAt: toDate(event.endAt),
+        createdAt: toOptionalDate(event.createdAt),
+        updatedAt: toOptionalDate(event.updatedAt),
+      }));
+      eventsRef.current = normalizedEvents;
+      setEvents(normalizedEvents);
 
-    // Set bill reminders
-    billRemindersRef.current = billRemindersData;
-    setBillReminders(billRemindersData);
+      // Normalize tasks
+      const normalizedTasks = tasksData.map((task) => ({
+        ...task,
+        recurrenceRule: task.recurrenceRule ?? null,
+        dueAt: toDate(task.dueAt),
+        startAt: task.startAt ? toDate(task.startAt) : null,
+        completedAt: toOptionalDate(task.completedAt),
+        createdAt: toOptionalDate(task.createdAt),
+        updatedAt: toOptionalDate(task.updatedAt),
+      }));
+      tasksRef.current = normalizedTasks;
+      setTasks(normalizedTasks);
 
-    setIsLoading(false);
-  }, []);
+      // Set bill reminders
+      billRemindersRef.current = billRemindersData;
+      setBillReminders(billRemindersData);
+    } catch (error) {
+      console.error('[calendar:loadData] Failed:', error);
+      toast.error(tErrors('failedToLoad'));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [tErrors]);
 
   useEffect(() => {
     void loadData();
@@ -671,21 +679,21 @@ export default function CalendarPage() {
       </div>
 
       <div className="mb-4 gap-2 flex flex-wrap items-center">
-        <Toggle pressed={showEvents} onPressedChange={setShowEvents} aria-label="Show events">
+        <Toggle pressed={showEvents} onPressedChange={setShowEvents} aria-label={t('filter.events')}>
           <span className="w-2 h-2 rounded-full bg-[oklch(0.60_0.20_250)] dark:bg-[oklch(0.70_0.20_250)] mr-2" />
-          Events
+          {t('filter.events')}
         </Toggle>
-        <Toggle pressed={showTasks} onPressedChange={setShowTasks} aria-label="Show tasks">
+        <Toggle pressed={showTasks} onPressedChange={setShowTasks} aria-label={t('filter.tasks')}>
           <span className="w-2 h-2 rounded-full bg-[oklch(0.65_0.15_145)] dark:bg-[oklch(0.75_0.15_145)] mr-2" />
-          Tasks
+          {t('filter.tasks')}
         </Toggle>
-        <Toggle pressed={showBillReminders} onPressedChange={setShowBillReminders} aria-label="Show bill reminders">
+        <Toggle pressed={showBillReminders} onPressedChange={setShowBillReminders} aria-label={t('filter.billReminders')}>
           <span className="w-2 h-2 rounded-full bg-[oklch(0.70_0.15_85)] dark:bg-[oklch(0.80_0.15_85)] mr-2" />
-          Bills
+          {t('filter.billReminders')}
         </Toggle>
         <Separator orientation="vertical" className="h-6 mx-2" />
-        <Toggle pressed={hideCompleted} onPressedChange={setHideCompleted} aria-label="Hide completed">
-          Hide Completed
+        <Toggle pressed={hideCompleted} onPressedChange={setHideCompleted} aria-label={t('filter.hideCompleted')}>
+          {t('filter.hideCompleted')}
         </Toggle>
       </div>
 

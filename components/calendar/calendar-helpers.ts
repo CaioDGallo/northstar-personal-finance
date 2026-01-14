@@ -10,7 +10,7 @@ import {
 
 export interface ExtendedCalendarEvent extends CalendarEvent {
   priority?: 'low' | 'medium' | 'high' | 'critical'
-  status?: string
+  status?: 'active' | 'paused' | 'completed' | 'done' | 'todo' | 'in_progress' | 'confirmed' | 'tentative' | 'cancelled'
   itemType?: 'event' | 'task' | 'bill_reminder'
   itemId?: number
   isAllDay?: boolean
@@ -20,8 +20,8 @@ export interface ExtendedCalendarEvent extends CalendarEvent {
 
 export interface CalendarEventItemProps {
   calendarEvent: ExtendedCalendarEvent
-  onEdit?: (id: number, type?: 'event' | 'task' | 'bill_reminder') => void
-  onDelete?: (id: number, type?: 'event' | 'task' | 'bill_reminder') => void
+  onEdit?: (id: number, type: 'event' | 'task' | 'bill_reminder') => void
+  onDelete?: (id: number, type: 'event' | 'task' | 'bill_reminder') => void
   onBillReminderClick?: (id: number) => void
 }
 

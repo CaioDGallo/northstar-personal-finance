@@ -508,6 +508,12 @@
     "deleteEventTitle": "Delete event?",
     "deleteTaskTitle": "Delete task?",
     "loading": "Loading...",
+    "filter": {
+      "events": "Events",
+      "tasks": "Tasks",
+      "billReminders": "Bills",
+      "hideCompleted": "Hide Completed"
+    },
     "status": {
       "scheduled": "Scheduled",
       "pending": "Pending",
@@ -670,7 +676,41 @@
     "activate": "Activate",
     "bannerTitle": "Bill reminders due soon",
     "bannerDescription": "{count, plural, =1 {1 bill due soon} other {{count} bills due soon}}",
-    "acknowledge": "Acknowledge"
+    "acknowledge": "Acknowledge",
+    "detail": {
+      "sheetDescription": "Bill reminder details for {name}",
+      "amount": "Amount",
+      "category": "Category",
+      "thisOccurrence": "This Occurrence",
+      "nextDueDate": "Next Due Date",
+      "dueDay": "Day {day}",
+      "atTime": "at {time}",
+      "recurrenceLabel": "Recurrence",
+      "ends": "Ends {endMonth}",
+      "infoNote": "Bill reminders are view-only from the calendar. To edit this reminder, visit the Reminders page.",
+      "status": {
+        "active": "Active",
+        "paused": "Paused",
+        "completed": "Completed"
+      },
+      "weekdays": {
+        "sunday": "Sunday",
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday"
+      },
+      "recurrence": {
+        "once": "One time on {startMonth}",
+        "weekly": "Every {weekday}",
+        "biweekly": "Every 2 weeks",
+        "monthly": "Monthly on day {day}",
+        "quarterly": "Every 3 months on day {day}",
+        "yearly": "Yearly on day {day} of month {month}"
+      }
+    }
   },
   "billReminderForm": {
     "name": "Name",
