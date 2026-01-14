@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { upsertBudget, upsertMonthlyBudget } from '@/lib/actions/budgets';
-import { displayToCents, centsToDisplay } from '@/lib/utils';
+import { centsToDisplay, parseCurrencyToCents } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { CategoryIcon } from '@/components/icon-picker';
@@ -40,10 +40,10 @@ export function BudgetForm({ yearMonth, budgets, monthlyBudget }: BudgetFormProp
   const [totalBudgetError, setTotalBudgetError] = useState<string>('');
 
   async function handleBlur(categoryId: number, value: string) {
-    if (value && !isNaN(parseFloat(value))) {
+    const parsedCents = parseCurrencyToCents(value);
+    if (parsedCents !== null) {
       try {
-        const cents = displayToCents(value);
-        await upsertBudget(categoryId, yearMonth, cents);
+        await upsertBudget(categoryId, yearMonth, parsedCents);
         setErrors((prev) => {
           const next = { ...prev };
           delete next[categoryId];
@@ -68,10 +68,10 @@ export function BudgetForm({ yearMonth, budgets, monthlyBudget }: BudgetFormProp
   }
 
   async function handleTotalBudgetBlur(value: string) {
-    if (value && !isNaN(parseFloat(value))) {
+    const parsedCents = parseCurrencyToCents(value);
+    if (parsedCents !== null) {
       try {
-        const cents = displayToCents(value);
-        await upsertMonthlyBudget(yearMonth, cents);
+        await upsertMonthlyBudget(yearMonth, parsedCents);
         setTotalBudgetError('');
       } catch (error) {
         setTotalBudgetError(tErrors('failedToSave'));
@@ -89,11 +89,11 @@ export function BudgetForm({ yearMonth, budgets, monthlyBudget }: BudgetFormProp
 
   // Calculate allocated amount in real-time
   const allocatedAmount = Object.values(values)
-    .filter((v) => v && !isNaN(parseFloat(v)))
-    .reduce((sum, v) => sum + displayToCents(v), 0);
+    .map((v) => parseCurrencyToCents(v))
+    .filter((v): v is number => v !== null)
+    .reduce((sum, v) => sum + v, 0);
 
-  const totalBudgetCents =
-    totalBudget && !isNaN(parseFloat(totalBudget)) ? displayToCents(totalBudget) : 0;
+  const totalBudgetCents = parseCurrencyToCents(totalBudget) ?? 0;
 
   const remainingBudget = totalBudgetCents - allocatedAmount;
   const allocationPercentage = totalBudgetCents > 0 ? (allocatedAmount / totalBudgetCents) * 100 : 0;

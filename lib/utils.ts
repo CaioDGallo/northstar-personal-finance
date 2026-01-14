@@ -18,7 +18,88 @@ export function centsToDisplay(cents: number): string {
  * @example displayToCents("100.50") → 10050
  */
 export function displayToCents(value: string): number {
-  return Math.round(parseFloat(value) * 100);
+  const parsed = parseCurrencyToNumber(value);
+  return parsed === null ? NaN : Math.round(parsed * 100);
+}
+
+/**
+ * Parse currency string into cents with locale-safe separators.
+ * Supports commas or dots as decimal separators and ignores thousand separators.
+ * Returns null for invalid inputs.
+ * @example parseCurrencyToCents("1.234,56") → 123456
+ */
+export function parseCurrencyToCents(value: string): number | null {
+  const parsed = parseCurrencyToNumber(value);
+  if (parsed === null) return null;
+  return Math.round(parsed * 100);
+}
+
+function parseCurrencyToNumber(value: string): number | null {
+  if (!value) return null;
+
+  let raw = value.trim();
+  if (!raw) return null;
+
+  const hasParens = raw.includes('(') && raw.includes(')');
+  raw = raw.replace(/[()]/g, '');
+
+  // Keep digits, separators, and minus sign only
+  raw = raw.replace(/[^\d,.\-]/g, '');
+  raw = raw.replace(/(?!^)-/g, '');
+
+  if (!raw || raw === '-') return null;
+
+  const isNegative = hasParens || raw.startsWith('-');
+  raw = raw.replace(/-/g, '');
+
+  const lastComma = raw.lastIndexOf(',');
+  const lastDot = raw.lastIndexOf('.');
+  let decimalSep: ',' | '.' | null = null;
+
+  if (lastComma !== -1 && lastDot !== -1) {
+    decimalSep = lastComma > lastDot ? ',' : '.';
+  } else if (lastComma !== -1) {
+    decimalSep = ',';
+  } else if (lastDot !== -1) {
+    decimalSep = '.';
+  }
+
+  let normalized = raw;
+
+  if (decimalSep) {
+    const parts = raw.split(decimalSep);
+
+    if (parts.length > 2) {
+      normalized = raw.replace(new RegExp(`\\${decimalSep}`, 'g'), '');
+      decimalSep = null;
+    } else {
+      const [intPart, fracPart = ''] = parts;
+      const fracLen = fracPart.length;
+      const isEmptyFraction = fracLen === 0;
+      const isLikelyThousands = fracLen === 3 && intPart.length > 0;
+
+      if (isEmptyFraction || isLikelyThousands) {
+        normalized = `${intPart}${fracPart}`;
+        decimalSep = null;
+      } else {
+        normalized = `${intPart}.${fracPart}`;
+      }
+    }
+
+    if (decimalSep) {
+      const thousandsSep = decimalSep === ',' ? '.' : ',';
+      normalized = normalized.replace(new RegExp(`\\${thousandsSep}`, 'g'), '');
+    }
+  } else {
+    normalized = raw.replace(/[.,]/g, '');
+  }
+
+  if (!normalized) return null;
+
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed)) return null;
+
+  return isNegative ? -parsed : parsed;
 }
 
 /**

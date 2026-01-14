@@ -1,4 +1,5 @@
 import type { ImportTemplate, ParseResult, ValidatedImportRow, ImportRowError } from '../types';
+import { parseCurrencyToCents } from '@/lib/utils';
 import { simplifyDescription } from './nubank-extrato-simplify';
 
 export const nubankExtratoParser: ImportTemplate = {
@@ -28,11 +29,11 @@ export const nubankExtratoParser: ImportTemplate = {
         return;
       }
 
-      // Parse CSV - format: Data,Valor,Identificador,Descrição
-      // Handle potential commas in description by matching from start
-      const match = line.match(/^(\d{2}\/\d{2}\/\d{4}),(-?\d+(?:\.\d+)?),([a-f0-9-]{36}),(.+)$/i);
+      // Parse CSV - format: Data,Valor,Identificador,Descrição (comma or semicolon delimited)
+      const delimiter = line.includes(';') ? ';' : ',';
+      const parts = line.split(delimiter);
 
-      if (!match) {
+      if (parts.length < 4) {
         errors.push({
           rowIndex: index + 1,
           field: 'description',
@@ -43,7 +44,8 @@ export const nubankExtratoParser: ImportTemplate = {
         return;
       }
 
-      const [, dateStr, amountStr, identifier, description] = match;
+      const [dateStr, amountStr, identifier, ...descriptionParts] = parts;
+      const description = descriptionParts.join(delimiter);
 
       // Convert DD/MM/YYYY to YYYY-MM-DD
       const [day, month, year] = dateStr.split('/');
@@ -76,8 +78,8 @@ export const nubankExtratoParser: ImportTemplate = {
       }
 
       // Parse amount
-      const amount = parseFloat(amountStr);
-      if (isNaN(amount) || amount === 0) {
+      const amountCents = parseCurrencyToCents(amountStr);
+      if (amountCents === null || amountCents === 0) {
         errors.push({
           rowIndex: index + 1,
           field: 'amount',
@@ -89,13 +91,13 @@ export const nubankExtratoParser: ImportTemplate = {
       }
 
       // Determine type: positive = income, negative = expense
-      const isIncome = amount > 0;
-      const amountCents = Math.round(Math.abs(amount) * 100);
+      const isIncome = amountCents > 0;
+      const normalizedCents = Math.abs(amountCents);
 
       rows.push({
         date: isoDate,
         description: simplifyDescription(description.trim()).simplified,
-        amountCents,
+        amountCents: normalizedCents,
         rowIndex: index + 1,
         externalId: identifier,
         type: isIncome ? 'income' : 'expense',

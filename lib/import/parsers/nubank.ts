@@ -1,4 +1,5 @@
 import type { ImportTemplate, ParseResult, ValidatedImportRow, ImportRowError, InstallmentInfo } from '../types';
+import { parseCurrencyToCents } from '@/lib/utils';
 
 const PARCELA_REGEX = /^(.+?)\s*-\s*Parcela\s+(\d+)\/(\d+)$/i;
 
@@ -62,8 +63,9 @@ export const nubankParser: ImportTemplate = {
         return;
       }
 
-      // Parse CSV line (simple split - assumes no commas in values)
-      const parts = line.split(',');
+      // Parse CSV line with delimiter detection (comma or semicolon)
+      const delimiter = line.includes(';') ? ';' : ',';
+      const parts = line.split(delimiter);
 
       if (parts.length < 3) {
         errors.push({
@@ -76,7 +78,9 @@ export const nubankParser: ImportTemplate = {
         return;
       }
 
-      const [dateStr, title, amountStr] = parts;
+      const dateStr = parts[0];
+      const amountStr = parts[parts.length - 1];
+      const title = parts.slice(1, -1).join(delimiter);
 
       // Validate date (YYYY-MM-DD)
       const dateMatch = dateStr?.match(/^\d{4}-\d{2}-\d{2}$/);
@@ -104,8 +108,8 @@ export const nubankParser: ImportTemplate = {
       }
 
       // Parse amount
-      const amount = parseFloat(amountStr || '');
-      if (isNaN(amount)) {
+      const amountCents = amountStr ? parseCurrencyToCents(amountStr) : null;
+      if (amountCents === null) {
         errors.push({
           rowIndex: index + 1,
           field: 'amount',
@@ -117,17 +121,17 @@ export const nubankParser: ImportTemplate = {
       }
 
       // Determine type: positive = expense (charge), negative = income (refund)
-      const isIncome = amount < 0;
-      const amountCents = Math.round(Math.abs(amount) * 100);
+      const isIncome = amountCents < 0;
+      const normalizedCents = Math.abs(amountCents);
 
       const description = title.trim();
       const installmentInfo = parseInstallmentInfo(description);
-      const externalId = generateSyntheticExternalId(dateStr, description, amountCents);
+      const externalId = generateSyntheticExternalId(dateStr, description, normalizedCents);
 
       rows.push({
         date: dateStr,
         description,
-        amountCents,
+        amountCents: normalizedCents,
         rowIndex: index + 1,
         type: isIncome ? 'income' : 'expense',
         externalId,
