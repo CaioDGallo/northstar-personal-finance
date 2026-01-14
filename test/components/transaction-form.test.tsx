@@ -127,7 +127,7 @@ describe('TransactionForm', () => {
         categories={baseCategories}
         transaction={baseTransaction}
         open
-        onOpenChange={() => {}}
+        onOpenChange={() => { }}
       />
     );
 
@@ -143,7 +143,7 @@ describe('TransactionForm', () => {
         accounts={[]}
         categories={baseCategories}
         open
-        onOpenChange={() => {}}
+        onOpenChange={() => { }}
       />
     );
 
@@ -155,7 +155,7 @@ describe('TransactionForm', () => {
         accounts={baseAccounts}
         categories={[]}
         open
-        onOpenChange={() => {}}
+        onOpenChange={() => { }}
       />
     );
 
@@ -165,14 +165,13 @@ describe('TransactionForm', () => {
   it('calls createExpense with cents and selected ids', async () => {
     vi.mocked(createExpense).mockResolvedValueOnce(undefined);
 
-    const { container } = render(
+    render(
       <TransactionForm
         mode="expense"
         accounts={baseAccounts}
         categories={baseCategories}
         open
-        onOpenChange={() => {}}
-      />
+        onOpenChange={() => { }} />
     );
 
     fireEvent.change(screen.getByLabelText('amount'), { target: { value: '123.45' } });
@@ -207,7 +206,7 @@ describe('TransactionForm', () => {
         categories={baseCategories}
         transaction={baseTransaction}
         open
-        onOpenChange={() => {}}
+        onOpenChange={() => { }}
       />
     );
 
@@ -243,7 +242,7 @@ describe('TransactionForm', () => {
         accounts={baseAccounts}
         categories={baseCategories}
         open
-        onOpenChange={() => {}}
+        onOpenChange={() => { }}
       />
     );
 
@@ -280,7 +279,7 @@ describe('TransactionForm', () => {
         categories={baseCategories}
         income={baseIncome}
         open
-        onOpenChange={() => {}}
+        onOpenChange={() => { }}
       />
     );
 

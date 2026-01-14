@@ -113,7 +113,7 @@ describe('TransferForm', () => {
       <TransferForm
         accounts={accounts}
         open
-        onOpenChange={() => {}}
+        onOpenChange={() => { }}
       />
     );
 
@@ -133,12 +133,11 @@ describe('TransferForm', () => {
 
   it('shows error and prevents submission when using the same account', async () => {
     const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
-    const { container } = render(
+    render(
       <TransferForm
         accounts={accounts}
         open
-        onOpenChange={() => {}}
-      />
+        onOpenChange={() => { }} />
     );
 
     await user.type(screen.getByLabelText('amount'), '50.00');
@@ -160,7 +159,7 @@ describe('TransferForm', () => {
       <TransferForm
         accounts={accounts}
         open
-        onOpenChange={() => {}}
+        onOpenChange={() => { }}
       />
     );
 
@@ -178,7 +177,7 @@ describe('TransferForm', () => {
       <TransferForm
         accounts={accounts}
         open
-        onOpenChange={() => {}}
+        onOpenChange={() => { }}
       />
     );
 
@@ -209,7 +208,7 @@ describe('TransferForm', () => {
   });
 
   it('calls updateTransfer for edit mode', async () => {
-    const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
+    userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
     vi.mocked(updateTransfer).mockResolvedValueOnce(undefined);
 
     render(
@@ -225,7 +224,7 @@ describe('TransferForm', () => {
           toAccountId: 1,
         }}
         open
-        onOpenChange={() => {}}
+        onOpenChange={() => { }}
       />
     );
 

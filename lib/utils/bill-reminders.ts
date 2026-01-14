@@ -49,7 +49,7 @@ export function calculateNextDueDate(reminder: BillReminder): Date {
       const startDate = new Date(year, month - 1, reminder.dueDay);
 
       // Find next occurrence
-      let nextDate = new Date(startDate);
+      const nextDate = new Date(startDate);
       while (nextDate <= now) {
         nextDate.setDate(nextDate.getDate() + 14);
       }
