@@ -26,6 +26,7 @@ import { ThemeToggleRow } from './theme-toggle-row';
 import { LanguageToggleRow } from './language-toggle-row';
 
 const moreItems = [
+  { key: 'reminders', href: '/reminders', icon: Notification02Icon },
   { key: 'tasks', href: '/tasks', icon: Tick02Icon },
   { key: 'faturas', href: '/faturas', icon: CreditCardIcon },
   { key: 'income', href: '/income', icon: ArrowUp01Icon },

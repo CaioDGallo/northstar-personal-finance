@@ -1,8 +1,10 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { notificationJobs, events, tasks, userSettings } from '@/lib/schema';
+import { notificationJobs, events, tasks, userSettings, billReminders, categories } from '@/lib/schema';
 import { eq, and, lte } from 'drizzle-orm';
+import { generateBillReminderHtml, generateBillReminderText } from '@/lib/email/bill-reminder-template';
+import { calculateNextDueDate } from '@/lib/utils/bill-reminders';
 
 interface ProcessNotificationJobResult {
   processed: number;
@@ -12,6 +14,7 @@ interface ProcessNotificationJobResult {
 type NotificationJob = typeof notificationJobs.$inferSelect;
 type EventItem = typeof events.$inferSelect;
 type TaskItem = typeof tasks.$inferSelect;
+type BillReminderItem = typeof billReminders.$inferSelect;
 
 function formatDateTimeForUser(date: Date, timeZone?: string | null): string {
   const resolvedTimeZone = timeZone || 'UTC';
@@ -48,7 +51,7 @@ export async function processPendingNotificationJobs(): Promise<ProcessNotificat
   for (const { job } of pendingJobs) {
     try {
       let isValid = false;
-      let itemData: EventItem | TaskItem | null = null;
+      let itemData: EventItem | TaskItem | BillReminderItem | null = null;
       let userId: string | null = null;
 
       if (job.itemType === 'event') {
@@ -69,6 +72,15 @@ export async function processPendingNotificationJobs(): Promise<ProcessNotificat
         itemData = result[0] || null;
         userId = itemData?.userId || null;
         isValid = itemData !== null && (itemData.status === 'pending' || itemData.status === 'in_progress' || itemData.status === 'overdue');
+      } else if (job.itemType === 'bill_reminder') {
+        const result = await db
+          .select()
+          .from(billReminders)
+          .where(eq(billReminders.id, job.itemId))
+          .limit(1);
+        itemData = result[0] || null;
+        userId = itemData?.userId || null;
+        isValid = itemData !== null && itemData.status === 'active';
       }
 
       if (!isValid || !userId) {
@@ -161,15 +173,15 @@ export async function processPendingNotificationJobs(): Promise<ProcessNotificat
   return { processed, failed };
 }
 
-async function sendNotification(job: NotificationJob, itemData: EventItem | TaskItem | null): Promise<{ success: boolean; error?: string }> {
+async function sendNotification(job: NotificationJob, itemData: EventItem | TaskItem | BillReminderItem | null): Promise<{ success: boolean; error?: string }> {
   if (job.channel === 'email') {
     return await sendEmailNotification(job, itemData);
   }
-  
+
   return { success: false, error: 'Unsupported channel' };
 }
 
-async function sendEmailNotification(job: NotificationJob, itemData: EventItem | TaskItem | null): Promise<{ success: boolean; error?: string }> {
+async function sendEmailNotification(job: NotificationJob, itemData: EventItem | TaskItem | BillReminderItem | null): Promise<{ success: boolean; error?: string }> {
   try {
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
@@ -195,35 +207,79 @@ async function sendEmailNotification(job: NotificationJob, itemData: EventItem |
     const toEmail = settings.notificationEmail;
     const timeZone = settings.timezone || 'UTC';
     
-    const subject = job.itemType === 'event' 
-      ? `Event Reminder: ${itemData?.title}`
-      : `Task Reminder: ${itemData?.title}`;
-    
+    let subject = '';
     let body = '';
+    let html: string | undefined = undefined;
+
     if (job.itemType === 'event' && itemData && 'startAt' in itemData) {
       const eventItem = itemData as EventItem;
       const eventTime = formatDateTimeForUser(new Date(eventItem.startAt), timeZone);
+      subject = `Event Reminder: ${eventItem.title}`;
       body = `You have an upcoming event: ${eventItem.title}\n\nTime: ${eventTime}\n\nView your calendar at ${process.env.NEXT_PUBLIC_APP_URL || 'https://northstar.app'}/calendar`;
-    } else if (itemData) {
+    } else if (job.itemType === 'task' && itemData && 'dueAt' in itemData) {
       const taskItem = itemData as TaskItem;
       const dueDate = taskItem.dueAt
         ? formatDateTimeForUser(new Date(taskItem.dueAt), timeZone)
         : 'N/A';
+      subject = `Task Reminder: ${taskItem.title}`;
       body = `You have a task due: ${taskItem.title}\n\nDue: ${dueDate}\n\nView your calendar at ${process.env.NEXT_PUBLIC_APP_URL || 'https://northstar.app'}/calendar`;
+    } else if (job.itemType === 'bill_reminder' && itemData && 'dueDay' in itemData) {
+      const reminderItem = itemData as BillReminderItem;
+      const nextDue = calculateNextDueDate(reminderItem);
+      const now = new Date();
+      const daysUntil = Math.floor((nextDue.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+      // Get category if exists
+      let category = null;
+      if (reminderItem.categoryId) {
+        const [cat] = await db
+          .select()
+          .from(categories)
+          .where(eq(categories.id, reminderItem.categoryId))
+          .limit(1);
+        category = cat || null;
+      }
+
+      const emailData = {
+        reminderName: reminderItem.name,
+        amount: reminderItem.amount,
+        categoryName: category?.name || null,
+        categoryColor: category?.color || null,
+        dueDate: nextDue.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        dueTime: reminderItem.dueTime,
+        daysUntilDue: daysUntil,
+        appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://northstar.app',
+      };
+
+      subject = `Bill Reminder: ${reminderItem.name}`;
+      body = generateBillReminderText(emailData);
+      html = generateBillReminderHtml(emailData);
     }
-    
+
+    const emailPayload: {
+      from: string;
+      to: string;
+      subject: string;
+      text: string;
+      html?: string;
+    } = {
+      from: fromEmail,
+      to: toEmail,
+      subject,
+      text: body,
+    };
+
+    if (html) {
+      emailPayload.html = html;
+    }
+
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: toEmail,
-        subject,
-        text: body,
-      }),
+      body: JSON.stringify(emailPayload),
     });
     
     if (!response.ok) {

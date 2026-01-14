@@ -79,7 +79,9 @@
     "requiredFieldMissing": "Required field is missing",
     "invalidDataConstraint": "Data violates a constraint requirement",
     "databaseConnectionFailed": "Database connection failed. Please try again later.",
-    "invalidCreditLimit": "Credit limit must be a non-negative integer (cents)"
+    "invalidCreditLimit": "Credit limit must be a non-negative integer (cents)",
+    "nameRequired": "Name is required",
+    "invalidDueDay": "Due day must be between 1 and 31"
   },
   "navigation": {
     "northstar": "Northstar",
@@ -97,6 +99,7 @@
     "calendars": "Calendars",
     "calendar": "Calendar",
     "tasks": "Tasks",
+    "reminders": "Reminders",
     "preferences": "Preferences",
     "expandSidebar": "Expand sidebar"
   },
@@ -647,5 +650,43 @@
     "testing": "Testing...",
     "testSuccess": "Found {count} events in \"{name}\"",
     "testFailed": "Failed to fetch or parse calendar"
+  },
+  "billReminders": {
+    "title": "Bill Reminders",
+    "activeReminders": "Active Reminders",
+    "pausedAndCompleted": "Paused & Completed",
+    "noActiveRemindersYet": "No active reminders yet. Add one to get started!",
+    "addReminder": "Add Reminder",
+    "editReminder": "Edit Reminder",
+    "deleteReminderTitle": "Delete Reminder?",
+    "deleteReminderDescription": "This will permanently delete this bill reminder and all its scheduled notifications.",
+    "dueDay": "Day",
+    "nextDue": "Next due",
+    "active": "Active",
+    "paused": "Paused",
+    "completed": "Completed",
+    "pause": "Pause",
+    "activate": "Activate"
+  },
+  "billReminderForm": {
+    "name": "Name",
+    "namePlaceholder": "Rent, Electricity, Internet...",
+    "category": "Category",
+    "noCategory": "No category",
+    "amount": "Amount (Optional)",
+    "amountPlaceholder": "0.00",
+    "recurrence": "Recurrence",
+    "once": "One-time",
+    "weekly": "Weekly",
+    "biweekly": "Every 2 weeks",
+    "monthly": "Monthly",
+    "quarterly": "Every 3 months",
+    "yearly": "Yearly",
+    "dueDay": "Due Day",
+    "dueTime": "Due Time (Optional)",
+    "notifications": "Notifications",
+    "notify2DaysBefore": "2 days before",
+    "notify1DayBefore": "1 day before",
+    "notifyOnDueDay": "On due day"
   }
 }

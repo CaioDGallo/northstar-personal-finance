@@ -49,6 +49,7 @@ const navItems = [
   { key: 'transfers', href: '/transfers', icon: ArrowLeftRightIcon },
   { key: 'calendar', href: '/calendar', icon: CalendarIcon },
   { key: 'tasks', href: '/tasks', icon: Tick02Icon },
+  { key: 'reminders', href: '/reminders', icon: Notification02Icon },
   { key: 'faturas', href: '/faturas', icon: CreditCardIcon },
   { key: 'income', href: '/income', icon: Wallet01Icon },
 ];

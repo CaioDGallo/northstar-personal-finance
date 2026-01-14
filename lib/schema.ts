@@ -17,10 +17,11 @@ export const transferTypeEnum = pgEnum('transfer_type', ['fatura_payment', 'inte
 export const priorityEnum = pgEnum('priority', ['low', 'medium', 'high', 'critical']);
 export const eventStatusEnum = pgEnum('event_status', ['scheduled', 'cancelled', 'completed']);
 export const taskStatusEnum = pgEnum('task_status', ['pending', 'in_progress', 'completed', 'cancelled', 'overdue']);
-export const itemTypeEnum = pgEnum('item_type', ['event', 'task']);
+export const itemTypeEnum = pgEnum('item_type', ['event', 'task', 'bill_reminder']);
 export const notificationChannelEnum = pgEnum('notification_channel', ['email']);
 export const notificationStatusEnum = pgEnum('notification_status', ['pending', 'sent', 'failed', 'cancelled']);
 export const calendarSourceStatusEnum = pgEnum('calendar_source_status', ['active', 'error', 'disabled']);
+export const billReminderStatusEnum = pgEnum('bill_reminder_status', ['active', 'paused', 'completed']);
 
 // Accounts table
 export const accounts = pgTable('accounts', {
@@ -288,6 +289,27 @@ export const userSettings = pgTable(
   })
 );
 
+// Bill reminders table
+export const billReminders = pgTable('bill_reminders', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  name: text('name').notNull(),
+  categoryId: integer('category_id').references(() => categories.id, { onDelete: 'set null' }),
+  amount: integer('amount'), // cents, optional
+  dueDay: integer('due_day').notNull(), // 1-31 for monthly, 0-6 for weekly
+  dueTime: text('due_time'), // "HH:mm" or null
+  status: billReminderStatusEnum('status').notNull().default('active'),
+  recurrenceType: text('recurrence_type').notNull().default('monthly'), // 'once' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly'
+  startMonth: text('start_month').notNull(), // 'YYYY-MM'
+  endMonth: text('end_month'), // 'YYYY-MM' or null (forever)
+  notify2DaysBefore: boolean('notify_2_days_before').notNull().default(true),
+  notify1DayBefore: boolean('notify_1_day_before').notNull().default(true),
+  notifyOnDueDay: boolean('notify_on_due_day').notNull().default(true),
+  lastAcknowledgedMonth: text('last_acknowledged_month'), // for in-app banner dismissal
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
 // Type exports for TypeScript
 export type Account = typeof accounts.$inferSelect;
 export type NewAccount = typeof accounts.$inferInsert;
@@ -336,6 +358,9 @@ export type NewNotificationJob = typeof notificationJobs.$inferInsert;
 
 export type UserSettings = typeof userSettings.$inferSelect;
 export type NewUserSettings = typeof userSettings.$inferInsert;
+
+export type BillReminder = typeof billReminders.$inferSelect;
+export type NewBillReminder = typeof billReminders.$inferInsert;
 
 // Relations
 import { relations } from 'drizzle-orm';
@@ -439,3 +464,10 @@ export const notificationsRelations = relations(notifications, ({ many }) => ({
 }));
 
 export const userSettingsRelations = relations(userSettings, () => ({}));
+
+export const billRemindersRelations = relations(billReminders, ({ one }) => ({
+  category: one(categories, {
+    fields: [billReminders.categoryId],
+    references: [categories.id],
+  }),
+}));

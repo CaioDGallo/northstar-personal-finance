@@ -79,7 +79,9 @@
     "requiredFieldMissing": "Campo obrigatório está faltando",
     "invalidDataConstraint": "Os dados violam um requisito de restrição",
     "databaseConnectionFailed": "Falha na conexão com o banco de dados. Tente novamente mais tarde.",
-    "invalidCreditLimit": "Limite de crédito deve ser um inteiro não-negativo (centavos)"
+    "invalidCreditLimit": "Limite de crédito deve ser um inteiro não-negativo (centavos)",
+    "nameRequired": "Nome é obrigatório",
+    "invalidDueDay": "Dia de vencimento deve estar entre 1 e 31"
   },
   "navigation": {
     "northstar": "Northstar",
@@ -97,6 +99,7 @@
     "calendars": "Calendários",
     "calendar": "Calendário",
     "tasks": "Tarefas",
+    "reminders": "Lembretes",
     "preferences": "Preferências",
     "expandSidebar": "Expandir barra lateral"
   },
@@ -647,5 +650,43 @@
     "testing": "Testando...",
     "testSuccess": "Encontrados {count} eventos em \"{name}\"",
     "testFailed": "Falha ao buscar ou analisar calendário"
+  },
+  "billReminders": {
+    "title": "Lembretes de Contas",
+    "activeReminders": "Lembretes Ativos",
+    "pausedAndCompleted": "Pausados e Concluídos",
+    "noActiveRemindersYet": "Nenhum lembrete ativo ainda. Adicione um para começar!",
+    "addReminder": "Adicionar Lembrete",
+    "editReminder": "Editar Lembrete",
+    "deleteReminderTitle": "Excluir Lembrete?",
+    "deleteReminderDescription": "Isso excluirá permanentemente este lembrete de conta e todas as suas notificações agendadas.",
+    "dueDay": "Dia",
+    "nextDue": "Próximo vencimento",
+    "active": "Ativo",
+    "paused": "Pausado",
+    "completed": "Concluído",
+    "pause": "Pausar",
+    "activate": "Ativar"
+  },
+  "billReminderForm": {
+    "name": "Nome",
+    "namePlaceholder": "Aluguel, Luz, Internet...",
+    "category": "Categoria",
+    "noCategory": "Sem categoria",
+    "amount": "Valor (Opcional)",
+    "amountPlaceholder": "0,00",
+    "recurrence": "Recorrência",
+    "once": "Uma vez",
+    "weekly": "Semanal",
+    "biweekly": "A cada 2 semanas",
+    "monthly": "Mensal",
+    "quarterly": "A cada 3 meses",
+    "yearly": "Anual",
+    "dueDay": "Dia de Vencimento",
+    "dueTime": "Hora de Vencimento (Opcional)",
+    "notifications": "Notificações",
+    "notify2DaysBefore": "2 dias antes",
+    "notify1DayBefore": "1 dia antes",
+    "notifyOnDueDay": "No dia do vencimento"
   }
 }
