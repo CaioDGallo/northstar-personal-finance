@@ -279,13 +279,16 @@ type ImportMixedResult =
     };
 
 // Helper: Find existing installment transaction by description and total installments
+type DbClient = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 async function findExistingInstallmentTransaction(
+  dbClient: DbClient,
   userId: string,
   baseDescription: string,
   totalInstallments: number
 ): Promise<{ id: number; existingEntryNumbers: number[] } | null> {
   // Find transaction by description pattern (case-insensitive) and installment count
-  const results = await db
+  const results = await dbClient
     .select({
       id: transactions.id,
     })
@@ -304,7 +307,7 @@ async function findExistingInstallmentTransaction(
   const tx = results[0];
 
   // Get existing entry numbers for this transaction
-  const existingEntries = await db
+  const existingEntries = await dbClient
     .select({ installmentNumber: entries.installmentNumber })
     .from(entries)
     .where(eq(entries.transactionId, tx.id));
@@ -398,7 +401,7 @@ async function processInstallmentGroup(
   }
 
   // Check if transaction already exists
-  const existing = await findExistingInstallmentTransaction(userId, baseDescription, total);
+  const existing = await findExistingInstallmentTransaction(tx, userId, baseDescription, total);
 
   const fallbackAmount = firstRow.amountCents;
   const getInstallmentAmount = (

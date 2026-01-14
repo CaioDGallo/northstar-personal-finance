@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 import { renderHook, act } from '@testing-library/react';
 import { useSelection } from '@/lib/hooks/use-selection';
 import { describe, it, expect, vi } from 'vitest';

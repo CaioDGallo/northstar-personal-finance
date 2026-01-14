@@ -23,3 +23,31 @@ vi.mock('next/headers', () => ({
     get: (name: string) => (name === 'NEXT_LOCALE' ? { value: 'en' } : undefined),
   }),
 }));
+
+// Prevent tests from performing real network requests in the sandbox.
+const blockedHosts = new Set(['localhost', '127.0.0.1', '::1']);
+const createJsonResponse = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+globalThis.fetch = async (input: RequestInfo | URL) => {
+  const url =
+    typeof input === 'string'
+      ? input
+      : input instanceof URL
+        ? input.toString()
+        : input.url;
+
+  try {
+    const parsed = new URL(url, 'http://localhost');
+    if (blockedHosts.has(parsed.hostname)) {
+      return createJsonResponse({ ok: true });
+    }
+  } catch {
+    // If URL parsing fails, fall through to the error below.
+  }
+
+  throw new Error(`Unexpected fetch in tests: ${url}`);
+};

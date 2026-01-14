@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { setupTestDb, teardownTestDb, clearAllTables, getTestDb } from '@/test/db-utils';
 import * as schema from '@/lib/schema';
-import { TEST_USER_ID, createTestTask } from '@/test/fixtures';
+import { TEST_USER_ID, createTestEvent, createTestTask } from '@/test/fixtures';
 import { and, eq } from 'drizzle-orm';
 
 type NotificationActions = typeof import('@/lib/actions/notifications');
@@ -11,6 +11,7 @@ describe('Notification Scheduling', () => {
   let scheduleNotificationJobs: NotificationActions['scheduleNotificationJobs'];
   let getCurrentUserIdMock: ReturnType<typeof vi.fn>;
   let getUserSettingsMock: ReturnType<typeof vi.fn>;
+  const OTHER_USER_ID = 'other-user-id';
 
   beforeAll(async () => {
     db = await setupTestDb();
@@ -172,6 +173,67 @@ describe('Notification Scheduling', () => {
     getUserSettingsMock.mockResolvedValue({ notificationsEnabled: false });
 
     await scheduleNotificationJobs('task', task.id, dueAt);
+
+    const jobs = await db.select().from(schema.notificationJobs);
+    expect(jobs).toHaveLength(0);
+  });
+
+  it('creates notification jobs for events and ignores disabled configs', async () => {
+    const startAt = new Date('2026-05-10T14:00:00Z');
+    const endAt = new Date('2026-05-10T15:00:00Z');
+    const [event] = await db
+      .insert(schema.events)
+      .values(createTestEvent({ title: 'Event With Notifications', startAt, endAt }))
+      .returning();
+
+    await db.insert(schema.notifications).values([
+      {
+        itemType: 'event',
+        itemId: event.id,
+        offsetMinutes: 30,
+        channel: 'email',
+        enabled: true,
+      },
+      {
+        itemType: 'event',
+        itemId: event.id,
+        offsetMinutes: 120,
+        channel: 'email',
+        enabled: false,
+      },
+    ]);
+
+    getUserSettingsMock.mockResolvedValue({ notificationsEnabled: true });
+
+    await scheduleNotificationJobs('event', event.id, startAt);
+
+    const jobs = await db
+      .select()
+      .from(schema.notificationJobs)
+      .where(and(eq(schema.notificationJobs.itemType, 'event'), eq(schema.notificationJobs.itemId, event.id)));
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0]?.scheduledAt).toEqual(new Date(startAt.getTime() - 30 * 60000));
+  });
+
+  it('skips scheduling when the parent item is not owned', async () => {
+    const startAt = new Date('2026-06-01T09:00:00Z');
+    const endAt = new Date('2026-06-01T10:00:00Z');
+    const [event] = await db
+      .insert(schema.events)
+      .values(createTestEvent({ userId: OTHER_USER_ID, startAt, endAt }))
+      .returning();
+
+    await db.insert(schema.notifications).values({
+      itemType: 'event',
+      itemId: event.id,
+      offsetMinutes: 45,
+      channel: 'email',
+      enabled: true,
+    });
+
+    getUserSettingsMock.mockResolvedValue({ notificationsEnabled: true });
+
+    await scheduleNotificationJobs('event', event.id, startAt);
 
     const jobs = await db.select().from(schema.notificationJobs);
     expect(jobs).toHaveLength(0);
