@@ -169,3 +169,164 @@ test('create transfer updates cash flow report', async ({ page }) => {
     .first();
   await expect(transfersBlock).toContainText(/R\$\s*200,00/);
 });
+
+test('ignore expense removes it from totals', async ({ page }) => {
+  await login(page);
+
+  await createAccount(page, ACCOUNT_NAME);
+  await createCategory(page, 'Categorias de Despesa', EXPENSE_CATEGORY);
+  await setCategoryBudget(page, EXPENSE_CATEGORY, '1000');
+
+  // Create an expense
+  await page.goto('/expenses');
+  await page.getByRole('button', { name: 'Adicionar Despesa' }).click();
+  const dialog = page.getByRole('alertdialog');
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel('Valor').fill('250');
+  await dialog.getByLabel('Descrição').fill('Mercado Ignorar E2E');
+  await dialog.getByLabel('Categoria').click();
+  await page.getByRole('option', { name: EXPENSE_CATEGORY }).first().click();
+  await dialog.getByLabel('Conta').click();
+  await page.getByRole('option', { name: ACCOUNT_NAME }).first().click();
+  await dialog.getByRole('button', { name: 'Criar' }).click();
+  await expect(dialog).toBeHidden();
+
+  // Verify expense appears in dashboard totals
+  const currentMonth = getYearMonth();
+  await page.goto(`/dashboard?month=${currentMonth}`);
+  const expensesBlock = page
+    .locator('[data-slot="balance-summary"]')
+    .locator('div', { hasText: 'Total de Despesas' })
+    .first();
+  await expect(expensesBlock).toContainText(/R\$\s*250,00/);
+
+  // Go to expenses page and ignore the expense
+  await page.goto('/expenses');
+  const expenseCard = page.locator('div').filter({ hasText: 'Mercado Ignorar E2E' }).filter({ has: page.locator('h3') }).first();
+  await expenseCard.getByRole('button').last().click();
+  await page.getByRole('menuitem', { name: 'Ignorar nos cálculos' }).click();
+
+  // Verify expense is still visible but dimmed
+  await expect(page.getByRole('heading', { name: 'Mercado Ignorar E2E', level: 3 })).toBeVisible();
+
+  // Verify expense is NOT in dashboard totals
+  await page.goto(`/dashboard?month=${currentMonth}`);
+  await expect(expensesBlock).toContainText(/R\$\s*0,00/);
+
+  // Un-ignore the expense
+  await page.goto('/expenses');
+  await expenseCard.getByRole('button').last().click();
+  await page.getByRole('menuitem', { name: 'Incluir nos cálculos' }).click();
+  await page.waitForTimeout(300);
+
+  // Verify expense is back in totals
+  await page.goto(`/dashboard?month=${currentMonth}`);
+  await expect(expensesBlock).toContainText(/R\$\s*250,00/);
+});
+
+test('ignore income removes it from totals', async ({ page }) => {
+  await login(page);
+
+  await createAccount(page, ACCOUNT_NAME);
+  await createCategory(page, 'Categorias de Despesa', EXPENSE_CATEGORY);
+  await createCategory(page, 'Categorias de Receita', INCOME_CATEGORY);
+  await setCategoryBudget(page, EXPENSE_CATEGORY, '1000');
+
+  // Create an income
+  await page.goto('/income');
+  await page.getByRole('button', { name: 'Adicionar Receita' }).click();
+  const dialog = page.getByRole('alertdialog');
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel('Valor').fill('800');
+  await dialog.getByLabel('Descrição').fill('Freelance Ignorar E2E');
+  await dialog.getByLabel('Categoria').click();
+  await page.getByRole('option', { name: INCOME_CATEGORY }).first().click();
+  await dialog.getByLabel('Conta').click();
+  await page.getByRole('option', { name: ACCOUNT_NAME }).first().click();
+  await dialog.getByRole('button', { name: 'Criar' }).click();
+  await expect(dialog).toBeHidden();
+
+  // Verify income appears in dashboard net balance
+  const currentMonth = getYearMonth();
+  await page.goto(`/dashboard?month=${currentMonth}`);
+  const netBlock = page
+    .locator('[data-slot="balance-summary"]')
+    .locator('div', { hasText: 'Saldo Líquido' })
+    .first();
+  await expect(netBlock).toContainText(/R\$\s*800,00/);
+
+  // Ignore the income
+  await page.goto('/income');
+  const incomeCard = page.locator('div').filter({ hasText: 'Freelance Ignorar E2E' }).filter({ has: page.locator('h3') }).first();
+  await incomeCard.getByRole('button').last().click();
+  await page.getByRole('menuitem', { name: 'Ignorar nos cálculos' }).click();
+
+  // Verify income is still visible but dimmed
+  await expect(page.getByRole('heading', { name: 'Freelance Ignorar E2E', level: 3 })).toBeVisible();
+
+  // Verify income is NOT in dashboard net balance
+  await page.goto(`/dashboard?month=${currentMonth}`);
+  await expect(netBlock).toContainText(/R\$\s*0,00/);
+
+  // Un-ignore the income
+  await page.goto('/income');
+  await incomeCard.getByRole('button').last().click();
+  await page.getByRole('menuitem', { name: 'Incluir nos cálculos' }).click();
+
+  // Verify income is back in net balance
+  await page.goto(`/dashboard?month=${currentMonth}`);
+  await expect(netBlock).toContainText(/R\$\s*800,00/);
+});
+
+test('ignore transfer removes it from cash flow', async ({ page }) => {
+  await login(page);
+
+  await createAccount(page, ACCOUNT_NAME);
+  await createCategory(page, 'Categorias de Despesa', EXPENSE_CATEGORY);
+  await setCategoryBudget(page, EXPENSE_CATEGORY, '1000');
+
+  // Create a transfer
+  await page.goto('/transfers');
+  await page.getByRole('button', { name: 'Adicionar Transferência' }).click();
+  const dialog = page.getByRole('alertdialog');
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel('Tipo').click();
+  await page.getByRole('option', { name: 'Depósito' }).first().click();
+  await dialog.getByLabel('Valor').fill('150');
+  await dialog.getByLabel('Descrição').fill('Depósito Ignorar E2E');
+  await dialog.getByLabel('Conta de destino').click();
+  await page.getByRole('option', { name: ACCOUNT_NAME }).first().click();
+  await dialog.getByRole('button', { name: 'Criar' }).click();
+  await expect(dialog).toBeHidden();
+
+  // Verify transfer appears in dashboard cash flow
+  const currentMonth = getYearMonth();
+  await page.goto(`/dashboard?month=${currentMonth}`);
+  const transfersBlock = page
+    .locator('[data-slot="cash-flow-report"]')
+    .locator('div', { hasText: 'Transferências de entrada' })
+    .first();
+  await expect(transfersBlock).toContainText(/R\$\s*150,00/);
+
+  // Ignore the transfer
+  await page.goto('/transfers');
+  const transferCard = page.locator('div').filter({ hasText: 'Depósito Ignorar E2E' }).filter({ has: page.locator('h3') }).first();
+  await transferCard.getByRole('button').last().click();
+  await page.getByRole('menuitem', { name: 'Ignorar nos cálculos' }).click();
+
+  // Verify transfer is still visible but dimmed
+  await expect(page.getByRole('heading', { name: 'Depósito Ignorar E2E', level: 3 })).toBeVisible();
+
+  // Verify transfer is NOT in dashboard cash flow
+  await page.goto(`/dashboard?month=${currentMonth}`);
+  await expect(transfersBlock).toContainText(/R\$\s*0,00/);
+
+  // Un-ignore the transfer
+  await page.goto('/transfers');
+  await transferCard.getByRole('button').last().click();
+  await page.getByRole('menuitem', { name: 'Incluir nos cálculos' }).click();
+
+  // Verify transfer is back in cash flow
+  await page.goto(`/dashboard?month=${currentMonth}`);
+  await expect(transfersBlock).toContainText(/R\$\s*150,00/);
+});
