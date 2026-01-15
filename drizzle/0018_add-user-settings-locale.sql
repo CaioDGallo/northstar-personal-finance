@@ -1,1 +1,0 @@
-ALTER TABLE "user_settings" ADD COLUMN "locale" text DEFAULT 'pt-BR';

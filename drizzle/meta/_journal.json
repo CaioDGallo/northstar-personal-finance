@@ -127,6 +127,13 @@
       "when": 1768382696040,
       "tag": "0017_medical_kabuki",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1768485939736,
+      "tag": "0018_polite_champions",
+      "breakpoints": true
     }
   ]
 }
