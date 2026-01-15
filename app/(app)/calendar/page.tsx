@@ -21,6 +21,9 @@ import { parseRRule } from '@/lib/recurrence';
 import { buildTaskSchedule, type TaskWithRecurrence } from '@/lib/task-schedule';
 import { buildBillReminderSchedule } from '@/lib/bill-reminder-schedule';
 import { getBrowserTimeZone, resolveTimeZone, toZonedDateTime } from '@/lib/timezone-utils';
+import { addMonthsToDate } from '@/lib/utils';
+import { logError } from '@/lib/logger';
+import { ErrorIds } from '@/constants/errorIds';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -58,12 +61,6 @@ function toOptionalDate(value?: Date | string | null): Date | null {
 }
 
 type EventWithRecurrence = Event & { recurrenceRule?: string | null };
-
-function addMonthsToDate(date: Date, months: number): Date {
-  const next = new Date(date);
-  next.setMonth(next.getMonth() + months);
-  return next;
-}
 
 function resolveRecurrenceWindow(rule: ReturnType<typeof parseRRule>, baseStartAt: Date) {
   const now = new Date();
@@ -105,7 +102,7 @@ export default function CalendarPage() {
   const [showEvents, setShowEvents] = useState(true);
   const [showTasks, setShowTasks] = useState(true);
   const [showBillReminders, setShowBillReminders] = useState(true);
-  const [hideCompleted, setHideCompleted] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
 
   // Event state
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
@@ -198,7 +195,11 @@ export default function CalendarPage() {
       billRemindersRef.current = billRemindersData;
       setBillReminders(billRemindersData);
     } catch (error) {
-      console.error('[calendar:loadData] Failed:', error);
+      logError(
+        ErrorIds.CALENDAR_DATA_LOAD_FAILED,
+        'Failed to load calendar data',
+        error
+      );
       toast.error(tErrors('failedToLoad'));
     } finally {
       setIsLoading(false);
@@ -331,7 +332,12 @@ export default function CalendarPage() {
       setSelectedTask(null);
       await loadData();
     } catch (error) {
-      console.error('[Calendar] Delete failed:', error);
+      logError(
+        ErrorIds.CALENDAR_DELETE_FAILED,
+        'Delete operation failed',
+        error,
+        { targetId: deleteTarget.id }
+      );
       setDeleteError(tCommon('unexpectedError'));
     } finally {
       setIsDeleting(false);
@@ -440,12 +446,12 @@ export default function CalendarPage() {
   // Filter and combine all item types
   const filteredItems = useMemo(() => {
     const filteredEventsList = showEvents ? events.filter((event) => {
-      if (hideCompleted && event.status === 'completed') return false;
+      if (showCompleted && event.status === 'completed') return true;
       return true;
     }) : [];
 
     const filteredTasksList = showTasks ? tasks.filter((task) => {
-      if (hideCompleted && task.status === 'completed') return false;
+      if (showCompleted && task.status === 'completed') return true;
       return true;
     }) : [];
 
@@ -454,7 +460,7 @@ export default function CalendarPage() {
       tasks: filteredTasksList,
       billReminders: showBillReminders ? billReminders : [],
     };
-  }, [events, tasks, billReminders, showEvents, showTasks, showBillReminders, hideCompleted]);
+  }, [events, tasks, billReminders, showEvents, showTasks, showBillReminders, showCompleted]);
 
   const scheduleData = useMemo(() => {
     const occurrenceOverrides = new Map<string, { startAt: Date; endAt: Date }>();
@@ -491,11 +497,12 @@ export default function CalendarPage() {
       try {
         rule = parseRRule(event.recurrenceRule, { dtstart: baseStartAt });
       } catch (error) {
-        console.error('[Calendar] Invalid event recurrence rule:', {
-          eventId: event.id,
-          rrule: event.recurrenceRule,
+        logError(
+          ErrorIds.EVENT_SCHEDULE_FAILED,
+          'Invalid event recurrence rule',
           error,
-        });
+          { eventId: event.id, rrule: event.recurrenceRule }
+        );
         return [buildScheduleEvent(event, baseId, baseStartAt, baseEndAt)];
       }
 
@@ -679,21 +686,22 @@ export default function CalendarPage() {
       </div>
 
       <div className="mb-4 gap-2 flex flex-wrap items-center">
-        <Toggle pressed={showEvents} onPressedChange={setShowEvents} aria-label={t('filter.events')}>
-          <span className="w-2 h-2 rounded-full bg-[oklch(0.60_0.20_250)] dark:bg-[oklch(0.70_0.20_250)] mr-2" />
-          {t('filter.events')}
-        </Toggle>
-        <Toggle pressed={showTasks} onPressedChange={setShowTasks} aria-label={t('filter.tasks')}>
-          <span className="w-2 h-2 rounded-full bg-[oklch(0.65_0.15_145)] dark:bg-[oklch(0.75_0.15_145)] mr-2" />
-          {t('filter.tasks')}
-        </Toggle>
-        <Toggle pressed={showBillReminders} onPressedChange={setShowBillReminders} aria-label={t('filter.billReminders')}>
-          <span className="w-2 h-2 rounded-full bg-[oklch(0.70_0.15_85)] dark:bg-[oklch(0.80_0.15_85)] mr-2" />
-          {t('filter.billReminders')}
-        </Toggle>
-        <Separator orientation="vertical" className="h-6 mx-2" />
-        <Toggle pressed={hideCompleted} onPressedChange={setHideCompleted} aria-label={t('filter.hideCompleted')}>
-          {t('filter.hideCompleted')}
+        <div className='flex flex-row justify-between w-full space-x-2'>
+          <Toggle pressed={showEvents} onPressedChange={setShowEvents} aria-label={t('filter.events')}>
+            <span className="w-2 h-2 rounded-full bg-[oklch(0.60_0.20_250)] dark:bg-[oklch(0.70_0.20_250)] mr-2" />
+            {t('filter.events')}
+          </Toggle>
+          <Toggle pressed={showTasks} onPressedChange={setShowTasks} aria-label={t('filter.tasks')}>
+            <span className="w-2 h-2 rounded-full bg-[oklch(0.65_0.15_145)] dark:bg-[oklch(0.75_0.15_145)] mr-2" />
+            {t('filter.tasks')}
+          </Toggle>
+          <Toggle pressed={showBillReminders} onPressedChange={setShowBillReminders} aria-label={t('filter.billReminders')}>
+            <span className="w-2 h-2 rounded-full bg-[oklch(0.70_0.15_85)] dark:bg-[oklch(0.80_0.15_85)] mr-2" />
+            {t('filter.billReminders')}
+          </Toggle>
+        </div>
+        <Toggle pressed={showCompleted} onPressedChange={setShowCompleted} aria-label={t('filter.showCompleted')}>
+          {t('filter.showCompleted')}
         </Toggle>
       </div>
 

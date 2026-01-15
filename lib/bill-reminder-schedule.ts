@@ -2,6 +2,8 @@ import type { CalendarEvent } from '@schedule-x/calendar';
 import type { BillReminder } from '@/lib/schema';
 import { calculateNextDueDate } from '@/lib/utils/bill-reminders';
 import { toZonedDateTime } from '@/lib/timezone-utils';
+import { logError, logForDebugging } from '@/lib/logger';
+import { ErrorIds } from '@/constants/errorIds';
 
 export type BillReminderScheduleEvent = CalendarEvent & {
   itemType: 'bill_reminder';
@@ -53,10 +55,10 @@ function generateOccurrences(
         occurrences.push(nextDue);
       }
 
-      // Move current check forward based on recurrence type
-      currentCheck = new Date(nextDue.getTime() + 1000); // 1 second after to avoid infinite loops
+      // Move forward 1 second to find the next occurrence
+      currentCheck = new Date(nextDue.getTime() + 1000);
 
-      // Additional safety: skip ahead more aggressively
+      // Performance optimization: skip ahead by recurrence interval
       switch (reminder.recurrenceType) {
         case 'weekly':
           currentCheck = new Date(nextDue.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -74,8 +76,11 @@ function generateOccurrences(
           currentCheck = new Date(nextDue.getTime() + 365 * 24 * 60 * 60 * 1000);
           break;
         default:
-          console.error(
-            `[bill-reminders:schedule] Unsupported recurrence type: ${reminder.recurrenceType} (reminder ${reminder.id})`
+          logError(
+            ErrorIds.BILL_REMINDER_SCHEDULE_FAILED,
+            `Unsupported recurrence type: ${reminder.recurrenceType}`,
+            undefined,
+            { reminderId: reminder.id }
           );
           currentCheck = new Date(nextDue.getTime() + 24 * 60 * 60 * 1000);
           break;
@@ -89,7 +94,12 @@ function generateOccurrences(
 
     return uniqueOccurrences;
   } catch (error) {
-    console.error(`[bill-reminders:schedule] Failed for reminder ${reminder.id}:`, error);
+    logError(
+      ErrorIds.BILL_REMINDER_SCHEDULE_FAILED,
+      `Failed to generate schedule for reminder ${reminder.id}`,
+      error,
+      { reminderId: reminder.id }
+    );
     return [];
   }
 }
@@ -141,6 +151,17 @@ export function buildBillReminderSchedule(
     const occurrences = generateOccurrences(reminder, viewStart, viewEnd, timeZone);
 
     if (occurrences.length === 0) {
+      logForDebugging(
+        'bill-reminders:schedule',
+        `No occurrences generated for reminder ${reminder.id}`,
+        {
+          reminderId: reminder.id,
+          reminderName: reminder.name,
+          recurrenceType: reminder.recurrenceType,
+          viewStart: viewStart.toISOString(),
+          viewEnd: viewEnd.toISOString()
+        }
+      );
       return [];
     }
 

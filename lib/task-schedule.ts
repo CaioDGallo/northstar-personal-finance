@@ -3,6 +3,9 @@ import type { Task } from '@/lib/schema';
 import { parseRRule } from '@/lib/recurrence';
 import { resolveTaskRange } from '@/lib/tasks-utils';
 import { toZonedDateTime } from '@/lib/timezone-utils';
+import { addMonthsToDate } from '@/lib/utils';
+import { logError } from '@/lib/logger';
+import { ErrorIds } from '@/constants/errorIds';
 
 export type TaskWithRecurrence = Task & { recurrenceRule?: string | null };
 
@@ -14,12 +17,6 @@ export type TaskScheduleEvent = CalendarEvent & {
   priority: Task['priority'];
   status: Task['status'];
 };
-
-function addMonthsToDate(date: Date, months: number): Date {
-  const next = new Date(date);
-  next.setMonth(next.getMonth() + months);
-  return next;
-}
 
 function resolveRecurrenceWindow(rule: ReturnType<typeof parseRRule>, baseStartAt: Date) {
   const now = new Date();
@@ -87,11 +84,12 @@ export function buildTaskSchedule(tasks: TaskWithRecurrence[], timeZone: string)
     try {
       rule = parseRRule(task.recurrenceRule, { dtstart: baseStartAt });
     } catch (error) {
-      console.error('[Tasks] Invalid recurrence rule:', {
-        taskId: task.id,
-        rrule: task.recurrenceRule,
+      logError(
+        ErrorIds.TASK_SCHEDULE_FAILED,
+        'Invalid recurrence rule',
         error,
-      });
+        { taskId: task.id, rrule: task.recurrenceRule }
+      );
       return [buildScheduleEvent(task, baseId, baseStartAt, baseEndAt)];
     }
 

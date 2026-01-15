@@ -14,8 +14,8 @@ export interface ExtendedCalendarEvent extends CalendarEvent {
   itemType?: 'event' | 'task' | 'bill_reminder'
   itemId?: number
   isAllDay?: boolean
-  amount?: number | null
-  categoryId?: number | null
+  amount?: number
+  categoryId?: number
 }
 
 export interface CalendarEventItemProps {

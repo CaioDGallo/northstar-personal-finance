@@ -29,8 +29,7 @@ interface BillReminderDetailSheetProps {
   onOpenChange: (open: boolean) => void
   reminder: BillReminder | null
   occurrenceDate?: Date
-  categoryName?: string | null
-  categoryColor?: string | null
+  category?: { name: string; color: string }
 }
 
 // Helper: Format date/time
@@ -100,8 +99,7 @@ export function BillReminderDetailSheet({
   onOpenChange,
   reminder,
   occurrenceDate,
-  categoryName,
-  categoryColor,
+  category,
 }: BillReminderDetailSheetProps) {
   const tDetail = useTranslations('billReminders.detail')
 
@@ -149,19 +147,17 @@ export function BillReminderDetailSheet({
           )}
 
           {/* Category */}
-          {categoryName && (
+          {category && (
             <div className="flex items-start gap-3">
               <HugeiconsIcon icon={SparklesIcon} className="mt-0.5 h-5 w-5 text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium">{tDetail('category')}</p>
                 <div className="flex items-center gap-2 mt-1">
-                  {categoryColor && (
-                    <div
-                      className="h-3 w-3 rounded-full"
-                      style={{ backgroundColor: categoryColor }}
-                    />
-                  )}
-                  <p className="text-sm">{categoryName}</p>
+                  <div
+                    className="h-3 w-3 rounded-full"
+                    style={{ backgroundColor: category.color }}
+                  />
+                  <p className="text-sm">{category.name}</p>
                 </div>
               </div>
             </div>

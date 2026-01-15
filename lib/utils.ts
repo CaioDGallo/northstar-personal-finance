@@ -162,6 +162,16 @@ export function addMonths(yearMonth: string, months: number): string {
 }
 
 /**
+ * Add months to a Date object
+ * @example addMonthsToDate(new Date('2024-01-15'), 1) → Date('2024-02-15')
+ */
+export function addMonthsToDate(date: Date, months: number): Date {
+  const next = new Date(date);
+  next.setMonth(next.getMonth() + months);
+  return next;
+}
+
+/**
  * Parse "YYYY-MM-DD" date string as local time (not UTC)
  *
  * Fixes timezone bug where `new Date("2026-01-02")` is parsed as UTC midnight,
