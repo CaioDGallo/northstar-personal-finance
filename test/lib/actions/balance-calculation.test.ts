@@ -30,18 +30,6 @@ describe('Balance Calculation', () => {
     const accountActions = await import('@/lib/actions/accounts');
     calculateAccountBalance = accountActions.calculateAccountBalance;
     syncAccountBalance = accountActions.syncAccountBalance;
-
-    const incomeActions = await import('@/lib/actions/income');
-    createIncome = incomeActions.createIncome;
-
-    const transferActions = await import('@/lib/actions/transfers');
-    createTransfer = transferActions.createTransfer;
-
-    const expenseActions = await import('@/lib/actions/expenses');
-    createExpense = expenseActions.createExpense;
-
-    const faturaActions = await import('@/lib/actions/faturas');
-    payFatura = faturaActions.payFatura;
   });
 
   afterAll(async () => {
