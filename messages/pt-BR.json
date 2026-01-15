@@ -774,5 +774,18 @@
       "amount": "Valor",
       "textHeading": "LEMBRETE DE CONTA: {{urgency}}"
     }
+  },
+  "netWorth": {
+    "title": "Patrimônio Líquido",
+    "totalAssets": "Total de Ativos",
+    "totalLiabilities": "Total de Passivos",
+    "netWorth": "Patrimônio Líquido",
+    "byAccountType": "Por Tipo de Conta",
+    "accountType": {
+      "checking": "Conta Corrente",
+      "savings": "Poupança",
+      "cash": "Dinheiro",
+      "credit_card": "Cartão de Crédito"
+    }
   }
 }

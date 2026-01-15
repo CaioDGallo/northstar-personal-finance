@@ -204,3 +204,61 @@ export const getDashboardData = cache(async (yearMonth: string): Promise<Dashboa
     recentIncome,
   };
 });
+
+export type NetWorthData = {
+  totalAssets: number;
+  totalLiabilities: number;
+  netWorth: number;
+  byType: Record<string, number>;
+};
+
+/**
+ * Get current net worth across all accounts
+ *
+ * Assets: checking, savings, cash accounts with positive balances
+ * Liabilities: credit card accounts with negative balances (debt)
+ * Net Worth: assets - liabilities
+ */
+export const getNetWorth = cache(async (): Promise<NetWorthData> => {
+  const userId = await getCurrentUserId();
+
+  const allAccounts = await db
+    .select({
+      type: accounts.type,
+      currentBalance: accounts.currentBalance,
+    })
+    .from(accounts)
+    .where(eq(accounts.userId, userId));
+
+  let totalAssets = 0;
+  let totalLiabilities = 0;
+  const byType: Record<string, number> = {};
+
+  for (const account of allAccounts) {
+    const balance = account.currentBalance;
+
+    // Initialize type if not seen
+    if (!byType[account.type]) {
+      byType[account.type] = 0;
+    }
+    byType[account.type] += balance;
+
+    // Credit cards with negative balance are liabilities
+    if (account.type === 'credit_card' && balance < 0) {
+      totalLiabilities += Math.abs(balance);
+    }
+    // All other accounts (and CC with positive balance) are assets
+    else if (balance > 0) {
+      totalAssets += balance;
+    }
+  }
+
+  const netWorth = totalAssets - totalLiabilities;
+
+  return {
+    totalAssets,
+    totalLiabilities,
+    netWorth,
+    byType,
+  };
+});

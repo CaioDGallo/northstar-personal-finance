@@ -774,5 +774,18 @@
       "amount": "Amount",
       "textHeading": "BILL REMINDER: {{urgency}}"
     }
+  },
+  "netWorth": {
+    "title": "Net Worth",
+    "totalAssets": "Total Assets",
+    "totalLiabilities": "Total Liabilities",
+    "netWorth": "Net Worth",
+    "byAccountType": "By Account Type",
+    "accountType": {
+      "checking": "Checking",
+      "savings": "Savings",
+      "cash": "Cash",
+      "credit_card": "Credit Card"
+    }
   }
 }

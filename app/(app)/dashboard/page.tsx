@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server';
-import { getDashboardData } from '@/lib/actions/dashboard';
+import { getDashboardData, getNetWorth } from '@/lib/actions/dashboard';
 import { getCurrentYearMonth } from '@/lib/utils';
 import { MonthPicker } from '@/components/month-picker';
 import { SummaryCard } from '@/components/summary-card';
@@ -7,6 +7,7 @@ import { BalanceSummary } from '@/components/balance-summary';
 import { CashFlowReport } from '@/components/cash-flow-report';
 import { BudgetProgress } from '@/components/budget-progress';
 import { RecentExpenses } from '@/components/recent-expenses';
+import { NetWorthSummary } from '@/components/net-worth-summary';
 import Link from 'next/link';
 
 type PageProps = {
@@ -18,6 +19,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const yearMonth = params.month || getCurrentYearMonth();
   const data = await getDashboardData(yearMonth);
+  const netWorth = await getNetWorth();
 
   const hasNoBudgets = data.categoryBreakdown.length === 0;
 
@@ -49,6 +51,12 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               income={data.totalIncome}
               expenses={data.totalSpent}
               netBalance={data.netBalance}
+            />
+            <NetWorthSummary
+              totalAssets={netWorth.totalAssets}
+              totalLiabilities={netWorth.totalLiabilities}
+              netWorth={netWorth.netWorth}
+              byType={netWorth.byType}
             />
             <CashFlowReport
               income={data.totalIncome}

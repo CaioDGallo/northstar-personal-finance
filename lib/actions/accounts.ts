@@ -7,6 +7,7 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { getCurrentUserId } from '@/lib/auth';
 import { t } from '@/lib/i18n/server-errors';
 import { handleDbError } from '@/lib/db-errors';
+import { computeBalance } from '@/lib/balance';
 
 type ActionResult<T = void> =
   | { success: true; data?: T }
@@ -76,7 +77,12 @@ async function calculateAccountBalanceForUser(dbClient: DbClient, userId: string
     .from(transfers)
     .where(and(eq(transfers.userId, userId), eq(transfers.toAccountId, accountId)));
 
-  return totalIncome + totalTransfersIn - totalTransfersOut - totalExpenses;
+  return computeBalance({
+    totalExpenses,
+    totalReceivedIncome: totalIncome,
+    totalTransfersIn,
+    totalTransfersOut,
+  });
 }
 
 export async function calculateAccountBalance(accountId: number): Promise<number> {

@@ -49,6 +49,8 @@ export async function createIncome(data: CreateIncomeData) {
       receivedDate: data.receivedDate,
     });
 
+    await syncAccountBalance(data.accountId);
+
     revalidatePath('/income');
     revalidatePath('/dashboard');
     revalidatePath('/settings/accounts');
