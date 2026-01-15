@@ -1,27 +1,31 @@
 // @vitest-environment happy-dom
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
 import { EventDetailSheet } from '@/components/calendar/event-detail-sheet';
+import messages from '@/messages/en.json';
 
 describe('EventDetailSheet', () => {
   it('renders task duration details when provided', () => {
     render(
-      <EventDetailSheet
-        open
-        onOpenChange={() => {}}
-        event={{
-          id: 1,
-          title: 'Write tests',
-          description: 'Detail sheet for task',
-          location: 'Desk',
-          startAt: new Date('2026-02-01T09:00:00Z'),
-          endAt: new Date('2026-02-01T10:30:00Z'),
-          priority: 'medium',
-          status: 'pending',
-          type: 'task',
-          durationMinutes: 90,
-        }}
-      />
+      <NextIntlClientProvider messages={messages} locale="en">
+        <EventDetailSheet
+          open
+          onOpenChange={() => {}}
+          event={{
+            id: 1,
+            title: 'Write tests',
+            description: 'Detail sheet for task',
+            location: 'Desk',
+            startAt: new Date('2026-02-01T09:00:00Z'),
+            endAt: new Date('2026-02-01T10:30:00Z'),
+            priority: 'medium',
+            status: 'pending',
+            type: 'task',
+            durationMinutes: 90,
+          }}
+        />
+      </NextIntlClientProvider>
     );
 
     expect(screen.getByText('Write tests')).toBeInTheDocument();
@@ -56,23 +60,25 @@ describe('EventDetailSheet', () => {
     });
 
     render(
-      <EventDetailSheet
-        open
-        timeZone={timeZone}
-        onOpenChange={() => {}}
-        event={{
-          id: 42,
-          title: 'Occurrence Task',
-          description: null,
-          location: null,
-          startAt,
-          endAt,
-          priority: 'high',
-          status: 'pending',
-          type: 'task',
-          durationMinutes: 75,
-        }}
-      />
+      <NextIntlClientProvider messages={messages} locale="en">
+        <EventDetailSheet
+          open
+          timeZone={timeZone}
+          onOpenChange={() => {}}
+          event={{
+            id: 42,
+            title: 'Occurrence Task',
+            description: null,
+            location: null,
+            startAt,
+            endAt,
+            priority: 'high',
+            status: 'pending',
+            type: 'task',
+            durationMinutes: 75,
+          }}
+        />
+      </NextIntlClientProvider>
     );
 
     expect(screen.getByText(expectedStart)).toBeInTheDocument();
