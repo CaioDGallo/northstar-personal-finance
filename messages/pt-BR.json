@@ -81,6 +81,8 @@
     "invalidDataConstraint": "Os dados violam um requisito de restrição",
     "databaseConnectionFailed": "Falha na conexão com o banco de dados. Tente novamente mais tarde.",
     "invalidCreditLimit": "Limite de crédito deve ser um inteiro não-negativo (centavos)",
+    "creditLimitRequired": "O limite de crédito é obrigatório para cartões de crédito",
+    "invalidBalance": "Saldo inválido",
     "nameRequired": "Nome é obrigatório",
     "invalidDueDay": "Dia de vencimento deve estar entre 1 e 31"
   },
@@ -480,10 +482,13 @@
   "accountForm": {
     "name": "Nome",
     "type": "Tipo",
+    "initialBalance": "Saldo Inicial",
+    "initialBalancePlaceholder": "1000,00",
     "closingDay": "Dia do Fechamento (1-28)",
     "paymentDueDay": "Dia do Vencimento (1-28)",
-    "creditLimit": "Limite de Crédito (opcional)",
+    "creditLimit": "Limite de Crédito",
     "creditLimitPlaceholder": "5000,00",
+    "creditLimitRequired": "Limite de crédito é obrigatório para cartões de crédito",
     "selectDay": "Selecione o dia",
     "save": "Salvar",
     "cancel": "Cancelar",
@@ -790,6 +795,13 @@
       "footer": "Você está recebendo isto porque as notificações deste lembrete estão ativadas.",
       "amount": "Valor",
       "textHeading": "LEMBRETE DE CONTA: {{urgency}}"
+    },
+    "billReminders": {
+      "subject": "Lembretes de Contas - {{date}}",
+      "title": "Lembretes de Contas",
+      "count": "{{count}} lembretes para hoje",
+      "viewAllReminders": "Visualizar Todos os Lembretes",
+      "footer": "Você está recebendo este e-mail porque tem lembretes ativos"
     }
   },
   "netWorth": {

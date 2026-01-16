@@ -21,6 +21,7 @@ export function AccountForm({ account, onSuccess }: AccountFormProps) {
   const [type, setType] = useState<'credit_card' | 'checking' | 'savings' | 'cash'>(
     account?.type || 'checking'
   );
+  const [initialBalance, setInitialBalance] = useState('');
   const [closingDay, setClosingDay] = useState<number | null>(account?.closingDay ?? null);
   const [paymentDueDay, setPaymentDueDay] = useState<number | null>(account?.paymentDueDay ?? null);
   const [creditLimit, setCreditLimit] = useState(
@@ -32,11 +33,19 @@ export function AccountForm({ account, onSuccess }: AccountFormProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    // Validate credit limit for credit cards
+    if (type === 'credit_card' && !creditLimit) {
+      alert(t('creditLimitRequired'));
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const data = {
         name,
         type,
+        ...(!account && { currentBalance: displayToCents(initialBalance) }),
         ...(type === 'credit_card' && {
           closingDay,
           paymentDueDay,
@@ -87,6 +96,20 @@ export function AccountForm({ account, onSuccess }: AccountFormProps) {
             </SelectContent>
           </Select>
         </Field>
+
+        {!account && (
+          <Field>
+            <FieldLabel htmlFor="initialBalance">{t('initialBalance')}</FieldLabel>
+            <Input
+              type="text"
+              id="initialBalance"
+              value={initialBalance}
+              onChange={(e) => setInitialBalance(e.target.value)}
+              required
+              placeholder={t('initialBalancePlaceholder')}
+            />
+          </Field>
+        )}
 
         {type === 'credit_card' && (
           <>
@@ -139,6 +162,7 @@ export function AccountForm({ account, onSuccess }: AccountFormProps) {
                 id="creditLimit"
                 value={creditLimit}
                 onChange={(e) => setCreditLimit(e.target.value)}
+                required
                 placeholder={t('creditLimitPlaceholder')}
               />
             </Field>

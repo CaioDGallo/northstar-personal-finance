@@ -81,6 +81,8 @@
     "invalidDataConstraint": "Data violates a constraint requirement",
     "databaseConnectionFailed": "Database connection failed. Please try again later.",
     "invalidCreditLimit": "Credit limit must be a non-negative integer (cents)",
+    "creditLimitRequired": "Credit limit is required for credit card accounts",
+    "invalidBalance": "Invalid balance",
     "nameRequired": "Name is required",
     "invalidDueDay": "Due day must be between 1 and 31"
   },
@@ -480,10 +482,13 @@
   "accountForm": {
     "name": "Name",
     "type": "Type",
+    "initialBalance": "Initial Balance",
+    "initialBalancePlaceholder": "1000.00",
     "closingDay": "Closing Day (1-28)",
     "paymentDueDay": "Payment Due Day (1-28)",
-    "creditLimit": "Credit Limit (optional)",
+    "creditLimit": "Credit Limit",
     "creditLimitPlaceholder": "5000.00",
+    "creditLimitRequired": "Credit limit is required for credit cards",
     "selectDay": "Select day",
     "save": "Save",
     "cancel": "Cancel",
@@ -790,6 +795,13 @@
       "footer": "You're receiving this because you have notifications enabled for this bill reminder.",
       "amount": "Amount",
       "textHeading": "BILL REMINDER: {{urgency}}"
+    },
+    "billReminders": {
+      "subject": "Bill Reminders - {{date}}",
+      "title": "Bill Reminders",
+      "count": "{{count}} reminders for today",
+      "viewAllReminders": "View All Reminders",
+      "footer": "You're receiving this email because you have active reminders"
     }
   },
   "netWorth": {

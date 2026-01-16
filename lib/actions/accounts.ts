@@ -48,6 +48,21 @@ async function validateCreditLimit(limit: unknown) {
   }
 }
 
+async function validateCreditLimitRequired(type: string, limit: unknown) {
+  if (type === 'credit_card' && (limit === null || limit === undefined || limit === '')) {
+    throw new Error(await t('errors.creditLimitRequired'));
+  }
+}
+
+async function validateCurrentBalance(balance: unknown) {
+  if (balance === null || balance === undefined) {
+    return;
+  }
+  if (typeof balance !== 'number' || !Number.isInteger(balance)) {
+    throw new Error(await t('errors.invalidBalance'));
+  }
+}
+
 export async function getAccounts() {
   const userId = await getCurrentUserId();
   return await db.select().from(accounts).where(eq(accounts.userId, userId)).orderBy(accounts.name);
@@ -232,9 +247,17 @@ export async function createAccount(data: Omit<NewAccount, 'id' | 'userId' | 'cr
     await validateBillingDay(data.closingDay, 'errors.invalidClosingDay');
     await validateBillingDay(data.paymentDueDay, 'errors.invalidPaymentDueDay');
     await validateCreditLimit(data.creditLimit);
+    await validateCreditLimitRequired(data.type, data.creditLimit);
+    await validateCurrentBalance(data.currentBalance);
 
     const userId = await getCurrentUserId();
-    await db.insert(accounts).values({ ...data, name, userId });
+    const accountData = {
+      ...data,
+      name,
+      userId,
+      ...(data.currentBalance !== undefined && { lastBalanceUpdate: new Date() }),
+    };
+    await db.insert(accounts).values(accountData);
     revalidatePath('/settings/accounts');
     revalidateTag('accounts', 'max');
     return { success: true };
@@ -268,6 +291,14 @@ export async function updateAccount(id: number, data: Partial<Omit<NewAccount, '
     }
     if (updates.creditLimit !== undefined) {
       await validateCreditLimit(updates.creditLimit);
+    }
+    if (updates.currentBalance !== undefined) {
+      await validateCurrentBalance(updates.currentBalance);
+    }
+
+    // When changing type to credit card, require credit limit
+    if (updates.type === 'credit_card') {
+      await validateCreditLimitRequired(updates.type, updates.creditLimit);
     }
 
     const userId = await getCurrentUserId();
