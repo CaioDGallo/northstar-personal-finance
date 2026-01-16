@@ -6,12 +6,12 @@
     "edit": "Edit",
     "create": "Create",
     "update": "Update",
-    "loading": "Loading...",
-    "saving": "Saving...",
-    "deleting": "Deleting...",
-    "importing": "Importing...",
-    "copying": "Copying...",
-    "paying": "Paying...",
+    "loading": "Loading…",
+    "saving": "Saving…",
+    "deleting": "Deleting…",
+    "importing": "Importing…",
+    "copying": "Copying…",
+    "paying": "Paying…",
     "reverting": "Reverting...",
     "updating": "Updating...",
     "convert": "Convert",
@@ -385,7 +385,7 @@
     "noDefaultCategories": "Configure default import categories in Settings > Categories first"
   },
   "copyBudgets": {
-    "copying": "Copying...",
+    "copying": "Copying…",
     "copyFromPreviousMonth": "Copy from previous month",
     "copiedSuccess": "Copied {count} budgets from {month}",
     "noBudgetsToCopy": "No budgets to copy from {month}",
@@ -410,7 +410,7 @@
     "signIn": "Sign in",
     "authenticationFailed": "Authentication failed. Please check your credentials.",
     "unexpectedError": "An unexpected error occurred",
-    "loading": "Loading...",
+    "loading": "Loading…",
     "emailPlaceholder": "you@example.com",
     "passwordPlaceholder": "••••••••"
   },
@@ -442,7 +442,7 @@
     "passwordRequirementsNotMet": "Password must contain letters and numbers",
     "passwordsMismatch": "Passwords do not match",
     "unexpectedError": "An unexpected error occurred",
-    "loading": "Loading...",
+    "loading": "Loading…",
     "passwordPlaceholder": "••••••••"
   },
   "offline": {
@@ -518,7 +518,7 @@
     "editTask": "Edit Task",
     "deleteEventTitle": "Delete event?",
     "deleteTaskTitle": "Delete task?",
-    "loading": "Loading...",
+    "loading": "Loading…",
     "filter": {
       "events": "Events",
       "tasks": "Tasks",
@@ -611,7 +611,7 @@
     "yes": "Yes",
     "no": "No",
     "save": "Save",
-    "saving": "Saving...",
+    "saving": "Saving…",
     "savedSuccessfully": "Settings saved successfully!",
     "unexpectedError": "An unexpected error occurred. Please try again."
   },

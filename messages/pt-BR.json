@@ -6,12 +6,12 @@
     "edit": "Editar",
     "create": "Criar",
     "update": "Atualizar",
-    "loading": "Carregando...",
-    "saving": "Salvando...",
-    "deleting": "Excluindo...",
-    "importing": "Importando...",
-    "copying": "Copiando...",
-    "paying": "Pagando...",
+    "loading": "Carregando…",
+    "saving": "Salvando…",
+    "deleting": "Excluindo…",
+    "importing": "Importando…",
+    "copying": "Copiando…",
+    "paying": "Pagando…",
     "reverting": "Revertendo...",
     "updating": "Atualizando...",
     "convert": "Converter",
@@ -385,7 +385,7 @@
     "noDefaultCategories": "Configure as categorias padrão para importação em Configurações > Categorias primeiro"
   },
   "copyBudgets": {
-    "copying": "Copiando...",
+    "copying": "Copiando…",
     "copyFromPreviousMonth": "Copiar do mês anterior",
     "copiedSuccess": "Copiados {count} orçamentos de {month}",
     "noBudgetsToCopy": "Nenhum orçamento para copiar de {month}",
@@ -410,7 +410,7 @@
     "signIn": "Entrar",
     "authenticationFailed": "Falha na autenticação. Verifique suas credenciais.",
     "unexpectedError": "Ocorreu um erro inesperado",
-    "loading": "Carregando...",
+    "loading": "Carregando…",
     "emailPlaceholder": "seu@email.com",
     "passwordPlaceholder": "••••••••"
   },
@@ -442,7 +442,7 @@
     "passwordRequirementsNotMet": "A senha deve conter letras e números",
     "passwordsMismatch": "As senhas não correspondem",
     "unexpectedError": "Ocorreu um erro inesperado",
-    "loading": "Carregando...",
+    "loading": "Carregando…",
     "passwordPlaceholder": "••••••••"
   },
   "offline": {
@@ -518,7 +518,7 @@
     "editTask": "Editar Tarefa",
     "deleteEventTitle": "Excluir evento?",
     "deleteTaskTitle": "Excluir tarefa?",
-    "loading": "Carregando...",
+    "loading": "Carregando…",
     "filter": {
       "events": "Eventos",
       "tasks": "Tarefas",
@@ -611,7 +611,7 @@
     "yes": "Sim",
     "no": "Não",
     "save": "Salvar",
-    "saving": "Salvando...",
+    "saving": "Salvando…",
     "savedSuccessfully": "Configurações salvas com sucesso!",
     "unexpectedError": "Ocorreu um erro inesperado. Por favor, tente novamente."
   },

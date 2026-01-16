@@ -146,6 +146,14 @@ export function IncomeCard(props: IncomeCardProps) {
     disabled: !props.selectionMode && !props.onLongPress,
   });
 
+  // Support Shift+Click to enter selection mode (keyboard accessible)
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (!props.selectionMode && e.shiftKey && props.onLongPress) {
+      e.preventDefault();
+      props.onLongPress();
+    }
+  };
+
   return (
     <>
       <Card className={cn(
@@ -155,27 +163,7 @@ export function IncomeCard(props: IncomeCardProps) {
         props.selectionMode && "cursor-pointer",
         props.selectionMode && props.isSelected && "ring-2 ring-primary ring-offset-2"
       )}>
-        {/* Checkbox indicator - only shown in selection mode */}
-        {props.selectionMode && (
-          <div className="absolute -left-1 -top-1 z-10">
-            <div className={cn(
-              "size-6 rounded-full border-2 flex items-center justify-center transition-all",
-              props.isSelected
-                ? "bg-primary border-primary"
-                : "bg-white border-gray-300"
-            )}>
-              {props.isSelected && (
-                <HugeiconsIcon
-                  icon={Tick02Icon}
-                  className="size-4 text-white"
-                  strokeWidth={3}
-                />
-              )}
-            </div>
-          </div>
-        )}
-
-        <CardContent {...longPressHandlers} className="flex items-center gap-3 md:gap-4 px-3 md:px-4 py-3">
+        <CardContent {...longPressHandlers} onClick={handleCardClick} className="flex items-center gap-3 md:gap-4 px-3 md:px-4 py-3">
           {/* Category icon - clickable */}
           <button
             type="button"
@@ -202,6 +190,25 @@ export function IncomeCard(props: IncomeCardProps) {
             style={{ backgroundColor: optimisticCategory.color }}
           >
             <CategoryIcon icon={optimisticCategory.icon} />
+            {/* Checkbox indicator - only shown in selection mode */}
+            {props.selectionMode && (
+              <div className="absolute z-10">
+                <div className={cn(
+                  "size-10 rounded-full border-2 flex items-center justify-center transition-all",
+                  props.isSelected
+                    ? "bg-primary/85 border-green-600"
+                    : "bg-gray-100/70 border-gray-500"
+                )}>
+                  {props.isSelected && (
+                    <HugeiconsIcon
+                      icon={Tick02Icon}
+                      className="size-4 text-green-600"
+                      strokeWidth={4}
+                    />
+                  )}
+                </div>
+              </div>
+            )}
           </button>
 
           {/* Description + mobile date */}
@@ -214,8 +221,10 @@ export function IncomeCard(props: IncomeCardProps) {
           </div>
 
           {/* Desktop only: Category + Account */}
-          <div className="hidden md:block text-sm text-gray-500 shrink-0">
-            {optimisticCategory.name} • {income.accountName}
+          <div className="hidden md:flex items-center gap-1 text-sm text-gray-500 shrink-0 min-w-0">
+            <span className="truncate">{optimisticCategory.name}</span>
+            <span>•</span>
+            <span className="truncate">{income.accountName}</span>
           </div>
 
           {/* Desktop only: Full date */}
