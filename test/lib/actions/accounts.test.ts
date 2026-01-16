@@ -90,7 +90,7 @@ describe('Account Actions', () => {
       await createAccount({ name: 'Checking', type: 'checking' });
       await createAccount({ name: 'Savings', type: 'savings' });
       await createAccount({ name: 'Cash', type: 'cash' });
-      await createAccount({ name: 'Card', type: 'credit_card' });
+      await createAccount({ name: 'Card', type: 'credit_card', creditLimit: 100000 });
 
       const accounts = await db
         .select()
@@ -108,6 +108,7 @@ describe('Account Actions', () => {
         type: 'credit_card',
         closingDay: 15,
         paymentDueDay: 5,
+        creditLimit: 200000,
         userId: OTHER_USER_ID,
       } as unknown as CreateAccountData;
 

@@ -1,16 +1,10 @@
 "use client"
 
-import * as React from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   Calendar03Icon,
   Clock01Icon,
   Location01Icon,
-  Tick02Icon,
-  Flag01Icon,
-  Alert01Icon,
-  CircleIcon,
-  Loading03Icon,
 } from "@hugeicons/core-free-icons"
 
 import { useTranslations } from "next-intl"
@@ -181,11 +175,11 @@ export function EventDetailSheet({
                 <div className="text-xs font-medium">
                   {formatDateTime(event.startAt, event.isAllDay, timeZone)}
                 </div>
-                 {!event.isAllDay && (
-                   <div className="text-[10px] text-muted-foreground mt-1">
-                     {toLabel} {formatDateTime(event.endAt, event.isAllDay, timeZone)}
-                   </div>
-                 )}
+                {!event.isAllDay && (
+                  <div className="text-[10px] text-muted-foreground mt-1">
+                    {toLabel} {formatDateTime(event.endAt, event.isAllDay, timeZone)}
+                  </div>
+                )}
 
               </div>
             </div>
@@ -283,9 +277,9 @@ export function EventDetailSheet({
                   onOpenChange(false)
                 }}
                 className="flex-1"
-               >
-                 {tCommon('edit')}
-               </Button>
+              >
+                {tCommon('edit')}
+              </Button>
 
             )}
             {onDelete && (
@@ -296,9 +290,9 @@ export function EventDetailSheet({
                   onOpenChange(false)
                 }}
                 className="flex-1 text-destructive hover:text-destructive"
-               >
-                 {tCommon('delete')}
-               </Button>
+              >
+                {tCommon('delete')}
+              </Button>
 
             )}
           </SheetFooter>
