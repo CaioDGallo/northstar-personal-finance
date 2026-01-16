@@ -651,6 +651,22 @@
         "invalidIdentifierFormat": "Invalid identifier format (expected UUID)",
         "invalidOrZeroAmount": "Invalid or zero amount"
       }
+    },
+    "nubank-ofx": {
+      "name": "Nubank Credit Card (OFX)",
+      "description": "Import OFX statement from Nubank credit card",
+      "errors": {
+        "noTransactionsFound": "No OFX transactions found in file",
+        "parseError": "Failed to parse OFX file"
+      }
+    },
+    "nubank-extrato-ofx": {
+      "name": "Nubank Statement (OFX)",
+      "description": "Import OFX statement from Nubank checking account",
+      "errors": {
+        "noTransactionsFound": "No OFX transactions found in file",
+        "parseError": "Failed to parse OFX file"
+      }
     }
   },
   "calendarSources": {

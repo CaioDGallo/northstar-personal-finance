@@ -651,6 +651,22 @@
         "invalidIdentifierFormat": "Formato de identificador inválido (esperado UUID)",
         "invalidOrZeroAmount": "Valor inválido ou zero"
       }
+    },
+    "nubank-ofx": {
+      "name": "Nubank Cartão de Crédito (OFX)",
+      "description": "Importar fatura OFX do cartão Nubank",
+      "errors": {
+        "noTransactionsFound": "Nenhuma transação OFX encontrada no arquivo",
+        "parseError": "Falha ao processar arquivo OFX"
+      }
+    },
+    "nubank-extrato-ofx": {
+      "name": "Nubank Extrato (OFX)",
+      "description": "Importar extrato OFX da conta corrente Nubank",
+      "errors": {
+        "noTransactionsFound": "Nenhuma transação OFX encontrada no arquivo",
+        "parseError": "Falha ao processar arquivo OFX"
+      }
     }
   },
   "calendarSources": {

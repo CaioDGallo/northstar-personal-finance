@@ -9,14 +9,18 @@ type Props = {
   accept?: string;
 };
 
-export function FileDropzone({ onFileContent, accept = '.csv' }: Props) {
+export function FileDropzone({ onFileContent, accept = '.csv,.ofx' }: Props) {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const t = useTranslations('fileDropzone');
 
   const handleFile = useCallback(
     (file: File) => {
-      if (!file.name.endsWith('.csv')) {
+      // Validate file extension
+      const validExtensions = accept.split(',').map(ext => ext.trim().toLowerCase());
+      const fileExt = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
+
+      if (!validExtensions.includes(fileExt)) {
         setError(t('invalidFileType'));
         return;
       }
@@ -30,7 +34,7 @@ export function FileDropzone({ onFileContent, accept = '.csv' }: Props) {
       reader.onerror = () => setError(t('failedToRead'));
       reader.readAsText(file);
     },
-    [onFileContent, t]
+    [accept, onFileContent, t]
   );
 
   const handleDrop = useCallback(
