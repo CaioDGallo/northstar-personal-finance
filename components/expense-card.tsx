@@ -3,7 +3,9 @@
 import { useState, useOptimistic, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import { useLongPress } from '@/lib/hooks/use-long-press';
+import { useSwipe } from '@/lib/hooks/use-swipe';
 import { formatCurrency, formatDate, cn } from '@/lib/utils';
+import { triggerHaptic, HapticPatterns } from '@/lib/utils/haptics';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,7 +28,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
   DropdownMenu,
@@ -87,10 +88,23 @@ export function ExpenseCard(props: ExpenseCardProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const context = useExpenseContextOptional();
 
   // Check if expense can be converted to fatura payment
   const canConvertToFatura = entry.accountType !== 'credit_card' && entry.totalInstallments === 1 && unpaidFaturas.length > 0;
+
+  // Swipe-to-delete gesture (disabled in selection mode)
+  const swipe = useSwipe({
+    onSwipeLeft: () => {
+      if (!props.selectionMode) {
+        triggerHaptic(HapticPatterns.light);
+        setShowDeleteConfirm(true);
+      }
+    },
+    disabled: props.selectionMode || isOptimistic,
+    threshold: 80,
+  });
 
   const t = useTranslations('expenses');
   const tCommon = useTranslations('common');
@@ -129,11 +143,30 @@ export function ExpenseCard(props: ExpenseCardProps) {
   };
 
   const handleDelete = async () => {
+    setShowDeleteConfirm(false);
+    triggerHaptic(HapticPatterns.medium);
+
+    // Store the transaction data for potential undo
+    const transactionId = entry.transactionId;
+
+    // Optimistically remove from UI
     if (context) {
-      await context.removeExpense(entry.transactionId);
+      await context.removeExpense(transactionId);
     } else {
-      await deleteExpense(entry.transactionId);
+      await deleteExpense(transactionId);
     }
+
+    // Show undo toast
+    toast.success('Expense deleted', {
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          // Refresh the page to restore the deleted item
+          window.location.reload();
+        },
+      },
+      duration: 5000,
+    });
   };
 
   const handleCategoryChange = async (categoryId: number) => {
@@ -169,13 +202,29 @@ export function ExpenseCard(props: ExpenseCardProps) {
   return (
     <>
       <Card className={cn(
-        "py-0 relative",
+        "py-0 relative overflow-hidden",
         isOptimistic && "opacity-70 animate-pulse",
         entry.ignored && "opacity-50",
         props.selectionMode && "cursor-pointer",
         props.selectionMode && props.isSelected && "ring-2 ring-primary ring-offset-2"
       )}>
-        <CardContent {...longPressHandlers} onClick={handleCardClick} className="flex items-center gap-3 md:gap-4 px-3 md:px-4 py-3">
+        {/* Delete background revealed on swipe */}
+        {swipe.isSwiping && swipe.swipeOffset < 0 && (
+          <div className="absolute inset-0 bg-red-500 flex items-center justify-end px-4">
+            <span className="text-white font-medium">Delete</span>
+          </div>
+        )}
+
+        <CardContent
+          {...longPressHandlers}
+          {...swipe.handlers}
+          onClick={handleCardClick}
+          className="flex items-center gap-3 md:gap-4 px-3 md:px-4 py-3 relative bg-white"
+          style={{
+            transform: swipe.swipeOffset < 0 ? `translateX(${swipe.swipeOffset}px)` : undefined,
+            transition: swipe.isSwiping ? 'none' : 'transform 0.2s ease-out',
+          }}
+        >
           {/* Category icon - clickable */}
           <button
             type="button"
@@ -319,25 +368,9 @@ export function ExpenseCard(props: ExpenseCardProps) {
                   {t('convertToFaturaPayment')}
                 </DropdownMenuItem>
               )}
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    {t('deleteTransaction')}
-                  </DropdownMenuItem>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>{t('deleteConfirmationTitle')}</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {t('deleteConfirmation', { count: entry.totalInstallments, description: entry.description })}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete}>{tCommon('delete')}</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <DropdownMenuItem onClick={() => setShowDeleteConfirm(true)}>
+                {t('deleteTransaction')}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </CardContent>
@@ -387,6 +420,22 @@ export function ExpenseCard(props: ExpenseCardProps) {
           }}
         />
       )}
+
+      {/* Delete confirmation dialog (triggered by swipe or menu) */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteConfirmationTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteConfirmation', { count: entry.totalInstallments, description: entry.description })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>{tCommon('delete')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

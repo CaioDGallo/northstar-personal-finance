@@ -8,6 +8,9 @@ import { SelectionActionBar } from '@/components/selection-action-bar';
 import { CategoryQuickPicker } from '@/components/category-quick-picker';
 import { formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
+import { triggerHaptic, HapticPatterns } from '@/lib/utils/haptics';
+import { usePullToRefresh } from '@/lib/hooks/use-pull-to-refresh';
+import { useRouter } from 'next/navigation';
 
 export { ExpenseListProvider };
 
@@ -16,6 +19,18 @@ export function ExpenseList() {
   const { expenses, filteredExpenses, accounts, categories, unpaidFaturas, filters, searchQuery } = context;
   const selection = useSelection();
   const [bulkPickerOpen, setBulkPickerOpen] = useState(false);
+  const router = useRouter();
+
+  // Pull-to-refresh functionality
+  const pullToRefresh = usePullToRefresh({
+    onRefresh: async () => {
+      triggerHaptic(HapticPatterns.light);
+      router.refresh();
+      // Wait a bit for the refresh to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+    },
+    disabled: selection.isSelectionMode, // Disable during selection mode
+  });
 
   // Group by date (same logic as original page)
   const groupedByDate = filteredExpenses.reduce(
@@ -92,9 +107,11 @@ export function ExpenseList() {
 
     try {
       await context.bulkUpdateCategory(uniqueTransactionIds, categoryId);
+      triggerHaptic(HapticPatterns.success);
       selection.exitSelectionMode();
     } catch (error) {
       console.error('Bulk update failed:', error);
+      triggerHaptic(HapticPatterns.heavy);
       // Error already toasted by context
       // Keep selection active so user can retry
     }
@@ -120,6 +137,21 @@ export function ExpenseList() {
 
   return (
     <div className="space-y-8">
+      {/* Pull-to-refresh indicator */}
+      {(pullToRefresh.isRefreshing || pullToRefresh.pullDistance > 0) && (
+        <div
+          className="fixed top-0 left-0 right-0 z-50 flex justify-center"
+          style={{
+            transform: `translateY(${Math.min(pullToRefresh.pullDistance, 80)}px)`,
+            transition: pullToRefresh.isRefreshing ? 'transform 0.3s ease-out' : 'none',
+          }}
+        >
+          <div className="bg-gray-900/90 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm">
+            {pullToRefresh.isRefreshing ? 'Refreshing...' : 'Pull to refresh'}
+          </div>
+        </div>
+      )}
+
       {dates.map((date) => (
         <div key={date}>
           <h2 className="mb-3 text-sm font-medium text-gray-500">
