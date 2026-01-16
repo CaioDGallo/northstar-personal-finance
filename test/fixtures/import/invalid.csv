@@ -1,0 +1,4 @@
+date,title,amount
+invalid-date,Test,100.00
+2026-01-15,,50.00
+2026-01-14,Valid,invalid-amount
