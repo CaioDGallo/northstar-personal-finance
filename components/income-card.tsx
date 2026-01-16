@@ -3,7 +3,9 @@
 import { useState, useOptimistic, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import { useLongPress } from '@/lib/hooks/use-long-press';
+import { useSwipe } from '@/lib/hooks/use-swipe';
 import { formatCurrency, formatDate, cn } from '@/lib/utils';
+import { triggerHaptic, HapticPatterns } from '@/lib/utils/haptics';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CategoryIcon } from '@/components/icon-picker';
@@ -76,6 +78,7 @@ export function IncomeCard(props: IncomeCardProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isPending, startTransition] = useTransition();
   const context = useIncomeContextOptional();
 
@@ -118,11 +121,13 @@ export function IncomeCard(props: IncomeCardProps) {
   };
 
   const handleDelete = async () => {
+    setShowDeleteConfirm(false);
     if (context) {
       await context.removeIncome(income.id);
     } else {
       await deleteIncome(income.id);
     }
+    toast.success(t('incomeDeleted'));
   };
 
   const handleCategoryChange = async (categoryId: number) => {
@@ -147,6 +152,52 @@ export function IncomeCard(props: IncomeCardProps) {
     disabled: !props.selectionMode && !props.onLongPress,
   });
 
+  const swipe = useSwipe({
+    onSwipeLeft: () => {
+      if (!props.selectionMode) {
+        triggerHaptic(HapticPatterns.light);
+        setShowDeleteConfirm(true);
+      }
+    },
+    disabled: props.selectionMode || isOptimistic,
+    threshold: 50,
+    velocityThreshold: 0.15,
+  });
+
+  // Combined handlers for long-press and swipe
+  const combinedHandlers = {
+    onPointerDown: (e: React.PointerEvent) => {
+      longPressHandlers.onPointerDown(e);
+      if (!props.selectionMode && !isOptimistic) {
+        swipe.handlers.onPointerDown(e);
+      }
+    },
+    onPointerMove: (e: React.PointerEvent) => {
+      longPressHandlers.onPointerMove(e);
+      if (!props.selectionMode && !isOptimistic) {
+        swipe.handlers.onPointerMove(e);
+      }
+    },
+    onPointerUp: (e: React.PointerEvent) => {
+      longPressHandlers.onPointerUp(e);
+      if (!props.selectionMode && !isOptimistic) {
+        swipe.handlers.onPointerUp(e);
+      }
+    },
+    onPointerCancel: () => {
+      longPressHandlers.onPointerCancel();
+      if (!props.selectionMode && !isOptimistic) {
+        swipe.handlers.onPointerCancel();
+      }
+    },
+    onPointerLeave: () => {
+      longPressHandlers.onPointerLeave();
+      if (!props.selectionMode && !isOptimistic) {
+        swipe.handlers.onPointerLeave();
+      }
+    },
+  };
+
   // Support Shift+Click to enter selection mode (keyboard accessible)
   const handleCardClick = (e: React.MouseEvent) => {
     if (!props.selectionMode && e.shiftKey && props.onLongPress) {
@@ -158,17 +209,33 @@ export function IncomeCard(props: IncomeCardProps) {
   return (
     <>
       <Card className={cn(
-        "py-0 relative",
+        "py-0 relative overflow-hidden",
         isOptimistic && "opacity-70 animate-pulse",
         income.ignored && "opacity-50",
         props.selectionMode && "cursor-pointer",
         props.selectionMode && props.isSelected && "ring-2 ring-primary ring-offset-2"
       )}>
-        <CardContent {...longPressHandlers} onClick={handleCardClick} className="flex items-center gap-3 md:gap-4 px-3 md:px-4 py-3 select-none touch-none">
+        {/* Swipe-to-delete background - revealed when swiping left */}
+        {swipe.isSwiping && swipe.swipeOffset < 0 && !props.selectionMode && (
+          <div className="absolute inset-0 bg-red-500 flex items-center justify-end px-6 pointer-events-none">
+            <span className="text-white font-medium">{t('delete')}</span>
+          </div>
+        )}
+
+        <CardContent
+          {...combinedHandlers}
+          onClick={handleCardClick}
+          className="flex items-center gap-3 md:gap-4 px-3 md:px-4 py-3 relative bg-card select-none touch-pan-y"
+          style={{
+            transform: swipe.swipeOffset < 0 ? `translateX(${swipe.swipeOffset}px)` : undefined,
+            transition: swipe.isSwiping ? 'none' : 'transform 0.2s ease-out',
+          }}
+        >
           {/* Category icon - clickable */}
           <button
             type="button"
             aria-label={props.selectionMode ? t('selected') : t('changeCategory')}
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
               if (props.selectionMode) {
@@ -266,7 +333,13 @@ export function IncomeCard(props: IncomeCardProps) {
           {/* Actions dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-11 md:size-8 touch-manipulation" aria-label="Abrir menu de ações">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-11 md:size-8 touch-manipulation"
+                onPointerDown={(e) => e.stopPropagation()}
+                aria-label="Abrir menu de ações"
+              >
                 <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} size={16} />
               </Button>
             </DropdownMenuTrigger>
@@ -338,6 +411,22 @@ export function IncomeCard(props: IncomeCardProps) {
         open={editOpen}
         onOpenChange={setEditOpen}
       />
+
+      {/* Swipe-to-delete confirmation dialog */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteConfirmationTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteConfirmation', { description: income.description })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>{tCommon('delete')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

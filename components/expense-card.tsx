@@ -253,7 +253,7 @@ export function ExpenseCard(props: ExpenseCardProps) {
         <CardContent
           {...combinedHandlers}
           onClick={handleCardClick}
-          className="flex items-center gap-3 md:gap-4 px-3 md:px-4 py-3 relative bg-white select-none touch-none"
+          className="flex items-center gap-3 md:gap-4 px-3 md:px-4 py-3 relative bg-card select-none touch-pan-y"
           style={{
             transform: swipe.swipeOffset < 0 ? `translateX(${swipe.swipeOffset}px)` : undefined,
             transition: swipe.isSwiping ? 'none' : 'transform 0.2s ease-out',

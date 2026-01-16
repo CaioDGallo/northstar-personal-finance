@@ -25,7 +25,7 @@ export function useSwipe({
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     if (disabled) return;
-    e.preventDefault(); // Prevent text selection
+    // Don't preventDefault here - allow native scrolling to start
 
     startXRef.current = e.clientX;
     startYRef.current = e.clientY;
@@ -43,7 +43,6 @@ export function useSwipe({
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (disabled || startXRef.current === null || !isSwiping) return;
-    e.preventDefault(); // Prevent text selection
 
     // Cancel if vertical drift too large
     if (startYRef.current !== null) {
@@ -54,8 +53,15 @@ export function useSwipe({
       }
     }
 
-    currentXRef.current = e.clientX;
     const diff = e.clientX - startXRef.current;
+    const horizontalDrift = Math.abs(diff);
+
+    // Only preventDefault after horizontal swipe detected (not on every move)
+    if (horizontalDrift > 10) {
+      e.preventDefault(); // Now we're definitely swiping horizontally
+    }
+
+    currentXRef.current = e.clientX;
     // Cap maximum swipe distance
     const cappedDiff = Math.max(diff, -120);
     setSwipeOffset(cappedDiff);
@@ -63,11 +69,15 @@ export function useSwipe({
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     if (disabled || startXRef.current === null) return;
-    e.preventDefault(); // Prevent text selection
 
     const distance = currentXRef.current - startXRef.current;
     const duration = Date.now() - startTimeRef.current;
     const velocity = Math.abs(distance) / duration;
+
+    // Only preventDefault if we were actually swiping
+    if (Math.abs(distance) > 10) {
+      e.preventDefault();
+    }
 
     let actionTriggered = false;
 

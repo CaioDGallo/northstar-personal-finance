@@ -29,7 +29,8 @@ export function useLongPress({
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     if (disabled) return;
-    e.preventDefault(); // Prevent text selection
+    // Don't preventDefault - allow native scrolling to work
+    // Text selection prevention is handled via CSS (touch-pan-y)
 
     isLongPressRef.current = false;
     isCancelledRef.current = false;
@@ -48,7 +49,7 @@ export function useLongPress({
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!startPositionRef.current || isCancelledRef.current) return;
-    e.preventDefault(); // Prevent text selection
+    // Don't preventDefault - allow native scrolling to work
 
     const dx = Math.abs(e.clientX - startPositionRef.current.x);
     const dy = Math.abs(e.clientY - startPositionRef.current.y);
@@ -61,7 +62,7 @@ export function useLongPress({
   }, [cancel, moveThreshold]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
-    e.preventDefault(); // Prevent text selection
+    // Don't preventDefault - allow native scrolling to work
     cancel();
     startPositionRef.current = null;
 
