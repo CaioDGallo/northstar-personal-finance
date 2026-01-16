@@ -232,11 +232,13 @@ export function TransactionForm({
                   ref={amountInputRef}
                   type="number"
                   id="amount"
+                  name="amount"
                   step="0.01"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   required
                   placeholder={t('amountPlaceholder')}
+                  autoComplete="transaction-amount"
                 />
               </InputGroup>
             </Field>
@@ -247,10 +249,13 @@ export function TransactionForm({
               <Input
                 type="text"
                 id="description"
+                name="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 required
                 placeholder={descriptionPlaceholder}
+                autoComplete="off"
+                spellCheck={false}
               />
             </Field>
 
@@ -305,9 +310,11 @@ export function TransactionForm({
               <Input
                 type="date"
                 id="date"
+                name="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 required
+                autoComplete="transaction-date"
               />
             </Field>
 

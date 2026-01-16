@@ -50,9 +50,10 @@ export function CategoryQuickPicker({
                   type="button"
                   onClick={() => onSelect(category.id)}
                   disabled={isUpdating}
+                  aria-label={`Selecionar categoria ${category.name}`}
                   className={cn(
                     'flex items-center gap-3 px-4 py-3 transition-all',
-                    'hover:bg-muted',
+                    'hover:bg-muted touch-manipulation',
                     'disabled:opacity-50 disabled:cursor-not-allowed',
                     isSelected && 'bg-muted'
                   )}

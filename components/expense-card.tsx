@@ -171,6 +171,7 @@ export function ExpenseCard(props: ExpenseCardProps) {
           {/* Category icon - clickable */}
           <button
             type="button"
+            aria-label={props.selectionMode ? t('selected') : 'Alterar categoria'}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
@@ -180,7 +181,17 @@ export function ExpenseCard(props: ExpenseCardProps) {
                 setPickerOpen(true);
               }
             }}
-            className="size-10 shrink-0 rounded-full flex items-center justify-center text-white cursor-pointer transition-all hover:ring-2 hover:ring-offset-2 hover:ring-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                if (props.selectionMode) {
+                  props.onToggleSelection();
+                } else {
+                  setPickerOpen(true);
+                }
+              }
+            }}
+            className="size-10 shrink-0 rounded-full flex items-center justify-center text-white cursor-pointer transition-all hover:ring-2 hover:ring-offset-2 hover:ring-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary touch-manipulation"
             style={{ backgroundColor: optimisticCategory.color }}
           >
             <CategoryIcon icon={optimisticCategory.icon} />
@@ -243,11 +254,13 @@ export function ExpenseCard(props: ExpenseCardProps) {
                 className={isPaid ? 'text-green-600' : 'text-gray-400'}
                 size={14}
                 strokeWidth={2}
+                aria-hidden="true"
               />
               {/* Account type icon */}
               <div
                 className="size-4 rounded-full flex items-center justify-center"
                 style={{ backgroundColor: accountTypeConfig[entry.accountType].color }}
+                aria-hidden="true"
               >
                 <HugeiconsIcon
                   icon={accountTypeConfig[entry.accountType].icon}
@@ -265,8 +278,9 @@ export function ExpenseCard(props: ExpenseCardProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-8"
+                className="size-11 md:size-8 touch-manipulation"
                 onPointerDown={(e) => e.stopPropagation()}
+                aria-label="Abrir menu de ações"
               >
                 <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} size={16} />
               </Button>

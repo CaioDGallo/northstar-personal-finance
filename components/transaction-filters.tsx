@@ -148,7 +148,7 @@ export function TransactionFilters({
         {isSearching ? (
           // Search mode
           <div className="flex w-full items-center gap-2">
-            <Button onClick={handleSearchClose} variant="hollow" size="icon">
+            <Button onClick={handleSearchClose} variant="hollow" size="icon" className="touch-manipulation" aria-label="Cancelar busca">
               <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} />
             </Button>
             <Input
@@ -157,32 +157,35 @@ export function TransactionFilters({
               value={localSearchValue}
               onChange={(e) => setLocalSearchValue(e.target.value)}
               className="flex-1"
-              autoFocus
+              autoFocus={typeof window !== 'undefined' && window.innerWidth >= 768}
+              spellCheck={false}
             />
           </div>
         ) : (
           // Month picker mode
           <>
             <div className="flex items-center gap-3">
-              <Button onClick={() => navigateMonth(-1)} variant="hollow" size="icon">
+              <Button onClick={() => navigateMonth(-1)} variant="hollow" size="icon" className="touch-manipulation" aria-label="Mês anterior">
                 <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} />
               </Button>
               <span className="min-w-48 text-center text-lg font-medium capitalize">
                 {monthName}
               </span>
-              <Button onClick={() => navigateMonth(1)} variant="hollow" size="icon">
+              <Button onClick={() => navigateMonth(1)} variant="hollow" size="icon" className="touch-manipulation" aria-label="Próximo mês">
                 <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} />
               </Button>
             </div>
             <div className="flex items-center gap-1">
-              <Button onClick={handleSearchOpen} variant="hollow" size="icon">
+              <Button onClick={handleSearchOpen} variant="hollow" size="icon" className="touch-manipulation" aria-label="Pesquisar">
                 <HugeiconsIcon icon={SearchIcon} strokeWidth={2} />
               </Button>
               <Button
                 onClick={() => setIsExpanded(!isExpanded)}
                 variant="hollow"
                 size="icon"
-                className={hasActiveFilters ? 'text-primary' : ''}
+                className={`touch-manipulation ${hasActiveFilters ? 'text-primary' : ''}`}
+                aria-label={isExpanded ? 'Fechar filtros' : 'Abrir filtros'}
+                aria-expanded={isExpanded}
               >
                 <HugeiconsIcon icon={FilterIcon} strokeWidth={2} />
               </Button>

@@ -31,10 +31,10 @@ export function SelectionActionBar({
 
         {/* Actions */}
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={onCancel}>
+          <Button variant="outline" size="sm" onClick={onCancel} className="touch-manipulation">
             Cancel
           </Button>
-          <Button size="sm" onClick={onChangeCategory}>
+          <Button size="sm" onClick={onChangeCategory} className="touch-manipulation">
             Change Category
           </Button>
         </div>

@@ -123,6 +123,7 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    -webkit-tap-highlight-color: oklch(0.213 0 0 / 0.15);
   }
   body {
     @apply bg-background text-foreground;
