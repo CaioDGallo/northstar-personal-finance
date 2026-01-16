@@ -39,6 +39,12 @@ export function ImportModal({ accounts, categories }: Props) {
   const tErrors = useTranslations('errors');
   const tParsers = useTranslations('parsers');
 
+  // Determine accepted file extension based on parser type
+  const getAcceptedFileType = (template: ParserKey | null): string => {
+    if (!template) return '.csv,.ofx';
+    return template.endsWith('-ofx') ? '.ofx' : '.csv';
+  };
+
   const handleFileSelect = async (content: string) => {
     if (!selectedTemplate) return;
 
@@ -249,7 +255,7 @@ export function ImportModal({ accounts, categories }: Props) {
                       : parsers[selectedTemplate].name,
                   })}
                 </h3>
-                <FileDropzone onFileContent={handleFileSelect} />
+                <FileDropzone onFileContent={handleFileSelect} accept={getAcceptedFileType(selectedTemplate)} />
               </div>
 
               <Button variant="outline" onClick={() => setStep('template')} className="w-full">
