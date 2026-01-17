@@ -366,6 +366,7 @@ export async function toggleIgnoreTransfer(transferId: number) {
         ignored: transfers.ignored,
         fromAccountId: transfers.fromAccountId,
         toAccountId: transfers.toAccountId,
+        faturaId: transfers.faturaId,
       })
       .from(transfers)
       .where(and(eq(transfers.userId, userId), eq(transfers.id, transferId)))
@@ -373,6 +374,9 @@ export async function toggleIgnoreTransfer(transferId: number) {
 
     if (!record) {
       throw new Error(await t('errors.relatedRecordNotFound'));
+    }
+    if (record.faturaId) {
+      throw new Error(await t('errors.invalidDataConstraint'));
     }
 
     // Toggle ignored state
