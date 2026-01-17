@@ -35,6 +35,9 @@ export function ResetTransactionsSection() {
             transactions: result.deletedTransactions,
             entries: result.deletedEntries,
             income: result.deletedIncome,
+            transfers: result.deletedTransfers,
+            faturas: result.deletedFaturas,
+            accounts: result.accountsReconciled,
           })
         );
         setOpen(false);

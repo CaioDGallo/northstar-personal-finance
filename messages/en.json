@@ -860,7 +860,7 @@
     "resetTransactionsConfirmTitle": "Reset all transactions?",
     "resetTransactionsConfirmDescription": "This action will PERMANENTLY remove all your expenses, income, and transfers. Your budgets, accounts, and categories will be preserved. Auto-categorization will continue to work.",
     "resetTransactionsConfirmButton": "Yes, reset everything",
-    "resetTransactionsSuccess": "Transactions removed successfully ({transactions} expenses, {entries} entries, {income} income)",
+    "resetTransactionsSuccess": "Data removed successfully ({transactions} expenses, {entries} entries, {income} income, {transfers} transfers, {faturas} invoices, {accounts} accounts rebalanced)",
     "resetting": "Resetting..."
   }
 }

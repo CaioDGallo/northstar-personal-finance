@@ -860,7 +860,7 @@
     "resetTransactionsConfirmTitle": "Limpar todas as transações?",
     "resetTransactionsConfirmDescription": "Esta ação removerá PERMANENTEMENTE todas as suas despesas, receitas e transferências. Seus orçamentos, contas e categorias serão mantidos. A auto-categorização continuará funcionando.",
     "resetTransactionsConfirmButton": "Sim, limpar tudo",
-    "resetTransactionsSuccess": "Transações removidas com sucesso ({transactions} despesas, {entries} parcelas, {income} receitas)",
+    "resetTransactionsSuccess": "Dados removidos com sucesso ({transactions} despesas, {entries} parcelas, {income} receitas, {transfers} transferências, {faturas} faturas, {accounts} contas rebalanceadas)",
     "resetting": "Limpando..."
   }
 }
