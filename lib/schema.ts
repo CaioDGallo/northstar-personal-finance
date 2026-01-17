@@ -129,6 +129,7 @@ export const faturas = pgTable(
       .references(() => accounts.id, { onDelete: 'cascade' }),
     yearMonth: text('year_month').notNull(), // "2025-01"
     closingDate: date('closing_date').notNull(), // actual closing date for this billing cycle
+    startDate: date('start_date'), // null = calculated from previous fatura's closing date + 1
     totalAmount: integer('total_amount').notNull().default(0), // cached sum of entries
     dueDate: date('due_date').notNull(), // when payment is due
     paidAt: timestamp('paid_at'), // null = pending, timestamp = paid

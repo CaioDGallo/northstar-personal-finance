@@ -41,6 +41,7 @@ export function FaturaDetailSheet({
   const [fatura, setFatura] = useState<FaturaDetail | null>(null);
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [isEditingDates, setIsEditingDates] = useState(false);
+  const [editStartDate, setEditStartDate] = useState('');
   const [editClosingDate, setEditClosingDate] = useState('');
   const [editDueDate, setEditDueDate] = useState('');
   const [isPending, startTransition] = useTransition();
@@ -49,14 +50,16 @@ export function FaturaDetailSheet({
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsEditingDates(false); // Reset editing mode when sheet opens
       getFaturaWithEntries(faturaId).then((data) => {
         setFatura(data);
         if (data) {
+          setEditStartDate(data.startDate || '');
           setEditClosingDate(data.closingDate);
           setEditDueDate(data.dueDate);
         }
       });
-      setIsEditingDates(false);
     }
   }, [faturaId, open]);
 
@@ -79,6 +82,7 @@ export function FaturaDetailSheet({
     startTransition(async () => {
       try {
         await updateFaturaDates(faturaId, {
+          startDate: editStartDate || null,
           closingDate: editClosingDate,
           dueDate: editDueDate,
         });
@@ -87,6 +91,7 @@ export function FaturaDetailSheet({
         const updated = await getFaturaWithEntries(faturaId);
         setFatura(updated);
         if (updated) {
+          setEditStartDate(updated.startDate || '');
           setEditClosingDate(updated.closingDate);
           setEditDueDate(updated.dueDate);
         }
@@ -157,6 +162,15 @@ export function FaturaDetailSheet({
               {isEditingDates ? (
                 <div className="space-y-3 mt-3">
                   <div className="flex items-center gap-2">
+                    <label className="text-sm text-gray-600 min-w-24">{t('startDate')}</label>
+                    <Input
+                      type="date"
+                      value={editStartDate}
+                      onChange={(e) => setEditStartDate(e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
                     <label className="text-sm text-gray-600 min-w-24">{t('closingDate')}</label>
                     <Input
                       type="date"
@@ -196,6 +210,12 @@ export function FaturaDetailSheet({
                 </div>
               ) : (
                 <>
+                  <div className="flex items-center justify-between text-sm mt-2">
+                    <span className="text-gray-600">{t('startDate')}</span>
+                    <span>
+                      {fatura.startDate ? formatDate(fatura.startDate) : `(${t('calculated')})`}
+                    </span>
+                  </div>
                   <div className="flex items-center justify-between text-sm mt-2">
                     <span className="text-gray-600">{t('closingDate')}</span>
                     <span>{formatDate(fatura.closingDate)}</span>

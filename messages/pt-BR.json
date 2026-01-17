@@ -356,8 +356,10 @@
   "faturas": {
     "title": "Faturas",
     "total": "Total:",
+    "startDate": "Início:",
     "closingDate": "Fecha:",
     "dueDate": "Vence:",
+    "calculated": "Calculado",
     "paidOn": "Pago em:",
     "paid": "Paga",
     "overdue": "Vencida",
@@ -391,6 +393,7 @@
     "back": "Voltar",
     "account": "Conta",
     "category": "Categoria",
+    "startDate": "Data de Início",
     "closingDate": "Data de Fechamento",
     "dueDate": "Data de Vencimento",
     "importExpenses": "Importar {count} Item(s)",

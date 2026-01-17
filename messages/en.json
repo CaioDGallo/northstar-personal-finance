@@ -356,8 +356,10 @@
   "faturas": {
     "title": "Bills",
     "total": "Total:",
+    "startDate": "Starts:",
     "closingDate": "Closes:",
     "dueDate": "Due:",
+    "calculated": "Calculated",
     "paidOn": "Paid on:",
     "paid": "Paid",
     "overdue": "Overdue",
@@ -391,6 +393,7 @@
     "back": "Back",
     "account": "Account",
     "category": "Category",
+    "startDate": "Start Date",
     "closingDate": "Closing Date",
     "dueDate": "Due Date",
     "importExpenses": "Import {count} Item(s)",

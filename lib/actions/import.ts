@@ -302,7 +302,7 @@ type ImportMixedData = {
   rows: ValidatedImportRow[];
   accountId: number;
   categoryOverrides?: Record<number, number>;
-  faturaOverrides?: { closingDate?: string; dueDate?: string };
+  faturaOverrides?: { startDate?: string; closingDate?: string; dueDate?: string };
 };
 
 type ImportMixedResult =

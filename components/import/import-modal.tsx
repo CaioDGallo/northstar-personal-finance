@@ -34,6 +34,7 @@ export function ImportModal({ accounts, categories }: Props) {
   const [categoryId, setCategoryId] = useState(categories[0]?.id?.toString() || '');
   const [isImporting, setIsImporting] = useState(false);
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
+  const [startDate, setStartDate] = useState<string>('');
   const [closingDate, setClosingDate] = useState<string>('');
   const [dueDate, setDueDate] = useState<string>('');
 
@@ -49,8 +50,11 @@ export function ImportModal({ accounts, categories }: Props) {
     return date.toISOString().split('T')[0];
   };
 
-  // Initialize closing date and due date from OFX metadata
+  // Initialize start date, closing date and due date from OFX metadata
   useEffect(() => {
+    if (parseResult?.metadata?.statementStart) {
+      setStartDate(parseResult.metadata.statementStart);
+    }
     if (parseResult?.metadata?.statementEnd) {
       const closingDate = parseResult.metadata.statementEnd;
       setClosingDate(closingDate);
@@ -135,7 +139,7 @@ export function ImportModal({ accounts, categories }: Props) {
           rows: rowsToImport,
           accountId: parseInt(accountId),
           categoryOverrides,
-          faturaOverrides: closingDate || dueDate ? { closingDate, dueDate } : undefined,
+          faturaOverrides: startDate || closingDate || dueDate ? { startDate, closingDate, dueDate } : undefined,
         });
 
         if (result.success) {
@@ -351,6 +355,15 @@ export function ImportModal({ accounts, categories }: Props) {
                 {/* Show date fields for credit card accounts */}
                 {isCreditCardAccount && (
                   <>
+                    <Field>
+                      <FieldLabel htmlFor="startDate">{t('startDate')}</FieldLabel>
+                      <Input
+                        id="startDate"
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                      />
+                    </Field>
                     <Field>
                       <FieldLabel htmlFor="closingDate">{t('closingDate')}</FieldLabel>
                       <Input

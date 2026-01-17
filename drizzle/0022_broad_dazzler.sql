@@ -1,0 +1,1 @@
+ALTER TABLE "faturas" ADD COLUMN "start_date" date;

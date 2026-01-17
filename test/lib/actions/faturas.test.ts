@@ -25,6 +25,7 @@ describe('Fatura Actions', () => {
 
   let ensureFaturaExists: FaturaActions['ensureFaturaExists'];
   let updateFaturaTotal: FaturaActions['updateFaturaTotal'];
+  let updateFaturaDates: FaturaActions['updateFaturaDates'];
   let getFaturasByMonth: FaturaActions['getFaturasByMonth'];
   let getFaturasByAccount: FaturaActions['getFaturasByAccount'];
   let getFaturaWithEntries: FaturaActions['getFaturaWithEntries'];
@@ -143,6 +144,7 @@ describe('Fatura Actions', () => {
     const faturaActions = await import('@/lib/actions/faturas');
     ensureFaturaExists = faturaActions.ensureFaturaExists;
     updateFaturaTotal = faturaActions.updateFaturaTotal;
+    updateFaturaDates = faturaActions.updateFaturaDates;
     getFaturasByMonth = faturaActions.getFaturasByMonth;
     getFaturasByAccount = faturaActions.getFaturasByAccount;
     getFaturaWithEntries = faturaActions.getFaturaWithEntries;
@@ -205,6 +207,112 @@ describe('Fatura Actions', () => {
 
     it('throws when account does not exist', async () => {
       await expect(ensureFaturaExists(999, '2025-01')).rejects.toThrow('Account not found');
+    });
+
+    it('creates fatura with startDate override', async () => {
+      const account = await seedAccount(testAccounts.creditCardWithBilling);
+
+      const fatura = await ensureFaturaExists(account.id, '2025-01', {
+        startDate: '2025-01-05',
+        closingDate: '2025-02-10',
+        dueDate: '2025-02-20',
+      });
+
+      expect(fatura).toMatchObject({
+        accountId: account.id,
+        yearMonth: '2025-01',
+        startDate: '2025-01-05',
+        closingDate: '2025-02-10',
+        dueDate: '2025-02-20',
+      });
+    });
+
+    it('creates fatura with null startDate when not provided in overrides', async () => {
+      const account = await seedAccount(testAccounts.creditCardWithBilling);
+
+      const fatura = await ensureFaturaExists(account.id, '2025-01', {
+        closingDate: '2025-02-10',
+      });
+
+      expect(fatura.startDate).toBeNull();
+    });
+  });
+
+  describe('updateFaturaDates', () => {
+    it('updates startDate, closingDate, and dueDate', async () => {
+      const account = await seedAccount(testAccounts.creditCardWithBilling);
+      const fatura = await ensureFaturaExists(account.id, '2025-01');
+
+      await updateFaturaDates(fatura.id, {
+        startDate: '2025-01-10',
+        closingDate: '2025-02-15',
+        dueDate: '2025-02-25',
+      });
+
+      const updated = await db
+        .select()
+        .from(schema.faturas)
+        .where(eq(schema.faturas.id, fatura.id))
+        .limit(1);
+
+      expect(updated[0]).toMatchObject({
+        startDate: '2025-01-10',
+        closingDate: '2025-02-15',
+        dueDate: '2025-02-25',
+      });
+    });
+
+    it('clears startDate when set to null', async () => {
+      const account = await seedAccount(testAccounts.creditCardWithBilling);
+      const fatura = await ensureFaturaExists(account.id, '2025-01', {
+        startDate: '2025-01-05',
+      });
+
+      expect(fatura.startDate).toBe('2025-01-05');
+
+      await updateFaturaDates(fatura.id, {
+        startDate: null,
+      });
+
+      const updated = await db
+        .select()
+        .from(schema.faturas)
+        .where(eq(schema.faturas.id, fatura.id))
+        .limit(1);
+
+      expect(updated[0].startDate).toBeNull();
+    });
+
+    it('updates only provided dates', async () => {
+      const account = await seedAccount(testAccounts.creditCardWithBilling);
+      const fatura = await ensureFaturaExists(account.id, '2025-01');
+
+      const originalClosingDate = fatura.closingDate;
+      const originalDueDate = fatura.dueDate;
+
+      await updateFaturaDates(fatura.id, {
+        startDate: '2025-01-01',
+      });
+
+      const updated = await db
+        .select()
+        .from(schema.faturas)
+        .where(eq(schema.faturas.id, fatura.id))
+        .limit(1);
+
+      expect(updated[0]).toMatchObject({
+        startDate: '2025-01-01',
+        closingDate: originalClosingDate,
+        dueDate: originalDueDate,
+      });
+    });
+
+    it('throws when fatura does not exist', async () => {
+      await expect(
+        updateFaturaDates(999, {
+          startDate: '2025-01-01',
+        })
+      ).rejects.toThrow('Fatura not found');
     });
   });
 

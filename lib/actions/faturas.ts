@@ -31,7 +31,7 @@ export type UnpaidFatura = {
 export async function ensureFaturaExists(
   accountId: number,
   yearMonth: string,
-  overrides?: { closingDate?: string; dueDate?: string }
+  overrides?: { closingDate?: string; dueDate?: string; startDate?: string }
 ): Promise<Fatura> {
   const userId = await getCurrentUserId();
 
@@ -82,6 +82,7 @@ export async function ensureFaturaExists(
       accountId,
       yearMonth,
       closingDate,
+      startDate: overrides?.startDate ?? null,
       totalAmount: 0,
       dueDate: paymentDueDate,
     })
@@ -116,13 +117,13 @@ export async function updateFaturaTotal(accountId: number, yearMonth: string): P
  */
 export async function updateFaturaDates(
   faturaId: number,
-  data: { closingDate?: string; dueDate?: string }
+  data: { closingDate?: string; dueDate?: string; startDate?: string | null }
 ): Promise<void> {
   if (!Number.isInteger(faturaId) || faturaId <= 0) {
     throw new Error(await t('errors.invalidFaturaId'));
   }
 
-  if (!data.closingDate && !data.dueDate) {
+  if (!data.closingDate && !data.dueDate && data.startDate === undefined) {
     throw new Error('At least one date must be provided');
   }
 
@@ -140,9 +141,10 @@ export async function updateFaturaDates(
   }
 
   // Update dates
-  const updates: { closingDate?: string; dueDate?: string } = {};
+  const updates: { closingDate?: string; dueDate?: string; startDate?: string | null } = {};
   if (data.closingDate) updates.closingDate = data.closingDate;
   if (data.dueDate) updates.dueDate = data.dueDate;
+  if (data.startDate !== undefined) updates.startDate = data.startDate;
 
   await db
     .update(faturas)
