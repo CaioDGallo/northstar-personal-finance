@@ -27,6 +27,12 @@ function isPostgresError(error: unknown): error is PostgresError {
  * Handles database errors and returns user-friendly translated messages
  */
 export async function handleDbError(error: unknown, fallbackKey: string): Promise<string> {
+  // If it's a regular Error with a message that looks like a translation key,
+  // preserve it (these are validation errors from actions)
+  if (error instanceof Error && error.message.startsWith('errors.')) {
+    return error.message;
+  }
+
   if (!isPostgresError(error)) {
     return await t(fallbackKey);
   }

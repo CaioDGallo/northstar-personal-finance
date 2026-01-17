@@ -145,7 +145,7 @@ export async function processPendingNotificationJobs(): Promise<ProcessNotificat
         });
         failed++;
 
-        if (job.attempts >= 3) {
+        if (job.attempts >= 2) {
           await db
             .update(notificationJobs)
             .set({
@@ -393,7 +393,7 @@ async function processBillReminderEmailJobsGrouped(
         });
       } else {
         // Increment attempts or mark as failed for all jobs
-        const maxAttempts = validReminders[0].job.attempts >= 3;
+        const maxAttempts = validReminders[0].job.attempts >= 2;
 
         if (maxAttempts) {
           await db

@@ -397,6 +397,18 @@ describe('Bill Reminders - Notification Processing', () => {
     db = await setupTestDb();
     vi.doMock('@/lib/db', () => ({ db }));
 
+    vi.doMock('@/lib/i18n/server-errors', () => ({
+      translateWithLocale: vi.fn((locale: string, key: string, params?: any) => {
+        if (key === 'emails.billReminders.subject') {
+          return `Bill Reminders for ${params?.date || 'date'}`;
+        }
+        if (key === 'emails.billReminder.subject') {
+          return `Bill Reminder: ${params?.name || 'name'}`;
+        }
+        return key;
+      }),
+    }));
+
     const actions = await import('@/lib/actions/notification-jobs');
     processPendingNotificationJobs = actions.processPendingNotificationJobs;
   });
@@ -533,7 +545,7 @@ describe('Bill Reminders - Notification Processing', () => {
   it('cancels job when reminder inactive', async () => {
     const [reminder] = await db
       .insert(schema.billReminders)
-      .values(createTestBillReminder({ status: 'inactive' }))
+      .values(createTestBillReminder({ status: 'paused' }))
       .returning();
 
     const [job] = await db

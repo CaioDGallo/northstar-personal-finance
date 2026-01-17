@@ -14,6 +14,7 @@ type DateParts = {
 type CalculateOptions = {
   now?: Date;
   timeZone?: string;
+  graceWindowMs?: number;
 };
 
 const DEFAULT_DUE_TIME: DueTime = { hours: 0, minutes: 0, seconds: 0 };
@@ -218,7 +219,18 @@ export function calculateNextDueDate(reminder: BillReminder, options: CalculateO
         let nextDate = new Date(currentYear, currentMonth, reminder.dueDay);
         applyDueTime(nextDate);
 
-        if (nextDate <= now) {
+        // If no due time is specified, consider the entire day valid
+        // by comparing against end of day instead of midnight
+        const compareTime = new Date(nextDate);
+        if (!reminder.dueTime) {
+          compareTime.setHours(23, 59, 59, 999);
+        }
+
+        const graceWindowMs = options.graceWindowMs ?? 0;
+        const isWithinGraceWindow =
+          nextDate < now && now.getTime() - nextDate.getTime() <= graceWindowMs;
+
+        if (compareTime < now && !isWithinGraceWindow) {
           nextDate = new Date(currentYear, currentMonth + 1, reminder.dueDay);
           applyDueTime(nextDate);
         }
@@ -321,7 +333,11 @@ export function calculateNextDueDate(reminder: BillReminder, options: CalculateO
         currentMonthDate.day
       );
 
-      if (nextDate <= now) {
+      const graceWindowMs = options.graceWindowMs ?? 0;
+      const isWithinGraceWindow =
+        nextDate < now && now.getTime() - nextDate.getTime() <= graceWindowMs;
+
+      if (nextDate <= now && !isWithinGraceWindow) {
         const nextMonthDate = resolveYearMonthDay(
           nowParts.year,
           nowParts.month + 1,

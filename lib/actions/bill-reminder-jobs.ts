@@ -30,7 +30,7 @@ export async function scheduleBillReminderNotifications(): Promise<{
   for (const { reminder, timezone } of activeReminders) {
     try {
       const timeZone = timezone || 'UTC';
-      const nextDue = calculateNextDueDate(reminder, { now, timeZone });
+      const nextDue = calculateNextDueDate(reminder, { now, timeZone, graceWindowMs });
 
       // Only schedule if within next 7 days
       if (nextDue > sevenDaysFromNow) {

@@ -22,6 +22,15 @@ describe('handleDbError', () => {
     expect(tMock).toHaveBeenCalledWith('errors.failedToSave');
   });
 
+  it('preserves validation error messages that start with "errors."', async () => {
+    const { handleDbError } = await loadModule();
+
+    const result = await handleDbError(new Error('errors.nameRequired'), 'errors.failedToSave');
+
+    expect(result).toBe('errors.nameRequired');
+    expect(tMock).not.toHaveBeenCalled();
+  });
+
   it('returns fallback for non-error values', async () => {
     const { handleDbError } = await loadModule();
 
