@@ -59,7 +59,20 @@ export async function ensureFaturaExists(
 
   // Use overrides if provided, otherwise compute from account defaults
   const closingDate = overrides?.closingDate ?? computeClosingDate(yearMonth, closingDay);
-  const paymentDueDate = overrides?.dueDate ?? getFaturaPaymentDueDate(yearMonth, paymentDueDay, closingDay);
+
+  // If closingDate override provided without dueDate, calculate dueDate as +7 days
+  let paymentDueDate: string;
+  if (overrides?.dueDate) {
+    paymentDueDate = overrides.dueDate;
+  } else if (overrides?.closingDate) {
+    // When closingDate is overridden, default to 7 days after closing
+    const closingDateObj = new Date(overrides.closingDate);
+    closingDateObj.setDate(closingDateObj.getDate() + 7);
+    paymentDueDate = closingDateObj.toISOString().split('T')[0];
+  } else {
+    // No overrides, use account defaults
+    paymentDueDate = getFaturaPaymentDueDate(yearMonth, paymentDueDay, closingDay);
+  }
 
   // Create fatura
   const [fatura] = await db

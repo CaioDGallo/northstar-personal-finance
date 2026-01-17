@@ -42,10 +42,19 @@ export function ImportModal({ accounts, categories }: Props) {
   const tErrors = useTranslations('errors');
   const tParsers = useTranslations('parsers');
 
-  // Initialize closing date from OFX metadata
+  // Helper to add days to a date string (YYYY-MM-DD)
+  const addDays = (dateString: string, days: number): string => {
+    const date = new Date(dateString);
+    date.setDate(date.getDate() + days);
+    return date.toISOString().split('T')[0];
+  };
+
+  // Initialize closing date and due date from OFX metadata
   useEffect(() => {
     if (parseResult?.metadata?.statementEnd) {
-      setClosingDate(parseResult.metadata.statementEnd);
+      const closingDate = parseResult.metadata.statementEnd;
+      setClosingDate(closingDate);
+      setDueDate(addDays(closingDate, 7));
     }
   }, [parseResult]);
 
