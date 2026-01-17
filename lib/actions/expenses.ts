@@ -6,7 +6,8 @@ import { transactions, entries, accounts, categories, type NewEntry } from '@/li
 import { eq, and, isNull, isNotNull, desc, sql, inArray } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { getFaturaMonth, getFaturaPaymentDueDate } from '@/lib/fatura-utils';
-import { ensureFaturaExists, updateFaturaTotal } from '@/lib/actions/faturas';
+import { ensureFaturaExists, getFaturaWindowStart, updateFaturaTotal } from '@/lib/actions/faturas';
+import { addMonths } from '@/lib/utils';
 import { syncAccountBalance } from '@/lib/actions/accounts';
 import { getCurrentUserId } from '@/lib/auth';
 import { checkBulkRateLimit } from '@/lib/rate-limit';
@@ -76,10 +77,12 @@ export async function createExpense(data: CreateExpenseData) {
     const entriesToInsert: NewEntry[] = [];
     const affectedFaturas = new Set<string>();
 
-    for (let i = 0; i < data.installments; i++) {
-      const installmentPurchaseDate = new Date(basePurchaseDate);
-      installmentPurchaseDate.setUTCMonth(installmentPurchaseDate.getUTCMonth() + i);
+    // Calculate the base fatura month from the first installment's purchase date
+    const baseFaturaMonth = hasBillingConfig
+      ? getFaturaMonth(basePurchaseDate, account[0].closingDay!)
+      : basePurchaseDate.toISOString().slice(0, 7);
 
+    for (let i = 0; i < data.installments; i++) {
       // Adjust for last installment (rounding differences)
       const amount =
         i === data.installments - 1
@@ -88,16 +91,30 @@ export async function createExpense(data: CreateExpenseData) {
 
       let faturaMonth: string;
       let dueDate: string;
+      let purchaseDate: string;
 
       if (hasBillingConfig) {
         // Credit card with billing config: compute fatura month and due date
-        faturaMonth = getFaturaMonth(installmentPurchaseDate, account[0].closingDay!);
+        // Fatura month is calculated by adding months to the base fatura month
+        faturaMonth = addMonths(baseFaturaMonth, i);
         dueDate = getFaturaPaymentDueDate(faturaMonth, account[0].paymentDueDay!, account[0].closingDay!);
         affectedFaturas.add(faturaMonth);
+
+        if (i === 0) {
+          // First installment: use actual purchase date
+          purchaseDate = data.purchaseDate;
+        } else {
+          // Subsequent installments: use fatura window start date
+          // This places them at the first day of their respective billing period
+          purchaseDate = await getFaturaWindowStart(data.accountId, faturaMonth, account[0].closingDay!);
+        }
       } else {
         // Non-credit card or card without config: fatura = purchase month
-        faturaMonth = installmentPurchaseDate.toISOString().slice(0, 7); // YYYY-MM
-        dueDate = installmentPurchaseDate.toISOString().split('T')[0];
+        const installmentPurchaseDate = new Date(basePurchaseDate);
+        installmentPurchaseDate.setUTCMonth(installmentPurchaseDate.getUTCMonth() + i);
+        purchaseDate = installmentPurchaseDate.toISOString().split('T')[0];
+        faturaMonth = purchaseDate.slice(0, 7); // YYYY-MM
+        dueDate = purchaseDate;
       }
 
       entriesToInsert.push({
@@ -105,7 +122,7 @@ export async function createExpense(data: CreateExpenseData) {
         transactionId: transaction.id,
         accountId: data.accountId,
         amount,
-        purchaseDate: installmentPurchaseDate.toISOString().split('T')[0],
+        purchaseDate,
         faturaMonth,
         dueDate,
         installmentNumber: i + 1,
@@ -221,10 +238,12 @@ export async function updateExpense(transactionId: number, data: CreateExpenseDa
     const entriesToInsert: NewEntry[] = [];
     const newFaturas = new Set<string>();
 
-    for (let i = 0; i < data.installments; i++) {
-      const installmentPurchaseDate = new Date(basePurchaseDate);
-      installmentPurchaseDate.setUTCMonth(installmentPurchaseDate.getUTCMonth() + i);
+    // Calculate the base fatura month from the first installment's purchase date
+    const baseFaturaMonth = hasBillingConfig
+      ? getFaturaMonth(basePurchaseDate, account[0].closingDay!)
+      : basePurchaseDate.toISOString().slice(0, 7);
 
+    for (let i = 0; i < data.installments; i++) {
       const amount =
         i === data.installments - 1
           ? data.totalAmount - amountPerInstallment * (data.installments - 1)
@@ -232,14 +251,27 @@ export async function updateExpense(transactionId: number, data: CreateExpenseDa
 
       let faturaMonth: string;
       let dueDate: string;
+      let purchaseDate: string;
 
       if (hasBillingConfig) {
-        faturaMonth = getFaturaMonth(installmentPurchaseDate, account[0].closingDay!);
+        // Fatura month is calculated by adding months to the base fatura month
+        faturaMonth = addMonths(baseFaturaMonth, i);
         dueDate = getFaturaPaymentDueDate(faturaMonth, account[0].paymentDueDay!, account[0].closingDay!);
         newFaturas.add(faturaMonth);
+
+        if (i === 0) {
+          // First installment: use actual purchase date
+          purchaseDate = data.purchaseDate;
+        } else {
+          // Subsequent installments: use fatura window start date
+          purchaseDate = await getFaturaWindowStart(data.accountId, faturaMonth, account[0].closingDay!);
+        }
       } else {
-        faturaMonth = installmentPurchaseDate.toISOString().slice(0, 7);
-        dueDate = installmentPurchaseDate.toISOString().split('T')[0];
+        const installmentPurchaseDate = new Date(basePurchaseDate);
+        installmentPurchaseDate.setUTCMonth(installmentPurchaseDate.getUTCMonth() + i);
+        purchaseDate = installmentPurchaseDate.toISOString().split('T')[0];
+        faturaMonth = purchaseDate.slice(0, 7);
+        dueDate = purchaseDate;
       }
 
       entriesToInsert.push({
@@ -247,7 +279,7 @@ export async function updateExpense(transactionId: number, data: CreateExpenseDa
         transactionId,
         accountId: data.accountId,
         amount,
-        purchaseDate: installmentPurchaseDate.toISOString().split('T')[0],
+        purchaseDate,
         faturaMonth,
         dueDate,
         installmentNumber: i + 1,

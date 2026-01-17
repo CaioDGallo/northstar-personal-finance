@@ -4,6 +4,7 @@ import {
   getFaturaPaymentDueDate,
   formatFaturaMonthWithLocale,
   getCurrentFaturaMonth,
+  computeFaturaWindowStart,
 } from '@/lib/fatura-utils';
 
 describe('Fatura Utilities', () => {
@@ -481,6 +482,111 @@ describe('Fatura Utilities', () => {
 
       // These are different by design
       expect(budgetMonth).not.toBe(faturaMonth);
+    });
+  });
+
+  describe('computeFaturaWindowStart', () => {
+    describe('basic functionality', () => {
+      it('computes window start as previous closing date + 1 day', () => {
+        // Feb 2025 fatura with closingDay=15
+        // Previous fatura (Jan) closes on Jan 15
+        // Feb window starts Jan 16
+        const windowStart = computeFaturaWindowStart('2025-02', 15);
+        expect(windowStart).toBe('2025-01-16');
+      });
+
+      it('computes window start for March fatura', () => {
+        // Mar 2025 fatura with closingDay=15
+        // Previous fatura (Feb) closes on Feb 15
+        // Mar window starts Feb 16
+        const windowStart = computeFaturaWindowStart('2025-03', 15);
+        expect(windowStart).toBe('2025-02-16');
+      });
+
+      it('computes window start for January (year boundary)', () => {
+        // Jan 2026 fatura with closingDay=15
+        // Previous fatura (Dec 2025) closes on Dec 15
+        // Jan window starts Dec 16
+        const windowStart = computeFaturaWindowStart('2026-01', 15);
+        expect(windowStart).toBe('2025-12-16');
+      });
+    });
+
+    describe('different closing days', () => {
+      it('closingDay=1: window starts on day 2', () => {
+        const windowStart = computeFaturaWindowStart('2025-02', 1);
+        expect(windowStart).toBe('2025-01-02');
+      });
+
+      it('closingDay=28: window starts on day 29', () => {
+        // For Feb fatura, Jan closes on 28, window starts Jan 29
+        const windowStart = computeFaturaWindowStart('2025-02', 28);
+        expect(windowStart).toBe('2025-01-29');
+      });
+
+      it('closingDay=5: window starts on day 6', () => {
+        const windowStart = computeFaturaWindowStart('2025-02', 5);
+        expect(windowStart).toBe('2025-01-06');
+      });
+    });
+
+    describe('month boundary edge cases', () => {
+      it('handles short months - Feb has only 28 days', () => {
+        // For Mar fatura, Feb (non-leap year) closes on Feb 28 (or closingDay if lower)
+        // closingDay=30 but Feb only has 28 days, so closes on 28
+        // Window starts Feb 29... but wait, 2025 is not leap year
+        // So if closingDay=30, Feb closing is Feb 28, window starts Mar 1
+        const windowStart = computeFaturaWindowStart('2025-03', 30);
+        expect(windowStart).toBe('2025-03-01');
+      });
+
+      it('handles leap year - Feb has 29 days', () => {
+        // For Mar 2024 fatura, Feb (leap year) has 29 days
+        // closingDay=30 but Feb only has 29 days, so closes on 29
+        // Window starts Mar 1
+        const windowStart = computeFaturaWindowStart('2024-03', 30);
+        expect(windowStart).toBe('2024-03-01');
+      });
+
+      it('handles closingDay greater than previous month days', () => {
+        // Apr fatura, Mar closes on 31 (if closingDay >= 31)
+        // closingDay=31, Mar has 31 days, so closes Mar 31
+        // Window starts Apr 1
+        const windowStart = computeFaturaWindowStart('2025-04', 31);
+        expect(windowStart).toBe('2025-04-01');
+      });
+    });
+
+    describe('installment date calculation integration', () => {
+      it('3-installment expense places entries at fatura window starts', () => {
+        const closingDay = 15;
+
+        // Purchase on Jan 10 (before closing) → fatura Jan
+        // Installment 1: purchaseDate = Jan 10 (actual)
+        // Installment 2: faturaMonth = Feb, purchaseDate = window start = Jan 16
+        // Installment 3: faturaMonth = Mar, purchaseDate = window start = Feb 16
+
+        const windowStart2 = computeFaturaWindowStart('2025-02', closingDay);
+        const windowStart3 = computeFaturaWindowStart('2025-03', closingDay);
+
+        expect(windowStart2).toBe('2025-01-16');
+        expect(windowStart3).toBe('2025-02-16');
+      });
+
+      it('fatura window start is always within the billing period', () => {
+        // Feb fatura window is Jan 16 - Feb 15 (closingDay=15)
+        // Window start should be Jan 16
+        const windowStart = computeFaturaWindowStart('2025-02', 15);
+        expect(windowStart).toBe('2025-01-16');
+
+        // Verify it's after previous closing (Jan 15)
+        expect(new Date(windowStart + 'T00:00:00Z').getTime())
+          .toBeGreaterThan(new Date('2025-01-15T00:00:00Z').getTime());
+
+        // Verify it's on or before current closing (Feb 15)
+        expect(new Date(windowStart + 'T00:00:00Z').getTime())
+          .toBeLessThanOrEqual(new Date('2025-02-15T00:00:00Z').getTime());
+      });
     });
   });
 });

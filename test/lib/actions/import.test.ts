@@ -344,14 +344,19 @@ describe('Import Actions', () => {
         .where(eq(schema.entries.transactionId, transaction.id));
       expect(entries).toHaveLength(2);
 
+      // With new behavior: subsequent installments use fatura window start
+      // Base purchase date is calculated: parcela 2 date (Jan 20) - 1 month = Dec 20
+      // Base fatura month: Dec 20 is after closing day 15, so base fatura = Jan
+      // Entry 2: faturaMonth = Feb, purchaseDate = fatura window start = Jan 16
+      // Entry 3: faturaMonth = Mar, purchaseDate = fatura window start = Feb 16
       const entry2 = entries.find((entry) => entry.installmentNumber === 2);
       const entry3 = entries.find((entry) => entry.installmentNumber === 3);
 
-      expect(entry2?.purchaseDate).toBe('2025-01-20');
+      expect(entry2?.purchaseDate).toBe('2025-01-16');
       expect(entry2?.faturaMonth).toBe('2025-02');
       expect(entry2?.dueDate).toBe('2025-03-05');
 
-      expect(entry3?.purchaseDate).toBe('2025-02-20');
+      expect(entry3?.purchaseDate).toBe('2025-02-16');
       expect(entry3?.faturaMonth).toBe('2025-03');
       expect(entry3?.dueDate).toBe('2025-04-05');
       expect(entry3?.amount).toBe(120000);

@@ -507,6 +507,10 @@ describe('Expense Actions - Happy Path', () => {
   describe('installments span multiple faturas', () => {
     it('creates entries with correct faturaMonth and dueDate for each installment', async () => {
       // Purchase on Jan 10, 3 installments
+      // With new behavior:
+      // - Installment 1: purchaseDate = actual (Jan 10), faturaMonth = Jan
+      // - Installment 2: purchaseDate = fatura window start (Jan 16), faturaMonth = Feb
+      // - Installment 3: purchaseDate = fatura window start (Feb 16), faturaMonth = Mar
       await createExpense({
         description: 'Multi-installment',
         totalAmount: 30000,
@@ -520,19 +524,19 @@ describe('Expense Actions - Happy Path', () => {
       expect(expenses).toHaveLength(3);
 
       // Ordered desc by dueDate, so newest first
-      // Entry 3 (Mar): purchaseDate=2025-03-10, faturaMonth=2025-03, dueDate=2025-04-05
+      // Entry 3 (Mar): purchaseDate=2025-02-16 (fatura window start), faturaMonth=2025-03, dueDate=2025-04-05
       expect(expenses[0].installmentNumber).toBe(3);
-      expect(expenses[0].purchaseDate).toBe('2025-03-10');
+      expect(expenses[0].purchaseDate).toBe('2025-02-16');
       expect(expenses[0].faturaMonth).toBe('2025-03');
       expect(expenses[0].dueDate).toBe('2025-04-05');
 
-      // Entry 2 (Feb): purchaseDate=2025-02-10, faturaMonth=2025-02, dueDate=2025-03-05
+      // Entry 2 (Feb): purchaseDate=2025-01-16 (fatura window start), faturaMonth=2025-02, dueDate=2025-03-05
       expect(expenses[1].installmentNumber).toBe(2);
-      expect(expenses[1].purchaseDate).toBe('2025-02-10');
+      expect(expenses[1].purchaseDate).toBe('2025-01-16');
       expect(expenses[1].faturaMonth).toBe('2025-02');
       expect(expenses[1].dueDate).toBe('2025-03-05');
 
-      // Entry 1 (Jan): purchaseDate=2025-01-10, faturaMonth=2025-01, dueDate=2025-02-05
+      // Entry 1 (Jan): purchaseDate=2025-01-10 (actual purchase), faturaMonth=2025-01, dueDate=2025-02-05
       expect(expenses[2].installmentNumber).toBe(1);
       expect(expenses[2].purchaseDate).toBe('2025-01-10');
       expect(expenses[2].faturaMonth).toBe('2025-01');

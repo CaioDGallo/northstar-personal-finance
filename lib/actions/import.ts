@@ -5,7 +5,8 @@ import { transactions, entries, accounts, categories, income, transfers, categor
 import { eq, and, inArray, desc, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import type { ValidatedImportRow, CategorySuggestion } from '@/lib/import/types';
-import { getFaturaMonth, getFaturaPaymentDueDate } from '@/lib/fatura-utils';
+import { computeFaturaWindowStart, getFaturaMonth, getFaturaPaymentDueDate } from '@/lib/fatura-utils';
+import { addMonths } from '@/lib/utils';
 import { ensureFaturaExists, updateFaturaTotal } from '@/lib/actions/faturas';
 import { syncAccountBalance } from '@/lib/actions/accounts';
 import { getDefaultImportCategories } from '@/lib/actions/categories';
@@ -370,28 +371,54 @@ type AccountInfo = {
   paymentDueDay: number | null;
 };
 
+/**
+ * Computes the entry dates for an installment.
+ *
+ * For credit cards with billing config:
+ * - First installment (installmentNumber=1): uses actual purchase date
+ * - Subsequent installments: uses fatura window start date
+ *
+ * @param basePurchaseDate - The original purchase date (for first installment)
+ * @param installmentNumber - Which installment (1, 2, 3, ...)
+ * @param account - Account info with closingDay and paymentDueDay
+ * @returns Entry dates (purchaseDate, faturaMonth, dueDate)
+ */
 function computeEntryDates(
   basePurchaseDate: string,
   installmentNumber: number,
   account: AccountInfo
 ): EntryDateInfo {
-  // Calculate purchase date for this installment
   const baseDate = new Date(basePurchaseDate + 'T00:00:00Z');
-  const installmentDate = new Date(baseDate);
-  installmentDate.setUTCMonth(installmentDate.getUTCMonth() + (installmentNumber - 1));
-
-  const purchaseDate = installmentDate.toISOString().split('T')[0];
 
   const hasBillingConfig =
     account.type === 'credit_card' && account.closingDay && account.paymentDueDay;
 
   if (hasBillingConfig) {
-    const faturaMonth = getFaturaMonth(installmentDate, account.closingDay!);
+    // Calculate base fatura month from the original purchase date
+    const baseFaturaMonth = getFaturaMonth(baseDate, account.closingDay!);
+
+    // Calculate the fatura month for this installment
+    const faturaMonth = addMonths(baseFaturaMonth, installmentNumber - 1);
     const dueDate = getFaturaPaymentDueDate(faturaMonth, account.paymentDueDay!, account.closingDay!);
+
+    let purchaseDate: string;
+    if (installmentNumber === 1) {
+      // First installment: use actual purchase date
+      purchaseDate = basePurchaseDate;
+    } else {
+      // Subsequent installments: use fatura window start date
+      // This places them at the first day of their respective billing period
+      purchaseDate = computeFaturaWindowStart(faturaMonth, account.closingDay!);
+    }
+
     return { purchaseDate, faturaMonth, dueDate };
   }
 
-  // Fallback for non-CC accounts
+  // Fallback for non-CC accounts: increment months on purchase date
+  const installmentDate = new Date(baseDate);
+  installmentDate.setUTCMonth(installmentDate.getUTCMonth() + (installmentNumber - 1));
+  const purchaseDate = installmentDate.toISOString().split('T')[0];
+
   return {
     purchaseDate,
     faturaMonth: purchaseDate.slice(0, 7),

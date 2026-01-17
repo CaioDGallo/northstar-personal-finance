@@ -2,7 +2,7 @@
 
 import { getCurrentUserId } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { computeClosingDate, getFaturaPaymentDueDate } from '@/lib/fatura-utils';
+import { computeClosingDate, computeFaturaWindowStart, getFaturaPaymentDueDate } from '@/lib/fatura-utils';
 import { t } from '@/lib/i18n/server-errors';
 import { checkBulkRateLimit } from '@/lib/rate-limit';
 import { accounts, categories, entries, faturas, transactions, transfers, type Fatura } from '@/lib/schema';
@@ -112,6 +112,71 @@ export async function updateFaturaTotal(accountId: number, yearMonth: string): P
 }
 
 /**
+ * Gets the fatura window start date for a given account and month.
+ *
+ * The start date is determined in this order:
+ * 1. If the fatura exists and has an explicit startDate override, use that
+ * 2. If the previous fatura exists, use its closingDate + 1 day
+ * 3. Fall back to computing from account's closingDay
+ *
+ * @param accountId - The credit card account ID
+ * @param yearMonth - Fatura month in "YYYY-MM" format
+ * @param closingDay - Account's default closing day (used as fallback)
+ * @returns Start date of the billing window in "YYYY-MM-DD" format
+ */
+export async function getFaturaWindowStart(
+  accountId: number,
+  yearMonth: string,
+  closingDay: number
+): Promise<string> {
+  const userId = await getCurrentUserId();
+
+  // Check if this fatura exists with an explicit startDate
+  const fatura = await db
+    .select({ startDate: faturas.startDate })
+    .from(faturas)
+    .where(
+      and(
+        eq(faturas.userId, userId),
+        eq(faturas.accountId, accountId),
+        eq(faturas.yearMonth, yearMonth)
+      )
+    )
+    .limit(1);
+
+  if (fatura[0]?.startDate) {
+    return fatura[0].startDate;
+  }
+
+  // Check if previous fatura exists to get its closing date
+  const [year, month] = yearMonth.split('-').map(Number);
+  const prevMonthDate = new Date(Date.UTC(year, month - 2, 1));
+  const prevYearMonth = `${prevMonthDate.getUTCFullYear()}-${String(prevMonthDate.getUTCMonth() + 1).padStart(2, '0')}`;
+
+  const prevFatura = await db
+    .select({ closingDate: faturas.closingDate })
+    .from(faturas)
+    .where(
+      and(
+        eq(faturas.userId, userId),
+        eq(faturas.accountId, accountId),
+        eq(faturas.yearMonth, prevYearMonth)
+      )
+    )
+    .limit(1);
+
+  if (prevFatura[0]?.closingDate) {
+    // Window starts day after previous fatura's closing date
+    const closingDate = new Date(prevFatura[0].closingDate + 'T00:00:00Z');
+    closingDate.setUTCDate(closingDate.getUTCDate() + 1);
+    return closingDate.toISOString().split('T')[0];
+  }
+
+  // Fall back to computed value from account defaults
+  return computeFaturaWindowStart(yearMonth, closingDay);
+}
+
+/**
  * Updates the closing date and/or due date for a specific fatura.
  * Used when actual billing dates differ from account defaults (e.g., weekend shifts).
  */
@@ -151,7 +216,84 @@ export async function updateFaturaDates(
     .set(updates)
     .where(and(eq(faturas.userId, userId), eq(faturas.id, faturaId)));
 
+  // Recalculate installment dates for entries in this fatura
+  // This is needed when startDate changes
+  await recalculateInstallmentDates(fatura[0].accountId, fatura[0].yearMonth);
+
+  // If closingDate changed, also recalculate the NEXT fatura's entries
+  // because its window start is calculated from this fatura's closing date
+  if (data.closingDate) {
+    const [year, month] = fatura[0].yearMonth.split('-').map(Number);
+    const nextMonth = new Date(Date.UTC(year, month, 1)); // month is 1-indexed, Date uses 0-indexed, so this gives next month
+    const nextYearMonth = `${nextMonth.getUTCFullYear()}-${String(nextMonth.getUTCMonth() + 1).padStart(2, '0')}`;
+    await recalculateInstallmentDates(fatura[0].accountId, nextYearMonth);
+  }
+
   revalidatePath('/faturas');
+  revalidatePath('/expenses');
+}
+
+/**
+ * Recalculates the purchaseDate for installment entries in a fatura.
+ *
+ * For entries that are part of multi-installment transactions (installmentNumber > 1),
+ * this updates their purchaseDate to the fatura's window start date.
+ *
+ * This should be called when:
+ * - A fatura's startDate or closingDate changes
+ * - Previous fatura's closingDate changes (affects this fatura's calculated startDate)
+ *
+ * @param accountId - The credit card account ID
+ * @param yearMonth - Fatura month in "YYYY-MM" format
+ */
+export async function recalculateInstallmentDates(
+  accountId: number,
+  yearMonth: string
+): Promise<void> {
+  const userId = await getCurrentUserId();
+
+  // Get account's closing day for fallback calculation
+  const account = await db
+    .select({ closingDay: accounts.closingDay })
+    .from(accounts)
+    .where(and(eq(accounts.userId, userId), eq(accounts.id, accountId)))
+    .limit(1);
+
+  if (!account[0]?.closingDay) {
+    // Non-credit card or no billing config - nothing to do
+    return;
+  }
+
+  // Get the fatura window start date
+  const windowStart = await getFaturaWindowStart(accountId, yearMonth, account[0].closingDay);
+
+  // Find all entries in this fatura that are part of multi-installment transactions
+  // and have installmentNumber > 1 (subsequent installments)
+  const entriesToUpdate = await db
+    .select({
+      entryId: entries.id,
+      installmentNumber: entries.installmentNumber,
+      totalInstallments: transactions.totalInstallments,
+    })
+    .from(entries)
+    .innerJoin(transactions, eq(entries.transactionId, transactions.id))
+    .where(
+      and(
+        eq(entries.userId, userId),
+        eq(entries.accountId, accountId),
+        eq(entries.faturaMonth, yearMonth),
+        sql`${transactions.totalInstallments} > 1`,
+        sql`${entries.installmentNumber} > 1`
+      )
+    );
+
+  // Update each entry's purchaseDate to the fatura window start
+  for (const entry of entriesToUpdate) {
+    await db
+      .update(entries)
+      .set({ purchaseDate: windowStart })
+      .where(eq(entries.id, entry.entryId));
+  }
 }
 
 /**

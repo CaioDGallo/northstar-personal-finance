@@ -169,3 +169,37 @@ export function getFaturaMonthFromClosingDate(
     return `${year}-${String(month).padStart(2, '0')}`;
   }
 }
+
+/**
+ * Computes the start date of a fatura billing window.
+ *
+ * The fatura window starts the day after the previous month's closing date.
+ * This is used to determine the purchaseDate for installments after the first one.
+ *
+ * Example: For Feb 2025 fatura with closingDay=15
+ * - Previous fatura (Jan) closes on 2025-01-15
+ * - Feb fatura window starts on 2025-01-16
+ *
+ * @param yearMonth - Fatura month in "YYYY-MM" format
+ * @param closingDay - Day of month when statement closes (1-28)
+ * @returns Start date of the billing window in "YYYY-MM-DD" format
+ */
+export function computeFaturaWindowStart(yearMonth: string, closingDay: number): string {
+  const [year, month] = yearMonth.split('-').map(Number);
+
+  // Get the previous month
+  const prevMonthDate = new Date(Date.UTC(year, month - 2, 1)); // month is 1-indexed, Date uses 0-indexed
+  const prevYear = prevMonthDate.getUTCFullYear();
+  const prevMonth = prevMonthDate.getUTCMonth(); // 0-indexed
+
+  // Get the last day of the previous month
+  const lastDayOfPrevMonth = new Date(Date.UTC(prevYear, prevMonth + 1, 0)).getUTCDate();
+
+  // The previous month's closing day (adjusted if month has fewer days)
+  const actualClosingDay = Math.min(closingDay, lastDayOfPrevMonth);
+
+  // Window starts the day after the previous closing date
+  const startDate = new Date(Date.UTC(prevYear, prevMonth, actualClosingDay + 1));
+
+  return startDate.toISOString().split('T')[0];
+}
