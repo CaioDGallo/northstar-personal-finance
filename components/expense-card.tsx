@@ -159,13 +159,6 @@ export function ExpenseCard(props: ExpenseCardProps) {
 
     // Show undo toast
     toast.success(t('expenseDeleted'), {
-      action: {
-        label: tCommon('undo'),
-        onClick: () => {
-          // Refresh the page to restore the deleted item
-          window.location.reload();
-        },
-      },
       duration: 5000,
     });
   };
