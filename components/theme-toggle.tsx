@@ -51,9 +51,10 @@ export function ThemeToggle() {
 
   const cycleTheme = () => {
     setTheme((prev) => {
-      if (prev === 'system') return 'light';
-      if (prev === 'light') return 'dark';
-      return 'system';
+      const next = prev === 'system' ? 'light' : prev === 'light' ? 'dark' : 'system';
+      // Notify toaster of theme change
+      window.dispatchEvent(new Event('theme-change'));
+      return next;
     });
   };
 

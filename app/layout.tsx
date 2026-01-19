@@ -3,7 +3,7 @@ import { JetBrains_Mono } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { Analytics } from "@vercel/analytics/next"
 import { getLocale, getMessages } from 'next-intl/server';
-import { Toaster } from 'sonner';
+import { Toaster } from '@/components/toaster';
 import { Providers } from './providers';
 import './globals.css';
 
