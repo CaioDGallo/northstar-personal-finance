@@ -1,10 +1,10 @@
 'use server';
 
 import { cache } from 'react';
+import { unstable_cache, revalidatePath, revalidateTag } from 'next/cache';
 import { db } from '@/lib/db';
 import { income, categories, accounts } from '@/lib/schema';
 import { eq, and, gte, lte, desc, isNull, isNotNull, sql, inArray } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
 import { getCurrentUserId } from '@/lib/auth';
 import { checkBulkRateLimit } from '@/lib/rate-limit';
 import { t } from '@/lib/i18n/server-errors';
@@ -55,6 +55,7 @@ export async function createIncome(data: CreateIncomeData) {
     // Track category frequency for auto-suggestions
     await incrementCategoryFrequency(userId, data.description.trim(), data.categoryId, 'income');
 
+    revalidateTag(`user-${userId}`, {});
     revalidatePath('/income');
     revalidatePath('/dashboard');
     revalidatePath('/settings/accounts');
@@ -114,6 +115,7 @@ export async function updateIncome(incomeId: number, data: CreateIncomeData) {
       await syncAccountBalance(data.accountId);
     }
 
+    revalidateTag(`user-${userId}`, {});
     revalidatePath('/income');
     revalidatePath('/dashboard');
     revalidatePath('/settings/accounts');
@@ -145,6 +147,7 @@ export async function deleteIncome(incomeId: number) {
 
     await syncAccountBalance(existing.accountId);
 
+    revalidateTag(`user-${userId}`, {});
     revalidatePath('/income');
     revalidatePath('/dashboard');
     revalidatePath('/settings/accounts');
@@ -163,10 +166,13 @@ export type IncomeFilters = {
 
 export const getIncome = cache(async (filters: IncomeFilters = {}) => {
   const userId = await getCurrentUserId();
-  const conditions = [eq(income.userId, userId)];
 
-  // Filter by month
-  if (filters.yearMonth) {
+  return unstable_cache(
+    async () => {
+      const conditions = [eq(income.userId, userId)];
+
+      // Filter by month
+      if (filters.yearMonth) {
     const [year, month] = filters.yearMonth.split('-').map(Number);
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     const endOfMonth = new Date(year, month, 0).getDate();
@@ -219,10 +225,14 @@ export const getIncome = cache(async (filters: IncomeFilters = {}) => {
       sql`categories AS replenish_cat`,
       sql`${income.replenishCategoryId} = replenish_cat.id`
     )
-    .where(and(...conditions))
-    .orderBy(desc(income.receivedDate), desc(income.createdAt));
+      .where(and(...conditions))
+      .orderBy(desc(income.receivedDate), desc(income.createdAt));
 
-  return results;
+      return results;
+    },
+    ['income', userId, filters.yearMonth || 'all', filters.categoryId?.toString() || 'all', filters.accountId?.toString() || 'all', filters.status || 'all'],
+    { tags: [`user-${userId}`], revalidate: 300 }
+  )();
 });
 
 export async function markIncomeReceived(incomeId: number) {
@@ -250,6 +260,7 @@ export async function markIncomeReceived(incomeId: number) {
 
     await syncAccountBalance(record.accountId);
 
+    revalidateTag(`user-${userId}`, {});
     revalidatePath('/income');
     revalidatePath('/dashboard');
     revalidatePath('/settings/accounts');
@@ -284,6 +295,7 @@ export async function markIncomePending(incomeId: number) {
 
     await syncAccountBalance(record.accountId);
 
+    revalidateTag(`user-${userId}`, {});
     revalidatePath('/income');
     revalidatePath('/dashboard');
     revalidatePath('/settings/accounts');
@@ -320,6 +332,7 @@ export async function updateIncomeCategory(incomeId: number, categoryId: number)
     'income'
   );
 
+  revalidateTag(`user-${userId}`, {});
   revalidatePath('/income');
   revalidatePath('/dashboard');
 }
@@ -359,6 +372,7 @@ export async function bulkUpdateIncomeCategories(
       await transferCategoryFrequency(userId, inc.description, inc.categoryId, categoryId, 'income');
     }
 
+    revalidateTag(`user-${userId}`, {});
     revalidatePath('/income');
     revalidatePath('/dashboard');
   } catch (error) {
@@ -397,6 +411,7 @@ export async function toggleIgnoreIncome(incomeId: number) {
     // Sync account balance
     await syncAccountBalance(record.accountId);
 
+    revalidateTag(`user-${userId}`, {});
     revalidatePath('/income');
     revalidatePath('/budgets');
     revalidatePath('/dashboard');
@@ -456,6 +471,7 @@ export async function setIncomeReplenishment(
       .set({ replenishCategoryId })
       .where(and(eq(income.userId, userId), eq(income.id, incomeId)));
 
+    revalidateTag(`user-${userId}`, {});
     revalidatePath('/income');
     revalidatePath('/budgets');
     revalidatePath('/dashboard');

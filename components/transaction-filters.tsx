@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,15 +14,10 @@ import {
 } from '@/components/ui/select';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
-  ArrowLeft01Icon,
-  ArrowRight01Icon,
   SearchIcon,
   Cancel01Icon,
   FilterIcon,
-  Loading03Icon,
 } from '@hugeicons/core-free-icons';
-import { cn } from '@/lib/utils';
-import { useMonthNavigation } from '@/lib/hooks/use-month-navigation';
 import { ActiveFilterBadges } from '@/components/active-filter-badges';
 import type { Account, Category } from '@/lib/schema';
 
@@ -37,6 +32,7 @@ type TransactionFiltersProps = {
   onCategoryChange: (value: string) => void;
   onAccountChange: (value: string) => void;
   onStatusChange: (value: string) => void;
+  currentMonth: string;
 };
 
 export function TransactionFilters({
@@ -50,11 +46,8 @@ export function TransactionFilters({
   onCategoryChange,
   onAccountChange,
   onStatusChange,
+  currentMonth,
 }: TransactionFiltersProps) {
-  const { navigateMonth, navigating, currentMonth } = useMonthNavigation({
-    pageType: variant === 'expense' ? 'expenses' : 'income',
-  });
-  const locale = useLocale();
   const t = useTranslations('filters');
   const tTransaction = useTranslations(variant === 'expense' ? 'expenses' : 'income');
 
@@ -102,12 +95,6 @@ export function TransactionFilters({
     setLocalSearchValue('');
   }
 
-  const [year, month] = currentMonth.split('-');
-  const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleString(locale, {
-    month: 'long',
-    year: 'numeric',
-  });
-
   // Get active filter data for badges
   const activeCategory =
     categoryFilter && categoryFilter !== 'all'
@@ -145,8 +132,8 @@ export function TransactionFilters({
 
   return (
     <div className="mb-6 space-y-3">
-      {/* Row 1: Month picker + Search + Filter toggle */}
-      <div className="flex items-center justify-between">
+      {/* Row 1: Search + Filter toggle */}
+      <div className="flex items-center justify-end gap-1">
         {isSearching ? (
           // Search mode
           <div className="flex w-full items-center gap-2">
@@ -164,59 +151,21 @@ export function TransactionFilters({
             />
           </div>
         ) : (
-          // Month picker mode
+          // Filter mode
           <>
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={() => navigateMonth(-1)}
-                variant="hollow"
-                size="icon"
-                className="touch-manipulation"
-                aria-label="Mês anterior"
-                disabled={navigating}
-              >
-                <HugeiconsIcon
-                  icon={navigating ? Loading03Icon : ArrowLeft01Icon}
-                  strokeWidth={2}
-                  className={cn(navigating && 'animate-spin')}
-                />
-              </Button>
-              <span className={cn(
-                'min-w-48 text-center text-lg font-medium capitalize',
-                navigating && 'text-muted-foreground'
-              )}>
-                {monthName}
-              </span>
-              <Button
-                onClick={() => navigateMonth(1)}
-                variant="hollow"
-                size="icon"
-                className="touch-manipulation"
-                aria-label="Próximo mês"
-                disabled={navigating}
-              >
-                <HugeiconsIcon
-                  icon={navigating ? Loading03Icon : ArrowRight01Icon}
-                  strokeWidth={2}
-                  className={cn(navigating && 'animate-spin')}
-                />
-              </Button>
-            </div>
-            <div className="flex items-center gap-1">
-              <Button onClick={handleSearchOpen} variant="hollow" size="icon" className="touch-manipulation" aria-label="Pesquisar">
-                <HugeiconsIcon icon={SearchIcon} strokeWidth={2} />
-              </Button>
-              <Button
-                onClick={() => setIsExpanded(!isExpanded)}
-                variant="hollow"
-                size="icon"
-                className={`touch-manipulation ${hasActiveFilters ? 'text-primary' : ''}`}
-                aria-label={isExpanded ? 'Fechar filtros' : 'Abrir filtros'}
-                aria-expanded={isExpanded}
-              >
-                <HugeiconsIcon icon={FilterIcon} strokeWidth={2} />
-              </Button>
-            </div>
+            <Button onClick={handleSearchOpen} variant="hollow" size="icon" className="touch-manipulation" aria-label="Pesquisar">
+              <HugeiconsIcon icon={SearchIcon} strokeWidth={2} />
+            </Button>
+            <Button
+              onClick={() => setIsExpanded(!isExpanded)}
+              variant="hollow"
+              size="icon"
+              className={`touch-manipulation ${hasActiveFilters ? 'text-primary' : ''}`}
+              aria-label={isExpanded ? 'Fechar filtros' : 'Abrir filtros'}
+              aria-expanded={isExpanded}
+            >
+              <HugeiconsIcon icon={FilterIcon} strokeWidth={2} />
+            </Button>
           </>
         )}
       </div>

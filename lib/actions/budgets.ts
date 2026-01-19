@@ -1,45 +1,52 @@
 'use server';
 
 import { cache } from 'react';
+import { unstable_cache, revalidatePath, revalidateTag } from 'next/cache';
 import { db } from '@/lib/db';
 import { budgets, categories, entries, transactions, monthlyBudgets, income } from '@/lib/schema';
 import { eq, and, gte, lte, sql, isNotNull } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
 import { getCurrentUserId } from '@/lib/auth';
 import { t } from '@/lib/i18n/server-errors';
 import { handleDbError } from '@/lib/db-errors';
 import { activeTransactionCondition } from '@/lib/query-helpers';
 
-export async function getBudgetsForMonth(yearMonth: string) {
-  try {
-    const userId = await getCurrentUserId();
-    const result = await db
-      .select({
-        categoryId: categories.id,
-        categoryName: categories.name,
-        categoryColor: categories.color,
-        categoryIcon: categories.icon,
-        budgetId: budgets.id,
-        budgetAmount: budgets.amount,
-      })
-      .from(categories)
-      .leftJoin(
-        budgets,
-        and(
-          eq(budgets.categoryId, categories.id),
-          eq(budgets.yearMonth, yearMonth),
-          eq(budgets.userId, userId)
-        )
-      )
-      .where(eq(categories.userId, userId))
-      .orderBy(categories.name);
+export const getBudgetsForMonth = cache(async (yearMonth: string) => {
+  const userId = await getCurrentUserId();
 
-    return result;
-  } catch (error) {
-    console.error('Failed to get budgets for month:', error);
-    throw new Error(await handleDbError(error, 'errors.failedToLoad'));
-  }
-}
+  return unstable_cache(
+    async () => {
+      try {
+        const result = await db
+          .select({
+            categoryId: categories.id,
+            categoryName: categories.name,
+            categoryColor: categories.color,
+            categoryIcon: categories.icon,
+            budgetId: budgets.id,
+            budgetAmount: budgets.amount,
+          })
+          .from(categories)
+          .leftJoin(
+            budgets,
+            and(
+              eq(budgets.categoryId, categories.id),
+              eq(budgets.yearMonth, yearMonth),
+              eq(budgets.userId, userId)
+            )
+          )
+          .where(eq(categories.userId, userId))
+          .orderBy(categories.name);
+
+        return result;
+      } catch (error) {
+        console.error('Failed to get budgets for month:', error);
+        throw new Error(await handleDbError(error, 'errors.failedToLoad'));
+      }
+    },
+    ['budgets-for-month', userId, yearMonth],
+    { tags: [`user-${userId}`], revalidate: 300 }
+  )();
+});
 
 export async function upsertBudget(
   categoryId: number,
@@ -78,6 +85,7 @@ export async function upsertBudget(
       await db.insert(budgets).values({ userId, categoryId, yearMonth, amount });
     }
 
+    revalidateTag(`user-${userId}`, {});
     revalidatePath('/settings/budgets');
     revalidatePath('/budgets');
   } catch (error) {
@@ -86,25 +94,32 @@ export async function upsertBudget(
   }
 }
 
-export async function getMonthlyBudget(yearMonth: string): Promise<number | null> {
+export const getMonthlyBudget = cache(async (yearMonth: string): Promise<number | null> => {
   if (!/^\d{4}-\d{2}$/.test(yearMonth)) {
     throw new Error(await t('errors.invalidYearMonthFormat'));
   }
 
-  try {
-    const userId = await getCurrentUserId();
-    const result = await db
-      .select({ amount: monthlyBudgets.amount })
-      .from(monthlyBudgets)
-      .where(and(eq(monthlyBudgets.userId, userId), eq(monthlyBudgets.yearMonth, yearMonth)))
-      .limit(1);
+  const userId = await getCurrentUserId();
 
-    return result.length > 0 ? result[0].amount : null;
-  } catch (error) {
-    console.error('Failed to get monthly budget:', error);
-    throw new Error(await handleDbError(error, 'errors.failedToLoad'));
-  }
-}
+  return unstable_cache(
+    async () => {
+      try {
+        const result = await db
+          .select({ amount: monthlyBudgets.amount })
+          .from(monthlyBudgets)
+          .where(and(eq(monthlyBudgets.userId, userId), eq(monthlyBudgets.yearMonth, yearMonth)))
+          .limit(1);
+
+        return result.length > 0 ? result[0].amount : null;
+      } catch (error) {
+        console.error('Failed to get monthly budget:', error);
+        throw new Error(await handleDbError(error, 'errors.failedToLoad'));
+      }
+    },
+    ['monthly-budget', userId, yearMonth],
+    { tags: [`user-${userId}`], revalidate: 300 }
+  )();
+});
 
 export async function upsertMonthlyBudget(yearMonth: string, amount: number) {
   if (!/^\d{4}-\d{2}$/.test(yearMonth)) {
@@ -131,6 +146,7 @@ export async function upsertMonthlyBudget(yearMonth: string, amount: number) {
       await db.insert(monthlyBudgets).values({ userId, yearMonth, amount });
     }
 
+    revalidateTag(`user-${userId}`, {});
     revalidatePath('/settings/budgets');
     revalidatePath('/budgets');
   } catch (error) {
@@ -182,9 +198,11 @@ export const getBudgetsWithSpending = cache(async (yearMonth: string): Promise<B
     throw new Error(await t('errors.invalidYearMonth'));
   }
 
-  try {
-    const userId = await getCurrentUserId();
-    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+  const userId = await getCurrentUserId();
+
+  return unstable_cache(
+    async () => {
+      const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     const endOfMonth = new Date(year, month, 0).getDate();
     const endDate = `${year}-${String(month).padStart(2, '0')}-${endOfMonth}`;
 
@@ -289,21 +307,21 @@ export const getBudgetsWithSpending = cache(async (yearMonth: string): Promise<B
     const totalSpent = budgetsWithSpending.reduce((sum, cat) => sum + cat.spent, 0);
     const totalReplenished = budgetsWithSpending.reduce((sum, cat) => sum + cat.replenished, 0);
     const totalNetSpent = budgetsWithSpending.reduce((sum, cat) => sum + cat.netSpent, 0);
-    const totalUnbudgetedSpent = unbudgeted.reduce((sum, cat) => sum + cat.spent, 0);
+      const totalUnbudgetedSpent = unbudgeted.reduce((sum, cat) => sum + cat.spent, 0);
 
-    return {
-      totalSpent,
-      totalReplenished,
-      totalNetSpent,
-      totalBudget,
-      budgets: budgetsWithSpending,
-      unbudgeted,
-      totalUnbudgetedSpent,
-    };
-  } catch (error) {
-    console.error('Failed to get budgets with spending:', error);
-    throw new Error(await handleDbError(error, 'errors.failedToLoad'));
-  }
+      return {
+        totalSpent,
+        totalReplenished,
+        totalNetSpent,
+        totalBudget,
+        budgets: budgetsWithSpending,
+        unbudgeted,
+        totalUnbudgetedSpent,
+      };
+    },
+    ['budgets', userId, yearMonth],
+    { tags: [`user-${userId}`], revalidate: 300 }
+  )();
 });
 
 export type CopyBudgetsResult = {
@@ -369,6 +387,7 @@ export async function copyBudgetsFromMonth(
     }
 
     // 6. Revalidate both budgets pages
+    revalidateTag(`user-${userId}`, {});
     revalidatePath('/budgets');
     revalidatePath('/settings/budgets');
 

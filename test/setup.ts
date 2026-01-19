@@ -15,6 +15,7 @@ afterEach(() => {
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
   revalidateTag: vi.fn(),
+  unstable_cache: vi.fn((fn) => fn),
 }));
 
 // Mock Next.js headers to provide a stable locale for error translations

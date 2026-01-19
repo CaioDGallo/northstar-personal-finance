@@ -13,6 +13,7 @@ type ExpenseFiltersWrapperProps = {
   onCategoryChange: (value: string) => void;
   onAccountChange: (value: string) => void;
   onStatusChange: (value: string) => void;
+  currentMonth: string;
 };
 
 export function ExpenseFiltersWrapper({
@@ -24,6 +25,7 @@ export function ExpenseFiltersWrapper({
   onCategoryChange,
   onAccountChange,
   onStatusChange,
+  currentMonth,
 }: ExpenseFiltersWrapperProps) {
   const { setSearchQuery } = useExpenseContext();
 
@@ -39,6 +41,7 @@ export function ExpenseFiltersWrapper({
       onCategoryChange={onCategoryChange}
       onAccountChange={onAccountChange}
       onStatusChange={onStatusChange}
+      currentMonth={currentMonth}
     />
   );
 }

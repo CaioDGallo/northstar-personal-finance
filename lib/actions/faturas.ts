@@ -7,7 +7,7 @@ import { t } from '@/lib/i18n/server-errors';
 import { checkBulkRateLimit } from '@/lib/rate-limit';
 import { accounts, categories, entries, faturas, transactions, transfers, type Fatura } from '@/lib/schema';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
+import { unstable_cache, revalidatePath, revalidateTag } from 'next/cache';
 import { cache } from 'react';
 import { syncAccountBalance } from '@/lib/actions/accounts';
 
@@ -229,6 +229,7 @@ export async function updateFaturaDates(
     await recalculateInstallmentDates(fatura[0].accountId, nextYearMonth);
   }
 
+  revalidateTag(`user-${userId}`, {});
   revalidatePath('/faturas');
   revalidatePath('/expenses');
 }
@@ -301,11 +302,18 @@ export async function recalculateInstallmentDates(
  */
 export const getFaturasByAccount = cache(async (accountId: number) => {
   const userId = await getCurrentUserId();
-  return await db
-    .select()
-    .from(faturas)
-    .where(and(eq(faturas.userId, userId), eq(faturas.accountId, accountId)))
-    .orderBy(desc(faturas.yearMonth));
+
+  return unstable_cache(
+    async () => {
+      return await db
+        .select()
+        .from(faturas)
+        .where(and(eq(faturas.userId, userId), eq(faturas.accountId, accountId)))
+        .orderBy(desc(faturas.yearMonth));
+    },
+    ['faturas-account', userId, String(accountId)],
+    { tags: [`user-${userId}`], revalidate: 300 }
+  )();
 });
 
 /**
@@ -313,22 +321,29 @@ export const getFaturasByAccount = cache(async (accountId: number) => {
  */
 export const getFaturasByMonth = cache(async (yearMonth: string) => {
   const userId = await getCurrentUserId();
-  return await db
-    .select({
-      id: faturas.id,
-      accountId: faturas.accountId,
-      accountName: accounts.name,
-      yearMonth: faturas.yearMonth,
-      closingDate: faturas.closingDate,
-      totalAmount: faturas.totalAmount,
-      dueDate: faturas.dueDate,
-      paidAt: sql<string | null>`${faturas.paidAt}::text`,
-      paidFromAccountId: faturas.paidFromAccountId,
-    })
-    .from(faturas)
-    .innerJoin(accounts, eq(faturas.accountId, accounts.id))
-    .where(and(eq(faturas.userId, userId), eq(faturas.yearMonth, yearMonth)))
-    .orderBy(accounts.name);
+
+  return unstable_cache(
+    async () => {
+      return await db
+        .select({
+          id: faturas.id,
+          accountId: faturas.accountId,
+          accountName: accounts.name,
+          yearMonth: faturas.yearMonth,
+          closingDate: faturas.closingDate,
+          totalAmount: faturas.totalAmount,
+          dueDate: faturas.dueDate,
+          paidAt: sql<string | null>`${faturas.paidAt}::text`,
+          paidFromAccountId: faturas.paidFromAccountId,
+        })
+        .from(faturas)
+        .innerJoin(accounts, eq(faturas.accountId, accounts.id))
+        .where(and(eq(faturas.userId, userId), eq(faturas.yearMonth, yearMonth)))
+        .orderBy(accounts.name);
+    },
+    ['faturas-month', userId, yearMonth],
+    { tags: [`user-${userId}`], revalidate: 300 }
+  )();
 });
 
 /**
@@ -336,22 +351,29 @@ export const getFaturasByMonth = cache(async (yearMonth: string) => {
  */
 export const getUnpaidFaturas = cache(async (): Promise<UnpaidFatura[]> => {
   const userId = await getCurrentUserId();
-  return await db
-    .select({
-      id: faturas.id,
-      accountId: faturas.accountId,
-      accountName: accounts.name,
-      yearMonth: faturas.yearMonth,
-      totalAmount: faturas.totalAmount,
-      dueDate: faturas.dueDate,
-    })
-    .from(faturas)
-    .innerJoin(accounts, eq(faturas.accountId, accounts.id))
-    .where(and(
-      eq(faturas.userId, userId),
-      isNull(faturas.paidAt)
-    ))
-    .orderBy(desc(faturas.yearMonth), accounts.name);
+
+  return unstable_cache(
+    async () => {
+      return await db
+        .select({
+          id: faturas.id,
+          accountId: faturas.accountId,
+          accountName: accounts.name,
+          yearMonth: faturas.yearMonth,
+          totalAmount: faturas.totalAmount,
+          dueDate: faturas.dueDate,
+        })
+        .from(faturas)
+        .innerJoin(accounts, eq(faturas.accountId, accounts.id))
+        .where(and(
+          eq(faturas.userId, userId),
+          isNull(faturas.paidAt)
+        ))
+        .orderBy(desc(faturas.yearMonth), accounts.name);
+    },
+    ['faturas-unpaid', userId],
+    { tags: [`user-${userId}`], revalidate: 300 }
+  )();
 });
 
 /**
@@ -359,44 +381,51 @@ export const getUnpaidFaturas = cache(async (): Promise<UnpaidFatura[]> => {
  */
 export const getFaturaWithEntries = cache(async (faturaId: number) => {
   const userId = await getCurrentUserId();
-  const fatura = await db.select().from(faturas).where(and(eq(faturas.userId, userId), eq(faturas.id, faturaId))).limit(1);
 
-  if (!fatura[0]) {
-    return null;
-  }
+  return unstable_cache(
+    async () => {
+      const fatura = await db.select().from(faturas).where(and(eq(faturas.userId, userId), eq(faturas.id, faturaId))).limit(1);
 
-  const faturaEntries = await db
-    .select({
-      id: entries.id,
-      amount: entries.amount,
-      purchaseDate: entries.purchaseDate,
-      dueDate: entries.dueDate,
-      paidAt: sql<string | null>`${entries.paidAt}::text`,
-      installmentNumber: entries.installmentNumber,
-      transactionId: transactions.id,
-      description: transactions.description,
-      totalInstallments: transactions.totalInstallments,
-      categoryId: categories.id,
-      categoryName: categories.name,
-      categoryColor: categories.color,
-      categoryIcon: categories.icon,
-    })
-    .from(entries)
-    .innerJoin(transactions, eq(entries.transactionId, transactions.id))
-    .innerJoin(categories, eq(transactions.categoryId, categories.id))
-    .where(
-      and(
-        eq(entries.userId, userId),
-        eq(entries.accountId, fatura[0].accountId),
-        eq(entries.faturaMonth, fatura[0].yearMonth)
-      )
-    )
-    .orderBy(desc(entries.purchaseDate));
+      if (!fatura[0]) {
+        return null;
+      }
 
-  return {
-    ...fatura[0],
-    entries: faturaEntries,
-  };
+      const faturaEntries = await db
+        .select({
+          id: entries.id,
+          amount: entries.amount,
+          purchaseDate: entries.purchaseDate,
+          dueDate: entries.dueDate,
+          paidAt: sql<string | null>`${entries.paidAt}::text`,
+          installmentNumber: entries.installmentNumber,
+          transactionId: transactions.id,
+          description: transactions.description,
+          totalInstallments: transactions.totalInstallments,
+          categoryId: categories.id,
+          categoryName: categories.name,
+          categoryColor: categories.color,
+          categoryIcon: categories.icon,
+        })
+        .from(entries)
+        .innerJoin(transactions, eq(entries.transactionId, transactions.id))
+        .innerJoin(categories, eq(transactions.categoryId, categories.id))
+        .where(
+          and(
+            eq(entries.userId, userId),
+            eq(entries.accountId, fatura[0].accountId),
+            eq(entries.faturaMonth, fatura[0].yearMonth)
+          )
+        )
+        .orderBy(desc(entries.purchaseDate));
+
+      return {
+        ...fatura[0],
+        entries: faturaEntries,
+      };
+    },
+    ['fatura-details', userId, String(faturaId)],
+    { tags: [`user-${userId}`], revalidate: 300 }
+  )();
 });
 
 /**
@@ -486,6 +515,7 @@ export async function payFatura(faturaId: number, fromAccountId: number): Promis
       await syncAccountBalance(fatura[0].accountId, tx, userId);
     });
 
+    revalidateTag(`user-${userId}`, {});
     revalidatePath('/faturas');
     revalidatePath('/expenses');
     revalidatePath('/dashboard');
@@ -579,6 +609,7 @@ export async function markFaturaUnpaid(faturaId: number): Promise<void> {
       }
     });
 
+    revalidateTag(`user-${userId}`, {});
     revalidatePath('/faturas');
     revalidatePath('/expenses');
     revalidatePath('/dashboard');
@@ -723,6 +754,7 @@ export async function convertExpenseToFaturaPayment(entryId: number, faturaId: n
     });
 
     // 9. Revalidate paths
+    revalidateTag(`user-${userId}`, {});
     revalidatePath('/faturas');
     revalidatePath('/expenses');
     revalidatePath('/dashboard');

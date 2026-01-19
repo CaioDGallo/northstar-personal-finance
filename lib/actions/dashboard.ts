@@ -1,6 +1,7 @@
 'use server';
 
 import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import { db } from '@/lib/db';
 import { entries, transactions, categories, budgets, accounts, income, transfers } from '@/lib/schema';
 import { eq, and, gte, lte, sql, desc, isNotNull, isNull } from 'drizzle-orm';
@@ -51,14 +52,16 @@ export type DashboardData = {
 export const getDashboardData = cache(async (yearMonth: string): Promise<DashboardData> => {
   const userId = await getCurrentUserId();
 
-  // Parse year-month to get start/end dates
-  const [year, month] = yearMonth.split('-').map(Number);
-  const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-  const endOfMonth = new Date(year, month, 0).getDate();
-  const endDate = `${year}-${String(month).padStart(2, '0')}-${endOfMonth}`;
+  return unstable_cache(
+    async () => {
+      // Parse year-month to get start/end dates
+      const [year, month] = yearMonth.split('-').map(Number);
+      const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+      const endOfMonth = new Date(year, month, 0).getDate();
+      const endDate = `${year}-${String(month).padStart(2, '0')}-${endOfMonth}`;
 
-  // 1. Get all budgets for the month with category info
-  const monthBudgets = await db
+      // 1. Get all budgets for the month with category info
+      const monthBudgets = await db
     .select({
       categoryId: budgets.categoryId,
       categoryName: categories.name,
@@ -226,19 +229,23 @@ export const getDashboardData = cache(async (yearMonth: string): Promise<Dashboa
     .orderBy(desc(income.createdAt))
     .limit(5);
 
-  return {
-    totalSpent,
-    totalReplenished,
-    totalBudget,
-    totalIncome,
-    netBalance,
-    totalTransfersIn,
-    totalTransfersOut,
-    cashFlowNet,
-    categoryBreakdown,
-    recentExpenses,
-    recentIncome,
-  };
+      return {
+        totalSpent,
+        totalReplenished,
+        totalBudget,
+        totalIncome,
+        netBalance,
+        totalTransfersIn,
+        totalTransfersOut,
+        cashFlowNet,
+        categoryBreakdown,
+        recentExpenses,
+        recentIncome,
+      };
+    },
+    ['dashboard', userId, yearMonth],
+    { tags: [`user-${userId}`], revalidate: 300 }
+  )();
 });
 
 export type NetWorthData = {
@@ -258,43 +265,49 @@ export type NetWorthData = {
 export const getNetWorth = cache(async (): Promise<NetWorthData> => {
   const userId = await getCurrentUserId();
 
-  const allAccounts = await db
-    .select({
-      type: accounts.type,
-      currentBalance: accounts.currentBalance,
-    })
-    .from(accounts)
-    .where(eq(accounts.userId, userId));
+  return unstable_cache(
+    async () => {
+      const allAccounts = await db
+        .select({
+          type: accounts.type,
+          currentBalance: accounts.currentBalance,
+        })
+        .from(accounts)
+        .where(eq(accounts.userId, userId));
 
-  let totalAssets = 0;
-  let totalLiabilities = 0;
-  const byType: Record<string, number> = {};
+      let totalAssets = 0;
+      let totalLiabilities = 0;
+      const byType: Record<string, number> = {};
 
-  for (const account of allAccounts) {
-    const balance = account.currentBalance;
+      for (const account of allAccounts) {
+        const balance = account.currentBalance;
 
-    // Initialize type if not seen
-    if (!byType[account.type]) {
-      byType[account.type] = 0;
-    }
-    byType[account.type] += balance;
+        // Initialize type if not seen
+        if (!byType[account.type]) {
+          byType[account.type] = 0;
+        }
+        byType[account.type] += balance;
 
-    // Credit cards with negative balance are liabilities
-    if (account.type === 'credit_card' && balance < 0) {
-      totalLiabilities += Math.abs(balance);
-    }
-    // All other accounts (and CC with positive balance) are assets
-    else if (balance > 0) {
-      totalAssets += balance;
-    }
-  }
+        // Credit cards with negative balance are liabilities
+        if (account.type === 'credit_card' && balance < 0) {
+          totalLiabilities += Math.abs(balance);
+        }
+        // All other accounts (and CC with positive balance) are assets
+        else if (balance > 0) {
+          totalAssets += balance;
+        }
+      }
 
-  const netWorth = totalAssets - totalLiabilities;
+      const netWorth = totalAssets - totalLiabilities;
 
-  return {
-    totalAssets,
-    totalLiabilities,
-    netWorth,
-    byType,
-  };
+      return {
+        totalAssets,
+        totalLiabilities,
+        netWorth,
+        byType,
+      };
+    },
+    ['networth', userId],
+    { tags: [`user-${userId}`], revalidate: 300 }
+  )();
 });

@@ -1,26 +1,13 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { BalanceSummary } from '@/components/balance-summary';
 import { SummaryCard } from '@/components/summary-card';
 import { BudgetProgress } from '@/components/budget-progress';
 import { RecentExpenses } from '@/components/recent-expenses';
 import { MonthPicker } from '@/components/month-picker';
 import { CashFlowReport } from '@/components/cash-flow-report';
-
-// MonthPicker mock values (defined at top level for hoisting)
-const mockMonthCurrentMonth = '2025-01';
-const mockMonthSetMonth = vi.fn();
-
-// Mock useMonthStore for MonthPicker tests
-vi.mock('@/lib/stores/month-store', () => ({
-  useMonthStore: vi.fn((selector) =>
-    selector({
-      currentMonth: mockMonthCurrentMonth,
-      setMonth: mockMonthSetMonth,
-    })
-  ),
-}));
 
 // Mock next-intl
 vi.mock('next-intl', () => ({
@@ -221,7 +208,7 @@ describe('Dashboard Components', () => {
   describe('SummaryCard Component', () => {
     describe('Display Tests', () => {
       it('shows total spent, total budget, and remaining', () => {
-        render(<SummaryCard spent={60000} budget={100000} />);
+        render(<SummaryCard replenished={0} spent={60000} budget={100000} />);
 
         expect(screen.getByText('Monthly Summary')).toBeInTheDocument();
         expect(screen.getByText('Total Spent')).toBeInTheDocument();
@@ -234,7 +221,7 @@ describe('Dashboard Components', () => {
       });
 
       it('shows green progress bar when under 80%', () => {
-        const { container } = render(<SummaryCard spent={70000} budget={100000} />);
+        const { container } = render(<SummaryCard replenished={0} spent={70000} budget={100000} />);
 
         const progressBar = container.querySelector('.h-full.transition-all');
         expect(progressBar).toHaveClass('bg-green-500');
@@ -242,7 +229,7 @@ describe('Dashboard Components', () => {
       });
 
       it('shows yellow progress bar when between 80-100%', () => {
-        const { container } = render(<SummaryCard spent={85000} budget={100000} />);
+        const { container } = render(<SummaryCard replenished={0} spent={85000} budget={100000} />);
 
         const progressBar = container.querySelector('.h-full.transition-all');
         expect(progressBar).toHaveClass('bg-yellow-500');
@@ -250,7 +237,7 @@ describe('Dashboard Components', () => {
       });
 
       it('shows red progress bar when over 100%', () => {
-        const { container } = render(<SummaryCard spent={120000} budget={100000} />);
+        const { container } = render(<SummaryCard replenished={0} spent={120000} budget={100000} />);
 
         const progressBar = container.querySelector('.h-full.transition-all');
         expect(progressBar).toHaveClass('bg-red-500');
@@ -258,16 +245,24 @@ describe('Dashboard Components', () => {
       });
 
       it('shows "Over Budget" label when spending exceeds budget', () => {
-        render(<SummaryCard spent={120000} budget={100000} />);
+        render(<SummaryCard replenished={0} spent={120000} budget={100000} />);
 
         expect(screen.getByText('Over Budget')).toBeInTheDocument();
         expect(screen.getByText(/R\$\s*200,00/)).toBeInTheDocument(); // Absolute value
+      });
+
+      it('calculates net spent with replenishment', () => {
+        render(<SummaryCard replenished={10000} spent={60000} budget={100000} />);
+
+        const totalSpentLabel = screen.getByText('Total Spent');
+        const totalSpentRow = totalSpentLabel.parentElement as HTMLElement;
+        expect(within(totalSpentRow).getByText(/R\$\s*500,00/)).toBeInTheDocument();
       });
     });
 
     describe('Edge Cases', () => {
       it('handles budget=0 with spent>0', () => {
-        const { container } = render(<SummaryCard spent={50000} budget={0} />);
+        const { container } = render(<SummaryCard replenished={0} spent={50000} budget={0} />);
 
         expect(screen.getByText('Unbudgeted')).toBeInTheDocument();
 
@@ -277,7 +272,7 @@ describe('Dashboard Components', () => {
       });
 
       it('handles spent=0 with budget>0', () => {
-        render(<SummaryCard spent={0} budget={100000} />);
+        render(<SummaryCard replenished={0} spent={0} budget={100000} />);
 
         expect(screen.getByText('Remaining')).toBeInTheDocument();
         // Two instances of R$ 1.000,00 (budget and remaining)
@@ -287,7 +282,7 @@ describe('Dashboard Components', () => {
       });
 
       it('handles spent=0 and budget=0', () => {
-        render(<SummaryCard spent={0} budget={0} />);
+        render(<SummaryCard replenished={0} spent={0} budget={0} />);
 
         // Multiple instances of R$ 0,00 (spent, budget, remaining)
         const zeroAmounts = screen.getAllByText(/R\$\s*0,00/);
@@ -296,7 +291,7 @@ describe('Dashboard Components', () => {
       });
 
       it('handles spent>budget (negative remaining)', () => {
-        render(<SummaryCard spent={120000} budget={100000} />);
+        render(<SummaryCard replenished={0} spent={120000} budget={100000} />);
 
         expect(screen.getByText('Over Budget')).toBeInTheDocument();
         // Shows absolute value of negative remaining
@@ -304,7 +299,7 @@ describe('Dashboard Components', () => {
       });
 
       it('handles spent=budget (zero remaining)', () => {
-        render(<SummaryCard spent={100000} budget={100000} />);
+        render(<SummaryCard replenished={0} spent={100000} budget={100000} />);
 
         expect(screen.getByText('Remaining')).toBeInTheDocument();
         expect(screen.getByText(/R\$\s*0,00/)).toBeInTheDocument();
@@ -312,21 +307,21 @@ describe('Dashboard Components', () => {
       });
 
       it('tests exact boundary at 80%', () => {
-        const { container } = render(<SummaryCard spent={80000} budget={100000} />);
+        const { container } = render(<SummaryCard replenished={0} spent={80000} budget={100000} />);
 
         const progressBar = container.querySelector('.h-full.transition-all');
         expect(progressBar).toHaveClass('bg-yellow-500'); // 80% is warning
       });
 
       it('tests exact boundary at 100%', () => {
-        const { container } = render(<SummaryCard spent={100000} budget={100000} />);
+        const { container } = render(<SummaryCard replenished={0} spent={100000} budget={100000} />);
 
         const progressBar = container.querySelector('.h-full.transition-all');
         expect(progressBar).toHaveClass('bg-yellow-500'); // 100% is still warning
       });
 
       it('handles very large amounts', () => {
-        render(<SummaryCard spent={50000000} budget={99999999} />);
+        render(<SummaryCard replenished={0} spent={50000000} budget={99999999} />);
 
         expect(screen.getByText(/R\$\s*500\.000,00/)).toBeInTheDocument();
         expect(screen.getByText(/R\$\s*999\.999,99/)).toBeInTheDocument();
@@ -338,7 +333,7 @@ describe('Dashboard Components', () => {
     describe('Display Tests', () => {
       it('shows category name, icon, spent, budget, and percentage', () => {
         render(
-          <BudgetProgress
+          <BudgetProgress replenished={0}
             categoryName="Food"
             categoryColor="#ef4444"
             categoryIcon="Restaurant01Icon"
@@ -354,7 +349,7 @@ describe('Dashboard Components', () => {
 
       it('applies category color to icon background', () => {
         const { container } = render(
-          <BudgetProgress
+          <BudgetProgress replenished={0}
             categoryName="Food"
             categoryColor="#ef4444"
             categoryIcon="Restaurant01Icon"
@@ -369,7 +364,7 @@ describe('Dashboard Components', () => {
 
       it('shows green progress bar when under 80%', () => {
         const { container } = render(
-          <BudgetProgress
+          <BudgetProgress replenished={0}
             categoryName="Food"
             categoryColor="#ef4444"
             categoryIcon="Restaurant01Icon"
@@ -384,7 +379,7 @@ describe('Dashboard Components', () => {
 
       it('shows yellow progress bar when between 80-100%', () => {
         const { container } = render(
-          <BudgetProgress
+          <BudgetProgress replenished={0}
             categoryName="Food"
             categoryColor="#ef4444"
             categoryIcon="Restaurant01Icon"
@@ -399,7 +394,7 @@ describe('Dashboard Components', () => {
 
       it('shows red progress bar when over 100%', () => {
         const { container } = render(
-          <BudgetProgress
+          <BudgetProgress replenished={0}
             categoryName="Food"
             categoryColor="#ef4444"
             categoryIcon="Restaurant01Icon"
@@ -416,7 +411,7 @@ describe('Dashboard Components', () => {
     describe('Edge Cases', () => {
       it('handles budget=0 with spent>0 (infinite percentage)', () => {
         const { container } = render(
-          <BudgetProgress
+          <BudgetProgress replenished={0}
             categoryName="Food"
             categoryColor="#ef4444"
             categoryIcon="Restaurant01Icon"
@@ -434,7 +429,7 @@ describe('Dashboard Components', () => {
 
       it('handles spent=0 with budget>0', () => {
         render(
-          <BudgetProgress
+          <BudgetProgress replenished={0}
             categoryName="Food"
             categoryColor="#ef4444"
             categoryIcon="Restaurant01Icon"
@@ -448,7 +443,7 @@ describe('Dashboard Components', () => {
 
       it('handles spent=budget (100%)', () => {
         render(
-          <BudgetProgress
+          <BudgetProgress replenished={0}
             categoryName="Food"
             categoryColor="#ef4444"
             categoryIcon="Restaurant01Icon"
@@ -462,7 +457,7 @@ describe('Dashboard Components', () => {
 
       it('handles spent>budget (over 100%)', () => {
         const { container } = render(
-          <BudgetProgress
+          <BudgetProgress replenished={0}
             categoryName="Food"
             categoryColor="#ef4444"
             categoryIcon="Restaurant01Icon"
@@ -480,7 +475,7 @@ describe('Dashboard Components', () => {
 
       it('handles null icon gracefully', () => {
         render(
-          <BudgetProgress
+          <BudgetProgress replenished={0}
             categoryName="Food"
             categoryColor="#ef4444"
             categoryIcon={null}
@@ -494,7 +489,7 @@ describe('Dashboard Components', () => {
 
       it('rounds percentage correctly (49.5%)', () => {
         render(
-          <BudgetProgress
+          <BudgetProgress replenished={0}
             categoryName="Food"
             categoryColor="#ef4444"
             categoryIcon="Restaurant01Icon"
@@ -509,7 +504,7 @@ describe('Dashboard Components', () => {
 
       it('rounds percentage correctly (49.4%)', () => {
         render(
-          <BudgetProgress
+          <BudgetProgress replenished={0}
             categoryName="Food"
             categoryColor="#ef4444"
             categoryIcon="Restaurant01Icon"
@@ -631,10 +626,30 @@ describe('Dashboard Components', () => {
 
     describe('Display Tests', () => {
       it('shows previous and next navigation buttons', () => {
-        const { container } = render(<MonthPicker />);
+        const { container } = render(<MonthPicker currentMonth="2025-01" />);
 
         const buttons = container.querySelectorAll('button');
         expect(buttons).toHaveLength(2); // Previous and Next buttons
+      });
+
+      it('navigates to previous month', async () => {
+        const user = userEvent.setup();
+        render(<MonthPicker currentMonth="2025-02" />);
+
+        await user.click(screen.getAllByRole('button')[0]);
+        expect(mockPush).toHaveBeenCalledWith(
+          expect.stringContaining('month=2025-01')
+        );
+      });
+
+      it('navigates to next month', async () => {
+        const user = userEvent.setup();
+        render(<MonthPicker currentMonth="2025-02" />);
+
+        await user.click(screen.getAllByRole('button')[1]);
+        expect(mockPush).toHaveBeenCalledWith(
+          expect.stringContaining('month=2025-03')
+        );
       });
     });
   });

@@ -13,6 +13,7 @@ type IncomeFiltersWrapperProps = {
   onCategoryChange: (value: string) => void;
   onAccountChange: (value: string) => void;
   onStatusChange: (value: string) => void;
+  currentMonth: string;
 };
 
 export function IncomeFiltersWrapper({
@@ -24,6 +25,7 @@ export function IncomeFiltersWrapper({
   onCategoryChange,
   onAccountChange,
   onStatusChange,
+  currentMonth,
 }: IncomeFiltersWrapperProps) {
   const { setSearchQuery } = useIncomeContext();
 
@@ -39,6 +41,7 @@ export function IncomeFiltersWrapper({
       onCategoryChange={onCategoryChange}
       onAccountChange={onAccountChange}
       onStatusChange={onStatusChange}
+      currentMonth={currentMonth}
     />
   );
 }

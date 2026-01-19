@@ -9,10 +9,8 @@ type UseSwipeOptions = {
 };
 
 export function useSwipe({
-  onSwipeLeft,
   onSwipeRight,
   threshold = 100,
-  velocityThreshold = 0.3,
   disabled = false,
 }: UseSwipeOptions) {
   const [swipeOffset, setSwipeOffset] = useState(0);

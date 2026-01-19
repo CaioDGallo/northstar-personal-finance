@@ -14,8 +14,7 @@ import {
   toggleIgnoreTransaction as serverToggleIgnoreTransaction,
   type ExpenseFilters,
 } from '@/lib/actions/expenses';
-import { centsToDisplay, getCurrentYearMonth, addMonths } from '@/lib/utils';
-import { useMonthStore } from '@/lib/stores/month-store';
+import { centsToDisplay } from '@/lib/utils';
 
 // Expense entry shape (from getExpenses return type)
 export type ExpenseEntry = {
@@ -248,15 +247,7 @@ export function ExpenseListProvider({
         purchaseDate: input.purchaseDate,
         installments: input.installments,
       }).then(() => {
-        // Clear cache for affected months
-        const purchaseMonth = input.purchaseDate.slice(0, 7);
-        const { clearMonthRange } = useMonthStore.getState();
-        if (input.installments > 1) {
-          const endMonth = addMonths(purchaseMonth, input.installments - 1);
-          clearMonthRange(purchaseMonth, endMonth);
-        } else {
-          useMonthStore.getState().clearMonthCache(purchaseMonth);
-        }
+        router.refresh(); // Refresh to get updated data
       }).catch(() => {
         toast.error('Failed to create expense');
         router.refresh(); // Revert optimistic state
@@ -280,14 +271,13 @@ export function ExpenseListProvider({
         } else {
           await serverMarkEntryPaid(id);
         }
-        // Clear current month cache and trigger re-fetch
-        useMonthStore.getState().clearMonthCache(getCurrentYearMonth());
-        useMonthStore.getState().invalidateExpensesCache();
+        router.refresh(); // Refresh to get updated data
       } catch {
         toast.error('Failed to update status');
+        router.refresh(); // Revert optimistic state
       }
     },
-    [dispatch]
+    [dispatch, router]
   );
 
   // Remove expense (delete)
@@ -299,14 +289,13 @@ export function ExpenseListProvider({
 
       try {
         await serverDeleteExpense(transactionId);
-        // Clear all caches and trigger re-fetch
-        useMonthStore.getState().clearAllCache();
-        useMonthStore.getState().invalidateExpensesCache();
+        router.refresh(); // Refresh to get updated data
       } catch {
         toast.error('Failed to delete expense');
+        router.refresh(); // Revert optimistic state
       }
     },
-    [dispatch]
+    [dispatch, router]
   );
 
   // Bulk update category
@@ -325,17 +314,15 @@ export function ExpenseListProvider({
 
       try {
         await serverBulkUpdateTransactionCategories(transactionIds, categoryId);
-        // Clear all caches and trigger re-fetch
-        useMonthStore.getState().clearAllCache();
-        useMonthStore.getState().invalidateExpensesCache();
+        router.refresh(); // Refresh to get updated data
         toast.success(`Updated ${transactionIds.length} item${transactionIds.length > 1 ? 's' : ''}`);
       } catch (error) {
         console.error('Failed to bulk update categories:', error);
         toast.error('Failed to update categories');
-        // Optimistic update will auto-revert on revalidation
+        router.refresh(); // Revert optimistic state
       }
     },
-    [categories, dispatch]
+    [categories, dispatch, router]
   );
 
   // Toggle ignore
@@ -347,14 +334,13 @@ export function ExpenseListProvider({
 
       try {
         await serverToggleIgnoreTransaction(transactionId);
-        // Clear all caches and trigger re-fetch
-        useMonthStore.getState().clearAllCache();
-        useMonthStore.getState().invalidateExpensesCache();
+        router.refresh(); // Refresh to get updated data
       } catch {
         toast.error('Failed to update ignore status');
+        router.refresh(); // Revert optimistic state
       }
     },
-    [dispatch]
+    [dispatch, router]
   );
 
   const value: ExpenseContextValue = {

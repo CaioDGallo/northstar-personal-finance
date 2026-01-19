@@ -13,8 +13,8 @@ import {
   toggleIgnoreIncome as serverToggleIgnoreIncome,
   type IncomeFilters,
 } from '@/lib/actions/income';
-import { centsToDisplay, getCurrentYearMonth } from '@/lib/utils';
-import { useMonthStore } from '@/lib/stores/month-store';
+import { centsToDisplay } from '@/lib/utils';
+
 
 // Income entry shape (from getIncome return type)
 export type IncomeEntry = {
@@ -214,9 +214,7 @@ export function IncomeListProvider({
         accountId: input.accountId,
         receivedDate: input.receivedDate,
       }).then(() => {
-        // Clear cache for the received month
-        const receivedMonth = input.receivedDate.slice(0, 7);
-        useMonthStore.getState().clearMonthCache(receivedMonth);
+        router.refresh(); // Refresh to get updated data
       }).catch(() => {
         toast.error('Failed to create income');
         router.refresh(); // Revert optimistic state
@@ -240,14 +238,13 @@ export function IncomeListProvider({
         } else {
           await serverMarkIncomeReceived(id);
         }
-        // Clear current month cache and trigger re-fetch
-        useMonthStore.getState().clearMonthCache(getCurrentYearMonth());
-        useMonthStore.getState().invalidateIncomeCache();
+        router.refresh(); // Refresh to get updated data
       } catch {
         toast.error('Failed to update status');
+        router.refresh(); // Revert optimistic state
       }
     },
-    [dispatch]
+    [dispatch, router]
   );
 
   // Remove income (delete)
@@ -259,14 +256,13 @@ export function IncomeListProvider({
 
       try {
         await serverDeleteIncome(id);
-        // Clear all caches and trigger re-fetch
-        useMonthStore.getState().clearAllCache();
-        useMonthStore.getState().invalidateIncomeCache();
+        router.refresh(); // Refresh to get updated data
       } catch {
         toast.error('Failed to delete income');
+        router.refresh(); // Revert optimistic state
       }
     },
-    [dispatch]
+    [dispatch, router]
   );
 
   // Bulk update category
@@ -285,17 +281,15 @@ export function IncomeListProvider({
 
       try {
         await serverBulkUpdateIncomeCategories(incomeIds, categoryId);
-        // Clear all caches and trigger re-fetch
-        useMonthStore.getState().clearAllCache();
-        useMonthStore.getState().invalidateIncomeCache();
+        router.refresh(); // Refresh to get updated data
         toast.success(`Updated ${incomeIds.length} item${incomeIds.length > 1 ? 's' : ''}`);
       } catch (error) {
         console.error('Failed to bulk update categories:', error);
         toast.error('Failed to update categories');
-        // Optimistic update will auto-revert on revalidation
+        router.refresh(); // Revert optimistic state
       }
     },
-    [categories, dispatch]
+    [categories, dispatch, router]
   );
 
   // Toggle ignore
@@ -307,14 +301,13 @@ export function IncomeListProvider({
 
       try {
         await serverToggleIgnoreIncome(id);
-        // Clear all caches and trigger re-fetch
-        useMonthStore.getState().clearAllCache();
-        useMonthStore.getState().invalidateIncomeCache();
+        router.refresh(); // Refresh to get updated data
       } catch {
         toast.error('Failed to update ignore status');
+        router.refresh(); // Revert optimistic state
       }
     },
-    [dispatch]
+    [dispatch, router]
   );
 
   const value: IncomeContextValue = {

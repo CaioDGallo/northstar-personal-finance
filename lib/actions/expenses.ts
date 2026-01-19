@@ -1,10 +1,10 @@
 'use server';
 
 import { cache } from 'react';
+import { unstable_cache, revalidatePath, revalidateTag } from 'next/cache';
 import { db } from '@/lib/db';
 import { transactions, entries, accounts, categories, type NewEntry } from '@/lib/schema';
 import { eq, and, isNull, isNotNull, desc, sql, inArray } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
 import { getFaturaMonth, getFaturaPaymentDueDate } from '@/lib/fatura-utils';
 import { ensureFaturaExists, getFaturaWindowStart, updateFaturaTotal } from '@/lib/actions/faturas';
 import { addMonths } from '@/lib/utils';
@@ -145,6 +145,7 @@ export async function createExpense(data: CreateExpenseData) {
     // Track category frequency for auto-suggestions
     await incrementCategoryFrequency(userId, data.description, data.categoryId, 'expense');
 
+    revalidateTag(`user-${userId}`, {});
     revalidatePath('/expenses');
     revalidatePath('/dashboard');
     revalidatePath('/faturas');
@@ -312,6 +313,7 @@ export async function updateExpense(transactionId: number, data: CreateExpenseDa
       await syncAccountBalance(accountId);
     }
 
+    revalidateTag(`user-${userId}`, {});
     revalidatePath('/expenses');
     revalidatePath('/dashboard');
     revalidatePath('/faturas');
@@ -360,6 +362,7 @@ export async function deleteExpense(transactionId: number) {
       await syncAccountBalance(accountId);
     }
 
+    revalidateTag(`user-${userId}`, {});
     revalidatePath('/expenses');
     revalidatePath('/dashboard');
     revalidatePath('/faturas');
@@ -381,7 +384,9 @@ export const getExpenses = cache(async (filters: ExpenseFilters = {}) => {
   const userId = await getCurrentUserId();
   const { yearMonth, categoryId, accountId, status = 'all' } = filters;
 
-  const conditions = [eq(entries.userId, userId)];
+  return unstable_cache(
+    async () => {
+      const conditions = [eq(entries.userId, userId)];
 
   // Filter ignored transactions (they should still appear but won't affect calculations)
   // Note: We don't filter them out, allowing them to be visible but dimmed in UI
@@ -430,10 +435,14 @@ export const getExpenses = cache(async (filters: ExpenseFilters = {}) => {
     .innerJoin(transactions, eq(entries.transactionId, transactions.id))
     .innerJoin(categories, eq(transactions.categoryId, categories.id))
     .innerJoin(accounts, eq(entries.accountId, accounts.id))
-    .where(and(...conditions))
-    .orderBy(desc(entries.dueDate));
+      .where(and(...conditions))
+      .orderBy(desc(entries.dueDate));
 
-  return results;
+      return results;
+    },
+    ['expenses', userId, yearMonth || 'all', categoryId?.toString() || 'all', accountId?.toString() || 'all', status],
+    { tags: [`user-${userId}`], revalidate: 300 }
+  )();
 });
 
 export async function markEntryPaid(entryId: number) {
@@ -449,6 +458,7 @@ export async function markEntryPaid(entryId: number) {
       .set({ paidAt: new Date() })
       .where(and(eq(entries.userId, userId), eq(entries.id, entryId)));
 
+    revalidateTag(`user-${userId}`, {});
     revalidatePath('/expenses');
     revalidatePath('/dashboard');
   } catch (error) {
@@ -470,6 +480,7 @@ export async function markEntryPending(entryId: number) {
       .set({ paidAt: null })
       .where(and(eq(entries.userId, userId), eq(entries.id, entryId)));
 
+    revalidateTag(`user-${userId}`, {});
     revalidatePath('/expenses');
     revalidatePath('/dashboard');
   } catch (error) {
@@ -513,6 +524,7 @@ export async function updateTransactionCategory(transactionId: number, categoryI
       'expense'
     );
 
+    revalidateTag(`user-${userId}`, {});
     revalidatePath('/expenses');
     revalidatePath('/dashboard');
   } catch (error) {
@@ -556,6 +568,7 @@ export async function bulkUpdateTransactionCategories(
       await transferCategoryFrequency(userId, txn.description, txn.categoryId, categoryId, 'expense');
     }
 
+    revalidateTag(`user-${userId}`, {});
     revalidatePath('/expenses');
     revalidatePath('/dashboard');
   } catch (error) {
@@ -601,6 +614,7 @@ export async function toggleIgnoreTransaction(transactionId: number) {
       await syncAccountBalance(accountId);
     }
 
+    revalidateTag(`user-${userId}`, {});
     revalidatePath('/expenses');
     revalidatePath('/dashboard');
     revalidatePath('/budgets');

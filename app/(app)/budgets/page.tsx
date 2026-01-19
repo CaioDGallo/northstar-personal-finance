@@ -1,39 +1,22 @@
-'use client';
-
-import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import { MonthPicker } from '@/components/month-picker';
 import { SummaryCard } from '@/components/summary-card';
 import { BudgetProgress } from '@/components/budget-progress';
 import { UnbudgetedSpending } from '@/components/unbudgeted-spending';
 import { CopyBudgetsButton } from '@/components/copy-budgets-button';
-import { useMonthStore } from '@/lib/stores/month-store';
-import { useBudgetsData } from '@/lib/hooks/use-budgets-data';
-import { usePrefetchMonths } from '@/lib/hooks/use-prefetch-months';
+import { getBudgetsWithSpending } from '@/lib/actions/budgets';
+import { getCurrentYearMonth } from '@/lib/utils';
 import Link from 'next/link';
 
-export default function BudgetsPage() {
-  const t = useTranslations('budgets');
-  const yearMonth = useMonthStore((state) => state.currentMonth);
-  const { data, loading } = useBudgetsData(yearMonth);
-
-  // Prefetch adjacent months
-  usePrefetchMonths('budgets');
-
-  if (loading || !data) {
-    return (
-      <div>
-        <div className="mb-6 flex flex-col md:flex-row space-y-4 md:space-y-0 items-center justify-between">
-          <h1 className="text-2xl font-bold">{t('title')}</h1>
-          <MonthPicker pageType="budgets" />
-        </div>
-        <div className="flex items-center justify-center p-12">
-          <div className="text-center">
-            <div className="text-lg">{t('loading', { default: 'Carregando...' })}</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+export default async function BudgetsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ month?: string }>
+}) {
+  const t = await getTranslations('budgets');
+  const { month } = await searchParams;
+  const yearMonth = month || getCurrentYearMonth();
+  const data = await getBudgetsWithSpending(yearMonth);
 
   const hasNoBudgets = data.budgets.length === 0;
 
@@ -41,7 +24,7 @@ export default function BudgetsPage() {
     <div>
       <div className="mb-6 flex flex-col md:flex-row space-y-4 md:space-y-0 items-center justify-between">
         <h1 className="text-2xl font-bold">{t('title')}</h1>
-        <MonthPicker pageType="budgets" />
+        <MonthPicker currentMonth={yearMonth} />
       </div>
 
       {/* Actions row */}

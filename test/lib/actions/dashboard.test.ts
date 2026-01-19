@@ -84,6 +84,7 @@ describe('Dashboard Actions - getDashboardData', () => {
 
       expect(result).toEqual({
         totalSpent: 0,
+        totalReplenished: 0,
         totalBudget: 0,
         totalIncome: 0,
         netBalance: 0,

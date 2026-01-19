@@ -1,6 +1,4 @@
-'use client';
-
-import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import { MonthPicker } from '@/components/month-picker';
 import { SummaryCard } from '@/components/summary-card';
 import { BalanceSummary } from '@/components/balance-summary';
@@ -8,36 +6,22 @@ import { CashFlowReport } from '@/components/cash-flow-report';
 import { BudgetProgress } from '@/components/budget-progress';
 import { RecentExpenses } from '@/components/recent-expenses';
 import { NetWorthSummary } from '@/components/net-worth-summary';
-import { useMonthStore } from '@/lib/stores/month-store';
-import { useDashboardData } from '@/lib/hooks/use-dashboard-data';
-import { useNetWorth } from '@/lib/hooks/use-net-worth';
-import { usePrefetchMonths } from '@/lib/hooks/use-prefetch-months';
+import { getDashboardData, getNetWorth } from '@/lib/actions/dashboard';
+import { getCurrentYearMonth } from '@/lib/utils';
 import Link from 'next/link';
 
-export default function DashboardPage() {
-  const t = useTranslations('dashboard');
-  const currentMonth = useMonthStore((state) => state.currentMonth);
-  const { data, loading } = useDashboardData(currentMonth);
-  const { data: netWorth } = useNetWorth();
-
-  // Prefetch adjacent months in background
-  usePrefetchMonths('dashboard');
-
-  if (loading || !data || !netWorth) {
-    return (
-      <div>
-        <div className="mb-6 flex flex-col md:flex-row space-y-4 md:space-y-0 items-center justify-between">
-          <h1 className="text-2xl font-bold">{t('title')}</h1>
-          <MonthPicker pageType="dashboard" />
-        </div>
-        <div className="flex items-center justify-center p-12">
-          <div className="text-center">
-            <div className="text-lg">{t('loading', { default: 'Carregando...' })}</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ month?: string }>
+}) {
+  const t = await getTranslations('dashboard');
+  const { month } = await searchParams;
+  const currentMonth = month || getCurrentYearMonth();
+  const [data, netWorth] = await Promise.all([
+    getDashboardData(currentMonth),
+    getNetWorth(),
+  ]);
 
   const hasNoBudgets = data.categoryBreakdown.length === 0;
 
@@ -45,7 +29,7 @@ export default function DashboardPage() {
     <div>
       <div className="mb-6 flex flex-col md:flex-row space-y-4 md:space-y-0 items-center justify-between">
         <h1 className="text-2xl font-bold">{t('title')}</h1>
-        <MonthPicker pageType="dashboard" />
+        <MonthPicker currentMonth={currentMonth} />
       </div>
 
       {hasNoBudgets ? (
