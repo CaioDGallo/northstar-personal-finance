@@ -4,7 +4,8 @@ import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Logout01Icon } from '@hugeicons/core-free-icons';
-import { logout } from '@/lib/actions/auth';
+import { signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { SidebarMenuButton } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import {
@@ -24,12 +25,14 @@ type LogoutButtonProps = {
 
 export function LogoutButton({ variant }: LogoutButtonProps) {
   const t = useTranslations();
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [showDialog, setShowDialog] = useState(false);
 
   const handleLogout = () => {
     startTransition(async () => {
-      await logout();
+      const data = await signOut({ redirect: false, callbackUrl: '/login' });
+      router.push(data.url);
     });
   };
 

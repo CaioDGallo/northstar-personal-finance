@@ -1,6 +1,5 @@
 'use server';
 
-import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import { users, passwordResetTokens } from '@/lib/auth-schema';
 import { eq } from 'drizzle-orm';
@@ -49,13 +48,6 @@ export async function validateLoginAttempt(email: string, captchaToken: string) 
     console.error('CAPTCHA verification error:', error);
     return { allowed: false, error: await t('errors.unexpectedError') };
   }
-}
-
-/**
- * Logout
- */
-export async function logout() {
-  redirect('/api/auth/signout');
 }
 
 /**
