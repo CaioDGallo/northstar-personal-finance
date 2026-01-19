@@ -182,7 +182,7 @@ describe('TransferForm', () => {
       />
     );
 
-    await user.type(screen.getByLabelText('amount'), '75.00');
+    await user.type(screen.getByLabelText('amount'), '7500');
     await user.type(screen.getByLabelText('description'), 'Top up');
     fireEvent.change(screen.getByLabelText('date'), {
       target: { value: '2026-01-05' },
@@ -203,13 +203,13 @@ describe('TransferForm', () => {
       });
     });
 
-    expect(screen.getByLabelText('amount')).toHaveValue(null);
+    expect(screen.getByLabelText('amount')).toHaveValue('R$ 0,00');
     expect(screen.getByLabelText('description')).toHaveValue('');
     expect(screen.getByLabelText('date')).toHaveValue(today);
   });
 
   it('calls updateTransfer for edit mode', async () => {
-    userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
+    const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
     vi.mocked(updateTransfer).mockResolvedValueOnce(undefined);
 
     render(
@@ -229,7 +229,13 @@ describe('TransferForm', () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText('amount'), { target: { value: '100.00' } });
+    const amountInput = screen.getByLabelText('amount');
+    await amountInput.focus();
+    await user.keyboard('{Control>}a{/Control}');
+    for (let i = 0; i < 10; i++) {
+      await user.keyboard('{Backspace}');
+    }
+    await user.type(amountInput, '10000');
 
     const form = document.querySelector('form');
     expect(form).not.toBeNull();

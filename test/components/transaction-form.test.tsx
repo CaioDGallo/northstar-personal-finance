@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { Account, Category, Transaction, Entry, Income } from '@/lib/schema';
 import { TransactionForm } from '@/components/transaction-form';
 import { createExpense, updateExpense } from '@/lib/actions/expenses';
@@ -164,6 +165,7 @@ describe('TransactionForm', () => {
   });
 
   it('calls createExpense with cents and selected ids', async () => {
+    const user = userEvent.setup();
     vi.mocked(createExpense).mockResolvedValueOnce(undefined);
 
     render(
@@ -175,7 +177,7 @@ describe('TransactionForm', () => {
         onOpenChange={() => { }} />
     );
 
-    fireEvent.change(screen.getByLabelText('amount'), { target: { value: '123.45' } });
+    await user.type(screen.getByLabelText('amount'), '12345');
     fireEvent.change(screen.getByLabelText('description'), { target: { value: 'Coffee' } });
     fireEvent.change(screen.getByLabelText('purchaseDate'), {
       target: { value: '2026-01-10' },
@@ -198,6 +200,7 @@ describe('TransactionForm', () => {
   });
 
   it('calls updateExpense with transaction id', async () => {
+    const user = userEvent.setup();
     vi.mocked(updateExpense).mockResolvedValueOnce(undefined);
 
     render(
@@ -211,9 +214,13 @@ describe('TransactionForm', () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText('amount'), {
-      target: { value: '200.00' },
-    });
+    const amountInput = screen.getByLabelText('amount');
+    await amountInput.focus();
+    await user.keyboard('{Control>}a{/Control}');
+    for (let i = 0; i < 10; i++) {
+      await user.keyboard('{Backspace}');
+    }
+    await user.type(amountInput, '20000');
     fireEvent.change(screen.getByLabelText('purchaseDate'), {
       target: { value: '2026-01-12' },
     });
@@ -235,6 +242,7 @@ describe('TransactionForm', () => {
   });
 
   it('uses income mode without installments and calls income actions', async () => {
+    const user = userEvent.setup();
     vi.mocked(createIncome).mockResolvedValueOnce(undefined);
 
     const { unmount } = render(
@@ -249,7 +257,7 @@ describe('TransactionForm', () => {
 
     expect(screen.queryByText('installments')).not.toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('amount'), { target: { value: '500.00' } });
+    await user.type(screen.getByLabelText('amount'), '50000');
     fireEvent.change(screen.getByLabelText('description'), { target: { value: 'Bonus' } });
     fireEvent.change(screen.getByLabelText('receivedDate'), {
       target: { value: '2026-01-11' },

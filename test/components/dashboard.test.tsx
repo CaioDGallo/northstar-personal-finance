@@ -8,6 +8,20 @@ import { RecentExpenses } from '@/components/recent-expenses';
 import { MonthPicker } from '@/components/month-picker';
 import { CashFlowReport } from '@/components/cash-flow-report';
 
+// MonthPicker mock values (defined at top level for hoisting)
+const mockMonthCurrentMonth = '2025-01';
+const mockMonthSetMonth = vi.fn();
+
+// Mock useMonthStore for MonthPicker tests
+vi.mock('@/lib/stores/month-store', () => ({
+  useMonthStore: vi.fn((selector) =>
+    selector({
+      currentMonth: mockMonthCurrentMonth,
+      setMonth: mockMonthSetMonth,
+    })
+  ),
+}));
+
 // Mock next-intl
 vi.mock('next-intl', () => ({
   useTranslations: (namespace: string) => (key: string) => {
@@ -611,21 +625,8 @@ describe('Dashboard Components', () => {
   });
 
   describe('MonthPicker Component', () => {
-    // Mock Zustand store
-    const mockSetMonth = vi.fn();
-    const mockCurrentMonth = '2025-01';
-
     beforeEach(() => {
       vi.clearAllMocks();
-      // Mock useMonthStore
-      vi.mock('@/lib/stores/month-store', () => ({
-        useMonthStore: vi.fn((selector) =>
-          selector({
-            currentMonth: mockCurrentMonth,
-            setMonth: mockSetMonth,
-          })
-        ),
-      }));
     });
 
     describe('Display Tests', () => {

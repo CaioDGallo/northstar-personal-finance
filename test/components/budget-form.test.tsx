@@ -45,6 +45,16 @@ const baseBudgets = [
   },
 ];
 
+// Helper to type in CurrencyInput and properly clear before typing new value
+async function typeCurrencyInput(user: ReturnType<typeof userEvent.setup>, input: HTMLElement, value: string) {
+  await input.focus();
+  await user.keyboard('{Control>}a{/Control}');
+  for (let i = 0; i < 10; i++) {
+    await user.keyboard('{Backspace}');
+  }
+  await user.type(input, value);
+}
+
 describe('BudgetForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -66,13 +76,12 @@ describe('BudgetForm', () => {
 
     const [totalInput] = screen.getAllByPlaceholderText('R$ 0,00');
 
-    await user.type(totalInput, '100.00');
+    await typeCurrencyInput(user, totalInput, '100.00');
     fireEvent.blur(totalInput);
 
     expect(await screen.findByText('Failed to save')).toBeInTheDocument();
 
-    await user.clear(totalInput);
-    await user.type(totalInput, '200.00');
+    await typeCurrencyInput(user, totalInput, '200.00');
     fireEvent.blur(totalInput);
 
     await waitFor(() => {
@@ -98,15 +107,14 @@ describe('BudgetForm', () => {
     const foodRow = screen.getByText('Food').closest('[data-slot="card"]');
     expect(foodRow).not.toBeNull();
 
-    const foodInput = within(foodRow!).getByPlaceholderText('0.00');
+    const foodInput = within(foodRow!).getByPlaceholderText('R$ 0,00');
 
-    await user.type(foodInput, '50.00');
+    await typeCurrencyInput(user, foodInput, '50.00');
     fireEvent.blur(foodInput);
 
     expect(await screen.findByText('Failed to save')).toBeInTheDocument();
 
-    await user.clear(foodInput);
-    await user.type(foodInput, '75.00');
+    await typeCurrencyInput(user, foodInput, '75.00');
     fireEvent.blur(foodInput);
 
     await waitFor(() => {
