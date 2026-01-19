@@ -5,11 +5,11 @@ import { createAccount, updateAccount } from '@/lib/actions/accounts';
 import type { Account } from '@/lib/schema';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { AlertDialogCancel, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { useTranslations } from 'next-intl';
-import { centsToDisplay, displayToCents } from '@/lib/utils';
 
 type AccountFormProps = {
   account?: Account;
@@ -21,11 +21,11 @@ export function AccountForm({ account, onSuccess }: AccountFormProps) {
   const [type, setType] = useState<'credit_card' | 'checking' | 'savings' | 'cash'>(
     account?.type || 'checking'
   );
-  const [initialBalance, setInitialBalance] = useState('');
+  const [initialBalanceCents, setInitialBalanceCents] = useState(0);
   const [closingDay, setClosingDay] = useState<number | null>(account?.closingDay ?? null);
   const [paymentDueDay, setPaymentDueDay] = useState<number | null>(account?.paymentDueDay ?? null);
-  const [creditLimit, setCreditLimit] = useState(
-    account?.creditLimit ? centsToDisplay(account.creditLimit) : ''
+  const [creditLimitCents, setCreditLimitCents] = useState(
+    account?.creditLimit ?? 0
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const t = useTranslations('accountForm');
@@ -35,7 +35,7 @@ export function AccountForm({ account, onSuccess }: AccountFormProps) {
     e.preventDefault();
 
     // Validate credit limit for credit cards
-    if (type === 'credit_card' && !creditLimit) {
+    if (type === 'credit_card' && creditLimitCents === 0) {
       alert(t('creditLimitRequired'));
       return;
     }
@@ -45,11 +45,11 @@ export function AccountForm({ account, onSuccess }: AccountFormProps) {
       const data = {
         name,
         type,
-        ...(!account && { currentBalance: displayToCents(initialBalance) }),
+        ...(!account && { currentBalance: initialBalanceCents }),
         ...(type === 'credit_card' && {
           closingDay,
           paymentDueDay,
-          creditLimit: creditLimit ? displayToCents(creditLimit) : null,
+          creditLimit: creditLimitCents > 0 ? creditLimitCents : null,
         }),
       };
 
@@ -100,11 +100,10 @@ export function AccountForm({ account, onSuccess }: AccountFormProps) {
         {!account && (
           <Field>
             <FieldLabel htmlFor="initialBalance">{t('initialBalance')}</FieldLabel>
-            <Input
-              type="text"
+            <CurrencyInput
               id="initialBalance"
-              value={initialBalance}
-              onChange={(e) => setInitialBalance(e.target.value)}
+              value={initialBalanceCents}
+              onChange={setInitialBalanceCents}
               required
               placeholder={t('initialBalancePlaceholder')}
             />
@@ -157,11 +156,10 @@ export function AccountForm({ account, onSuccess }: AccountFormProps) {
 
             <Field>
               <FieldLabel htmlFor="creditLimit">{t('creditLimit')}</FieldLabel>
-              <Input
-                type="text"
+              <CurrencyInput
                 id="creditLimit"
-                value={creditLimit}
-                onChange={(e) => setCreditLimit(e.target.value)}
+                value={creditLimitCents}
+                onChange={setCreditLimitCents}
                 required
                 placeholder={t('creditLimitPlaceholder')}
               />

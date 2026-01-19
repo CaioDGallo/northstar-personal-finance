@@ -4,7 +4,6 @@ import { useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { createTransfer, updateTransfer, type CreateTransferData } from '@/lib/actions/transfers';
 import type { Account } from '@/lib/schema';
-import { centsToDisplay, displayToCents } from '@/lib/utils';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -26,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from '@/components/ui/input-group';
+import { CurrencyInputGroupInput } from '@/components/ui/currency-input';
 
 const TRANSFER_TYPES: CreateTransferData['type'][] = [
   'internal_transfer',
@@ -78,7 +77,7 @@ export function TransferForm({
   const fallbackToAccountId = accounts.find((account) => account.id !== defaultAccountId)?.id ?? defaultAccountId ?? null;
 
   const [type, setType] = useState<CreateTransferData['type']>(transfer?.type || 'internal_transfer');
-  const [amount, setAmount] = useState(transfer ? centsToDisplay(transfer.amount) : '');
+  const [amountCents, setAmountCents] = useState(transfer?.amount ?? 0);
   const [description, setDescription] = useState(transfer?.description || '');
   const [date, setDate] = useState(
     transfer?.date || new Date().toISOString().split('T')[0]
@@ -100,10 +99,9 @@ export function TransferForm({
   const isInternal = type === 'internal_transfer' || type === 'fatura_payment';
   const showFromAccount = type !== 'deposit';
   const showToAccount = type !== 'withdrawal';
-  const totalCents = amount ? displayToCents(amount) : 0;
 
   const canSubmit =
-    totalCents > 0 &&
+    amountCents > 0 &&
     hasAccounts &&
     (!showFromAccount || !!fromAccountId) &&
     (!showToAccount || !!toAccountId) &&
@@ -112,7 +110,7 @@ export function TransferForm({
 
   const resetForm = () => {
     setType('internal_transfer');
-    setAmount('');
+    setAmountCents(0);
     setDescription('');
     setDate(new Date().toISOString().split('T')[0]);
     setFromAccountId(defaultAccountId);
@@ -149,7 +147,7 @@ export function TransferForm({
 
     const payload: CreateTransferData = {
       type,
-      amount: totalCents,
+      amount: amountCents,
       date,
       description: description.trim() || undefined,
       fromAccountId: showFromAccount ? fromAccountId ?? undefined : null,
@@ -225,21 +223,16 @@ export function TransferForm({
 
             <Field>
               <FieldLabel htmlFor="amount">{tForm('amount')}</FieldLabel>
-              <InputGroup>
-                <InputGroupAddon align="inline-start">
-                  <InputGroupText>R$</InputGroupText>
-                </InputGroupAddon>
-                <InputGroupInput
-                  ref={amountInputRef}
-                  type="number"
-                  id="amount"
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  required
-                  placeholder={tForm('amountPlaceholder')}
-                />
-              </InputGroup>
+              <CurrencyInputGroupInput
+                ref={amountInputRef}
+                id="amount"
+                name="amount"
+                value={amountCents}
+                onChange={setAmountCents}
+                required
+                placeholder={tForm('amountPlaceholder')}
+                autoComplete="transaction-amount"
+              />
             </Field>
 
             <Field>

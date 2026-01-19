@@ -8,6 +8,7 @@ import {
 import type { BillReminder, Category } from '@/lib/schema';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { Button } from '@/components/ui/button';
 import { AlertDialogCancel, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import {
@@ -19,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useLocale, useTranslations } from 'next-intl';
-import { centsToDisplay, displayToCents, getCurrentYearMonth } from '@/lib/utils';
+import { getCurrentYearMonth } from '@/lib/utils';
 
 type BillReminderFormProps = {
   reminder?: BillReminder;
@@ -36,8 +37,8 @@ export function BillReminderForm({
   const [categoryId, setCategoryId] = useState<number | null>(
     reminder?.categoryId ?? null
   );
-  const [amount, setAmount] = useState(
-    reminder?.amount ? centsToDisplay(reminder.amount) : ''
+  const [amountCents, setAmountCents] = useState(
+    reminder?.amount ?? 0
   );
   const [dueDay, setDueDay] = useState(reminder?.dueDay ?? 1);
   const [dueTime, setDueTime] = useState(reminder?.dueTime || '');
@@ -92,7 +93,7 @@ export function BillReminderForm({
       const data = {
         name: name.trim(),
         categoryId,
-        amount: amount ? displayToCents(amount) : null,
+        amount: amountCents > 0 ? amountCents : null,
         dueDay,
         dueTime: dueTime || null,
         status: 'active' as const,
@@ -166,14 +167,11 @@ export function BillReminderForm({
 
         <Field>
           <FieldLabel htmlFor="amount">{t('amount')}</FieldLabel>
-          <Input
-            type="number"
+          <CurrencyInput
             id="amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            value={amountCents}
+            onChange={setAmountCents}
             placeholder={t('amountPlaceholder')}
-            step="0.01"
-            min="0"
           />
         </Field>
 

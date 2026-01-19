@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { upsertBudget, upsertMonthlyBudget } from '@/lib/actions/budgets';
-import { centsToDisplay, parseCurrencyToCents } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
+import { centsToDisplay } from '@/lib/utils';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { Card, CardContent } from '@/components/ui/card';
 import { CategoryIcon } from '@/components/icon-picker';
 
@@ -25,39 +25,36 @@ type BudgetFormProps = {
 export function BudgetForm({ yearMonth, budgets, monthlyBudget }: BudgetFormProps) {
   const t = useTranslations('budgets');
   const tErrors = useTranslations('errors');
-  const [values, setValues] = useState<Record<number, string>>(
+  const [values, setValues] = useState<Record<number, number>>(
     Object.fromEntries(
       budgets.map((b) => [
         b.categoryId,
-        b.budgetAmount ? centsToDisplay(b.budgetAmount) : '',
+        b.budgetAmount ?? 0,
       ])
     )
   );
-  const [totalBudget, setTotalBudget] = useState<string>(
-    monthlyBudget ? centsToDisplay(monthlyBudget) : ''
+  const [totalBudgetCents, setTotalBudgetCents] = useState<number>(
+    monthlyBudget ?? 0
   );
   const [errors, setErrors] = useState<Record<number, string>>({});
   const [totalBudgetError, setTotalBudgetError] = useState<string>('');
 
-  async function handleBlur(categoryId: number, value: string) {
-    const parsedCents = parseCurrencyToCents(value);
-    if (parsedCents !== null) {
-      try {
-        await upsertBudget(categoryId, yearMonth, parsedCents);
-        setErrors((prev) => {
-          const next = { ...prev };
-          delete next[categoryId];
-          return next;
-        });
-      } catch (error) {
-        setErrors((prev) => ({ ...prev, [categoryId]: tErrors('failedToSave') }));
-        console.error('Budget save error:', error);
-      }
+  async function handleBlur(categoryId: number, cents: number) {
+    try {
+      await upsertBudget(categoryId, yearMonth, cents);
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[categoryId];
+        return next;
+      });
+    } catch (error) {
+      setErrors((prev) => ({ ...prev, [categoryId]: tErrors('failedToSave') }));
+      console.error('Budget save error:', error);
     }
   }
 
-  function handleChange(categoryId: number, value: string) {
-    setValues((prev) => ({ ...prev, [categoryId]: value }));
+  function handleChange(categoryId: number, cents: number) {
+    setValues((prev) => ({ ...prev, [categoryId]: cents }));
     if (errors[categoryId]) {
       setErrors((prev) => {
         const next = { ...prev };
@@ -67,21 +64,18 @@ export function BudgetForm({ yearMonth, budgets, monthlyBudget }: BudgetFormProp
     }
   }
 
-  async function handleTotalBudgetBlur(value: string) {
-    const parsedCents = parseCurrencyToCents(value);
-    if (parsedCents !== null) {
-      try {
-        await upsertMonthlyBudget(yearMonth, parsedCents);
-        setTotalBudgetError('');
-      } catch (error) {
-        setTotalBudgetError(tErrors('failedToSave'));
-        console.error('Monthly budget save error:', error);
-      }
+  async function handleTotalBudgetBlur(cents: number) {
+    try {
+      await upsertMonthlyBudget(yearMonth, cents);
+      setTotalBudgetError('');
+    } catch (error) {
+      setTotalBudgetError(tErrors('failedToSave'));
+      console.error('Monthly budget save error:', error);
     }
   }
 
-  function handleTotalBudgetChange(value: string) {
-    setTotalBudget(value);
+  function handleTotalBudgetChange(cents: number) {
+    setTotalBudgetCents(cents);
     if (totalBudgetError) {
       setTotalBudgetError('');
     }
@@ -89,11 +83,7 @@ export function BudgetForm({ yearMonth, budgets, monthlyBudget }: BudgetFormProp
 
   // Calculate allocated amount in real-time
   const allocatedAmount = Object.values(values)
-    .map((v) => parseCurrencyToCents(v))
-    .filter((v): v is number => v !== null)
     .reduce((sum, v) => sum + v, 0);
-
-  const totalBudgetCents = parseCurrencyToCents(totalBudget) ?? 0;
 
   const remainingBudget = totalBudgetCents - allocatedAmount;
   const allocationPercentage = totalBudgetCents > 0 ? (allocatedAmount / totalBudgetCents) * 100 : 0;
@@ -118,18 +108,13 @@ export function BudgetForm({ yearMonth, budgets, monthlyBudget }: BudgetFormProp
         <div className="flex items-center justify-between">
           <span className="text-lg font-semibold">{t('totalMonthlyBudget')}</span>
           <div className="flex flex-col items-end gap-1">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-neutral-500">R$</span>
-              <Input
-                type="number"
-                step="0.01"
-                value={totalBudget}
-                onChange={(e) => handleTotalBudgetChange(e.target.value)}
-                onBlur={(e) => handleTotalBudgetBlur(e.target.value)}
-                placeholder="0.00"
-                className="w-32 text-right"
-              />
-            </div>
+            <CurrencyInput
+              value={totalBudgetCents}
+              onChange={handleTotalBudgetChange}
+              onBlur={() => handleTotalBudgetBlur(totalBudgetCents)}
+              placeholder="R$ 0,00"
+              className="w-40 text-right"
+            />
             {totalBudgetError && (
               <span className="text-xs text-red-600">{totalBudgetError}</span>
             )}
@@ -186,18 +171,13 @@ export function BudgetForm({ yearMonth, budgets, monthlyBudget }: BudgetFormProp
 
             {/* Budget input */}
             <div className="flex flex-col items-end gap-1 shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-neutral-500">R$</span>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={values[budget.categoryId] || ''}
-                  onChange={(e) => handleChange(budget.categoryId, e.target.value)}
-                  onBlur={(e) => handleBlur(budget.categoryId, e.target.value)}
-                  placeholder="0.00"
-                  className="w-32 text-right"
-                />
-              </div>
+              <CurrencyInput
+                value={values[budget.categoryId] || 0}
+                onChange={(cents) => handleChange(budget.categoryId, cents)}
+                onBlur={() => handleBlur(budget.categoryId, values[budget.categoryId] || 0)}
+                placeholder="R$ 0,00"
+                className="w-40 text-right"
+              />
               {errors[budget.categoryId] && (
                 <span className="text-xs text-red-600">{errors[budget.categoryId]}</span>
               )}

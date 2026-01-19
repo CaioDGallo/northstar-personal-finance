@@ -25,8 +25,8 @@ async function createAccount(
 ) {
   const {
     type = 'checking',
-    initialBalance = '0',
-    creditLimit = '5000',
+    initialBalance = '0', // 0 cents = R$ 0,00
+    creditLimit = '500000', // 500000 cents = R$ 5.000,00
     closingDay = '1',
     paymentDueDay = '10',
   } = options;
@@ -218,7 +218,7 @@ test('edit expense', async ({ page }) => {
   await page.getByRole('button', { name: 'Adicionar Despesa' }).click();
   const dialog = page.getByRole('alertdialog');
   await expect(dialog).toBeVisible();
-  await dialog.getByLabel('Valor').fill('150');
+  await dialog.getByLabel('Valor').fill('15000'); // 15000 cents = R$ 150,00
   await dialog.getByLabel('Descrição').fill(ORIGINAL_DESC);
   await dialog.getByLabel('Categoria').click();
   await page.getByRole('option', { name: CATEGORY_NAME }).first().click();
@@ -267,7 +267,7 @@ test('delete expense', async ({ page }) => {
   await page.getByRole('button', { name: 'Adicionar Despesa' }).click();
   const dialog = page.getByRole('alertdialog');
   await expect(dialog).toBeVisible();
-  await dialog.getByLabel('Valor').fill('100');
+  await dialog.getByLabel('Valor').fill('10000'); // 10000 cents = R$ 100,00
   await dialog.getByLabel('Descrição').fill(DESCRIPTION);
   await dialog.getByLabel('Categoria').click();
   await page.getByRole('option', { name: CATEGORY_NAME }).first().click();
@@ -315,7 +315,7 @@ test('edit income', async ({ page }) => {
   await page.getByRole('button', { name: 'Adicionar Receita' }).click();
   const dialog = page.getByRole('alertdialog');
   await expect(dialog).toBeVisible();
-  await dialog.getByLabel('Valor').fill('2000');
+  await dialog.getByLabel('Valor').fill('200000'); // 200000 cents = R$ 2.000,00
   await dialog.getByLabel('Descrição').fill(ORIGINAL_DESC);
   await dialog.getByLabel('Categoria').click();
   await page.getByRole('option', { name: CATEGORY_NAME }).first().click();
@@ -364,7 +364,7 @@ test('delete income', async ({ page }) => {
   await page.getByRole('button', { name: 'Adicionar Receita' }).click();
   const dialog = page.getByRole('alertdialog');
   await expect(dialog).toBeVisible();
-  await dialog.getByLabel('Valor').fill('1500');
+  await dialog.getByLabel('Valor').fill('150000'); // 150000 cents = R$ 1.500,00
   await dialog.getByLabel('Descrição').fill(DESCRIPTION);
   await dialog.getByLabel('Categoria').click();
   await page.getByRole('option', { name: CATEGORY_NAME }).first().click();
@@ -412,7 +412,7 @@ test('edit transfer', async ({ page }) => {
   await expect(dialog).toBeVisible();
   await dialog.getByLabel('Tipo').click();
   await page.getByRole('option', { name: 'Depósito' }).first().click();
-  await dialog.getByLabel('Valor').fill('500');
+  await dialog.getByLabel('Valor').fill('50000'); // 50000 cents = R$ 500,00
   await dialog.getByLabel('Descrição').fill(ORIGINAL_DESC);
   await dialog.getByLabel('Conta de destino').click();
   await page.getByRole('option', { name: ACCOUNT_NAME }).first().click();
@@ -459,7 +459,7 @@ test('delete transfer', async ({ page }) => {
   await expect(dialog).toBeVisible();
   await dialog.getByLabel('Tipo').click();
   await page.getByRole('option', { name: 'Depósito' }).first().click();
-  await dialog.getByLabel('Valor').fill('300');
+  await dialog.getByLabel('Valor').fill('30000'); // 30000 cents = R$ 300,00
   await dialog.getByLabel('Descrição').fill(DESCRIPTION);
   await dialog.getByLabel('Conta de destino').click();
   await page.getByRole('option', { name: ACCOUNT_NAME }).first().click();

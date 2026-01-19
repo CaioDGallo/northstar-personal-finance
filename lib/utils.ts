@@ -239,3 +239,39 @@ export function formatRelativeTime(date: Date): string {
 
   return date.toLocaleDateString();
 }
+
+/**
+ * Format cents as Brazilian currency display (without symbol)
+ * Used for POS-style currency input component
+ * @example formatCentsAsBRL(1999) → "19,99"
+ * @example formatCentsAsBRL(0) → "0,00"
+ * @example formatCentsAsBRL(123456) → "1.234,56"
+ */
+export function formatCentsAsBRL(cents: number): string {
+  return (cents / 100).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+/**
+ * Convert digit string to cents
+ * Used for POS-style currency input component
+ * @example digitsToCents("001999") → 1999
+ * @example digitsToCents("") → 0
+ * @example digitsToCents("5") → 5
+ */
+export function digitsToCents(digits: string): number {
+  return parseInt(digits || '0', 10);
+}
+
+/**
+ * Convert cents to digit string (padded to at least 3 digits)
+ * Used for POS-style currency input component
+ * @example centsToDigits(1999) → "001999"
+ * @example centsToDigits(0) → "000"
+ * @example centsToDigits(5) → "005"
+ */
+export function centsToDigits(cents: number): string {
+  return cents.toString().padStart(3, '0');
+}

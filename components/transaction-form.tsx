@@ -6,7 +6,7 @@ import { createExpense, updateExpense } from '@/lib/actions/expenses';
 import { createIncome, updateIncome } from '@/lib/actions/income';
 import { useExpenseContextOptional } from '@/lib/contexts/expense-context';
 import { useIncomeContextOptional } from '@/lib/contexts/income-context';
-import { displayToCents, centsToDisplay, formatCurrency } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import type { Account, Category, Transaction, Entry, Income } from '@/lib/schema';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from '@/components/ui/input-group';
+import { CurrencyInputGroupInput } from '@/components/ui/currency-input';
 import { CategorySelect } from '@/components/category-select';
 
 type TransactionFormProps = {
@@ -70,10 +70,10 @@ export function TransactionForm({
   const incomeContext = useIncomeContextOptional();
 
   const existingData = mode === 'expense' ? transaction : income;
-  const [amount, setAmount] = useState(
+  const [amountCents, setAmountCents] = useState(
     existingData
-      ? centsToDisplay(mode === 'expense' ? (transaction?.totalAmount ?? 0) : (income?.amount ?? 0))
-      : ''
+      ? (mode === 'expense' ? (transaction?.totalAmount ?? 0) : (income?.amount ?? 0))
+      : 0
   );
   const [description, setDescription] = useState(existingData?.description || '');
   const [categoryId, setCategoryId] = useState<number>(
@@ -96,7 +96,7 @@ export function TransactionForm({
 
   const amountInputRef = useRef<HTMLInputElement>(null);
 
-  const totalCents = amount ? displayToCents(amount) : 0;
+  const totalCents = amountCents;
   const perInstallment = installments > 0 ? totalCents / installments : 0;
 
   const hasCategories = categories.length > 0;
@@ -174,7 +174,7 @@ export function TransactionForm({
 
       // Reset form if creating new
       if (!existingData) {
-        setAmount('');
+        setAmountCents(0);
         setDescription('');
         setCategoryId(categories[0]?.id || 0);
         setAccountId(accounts[0]?.id || 0);
@@ -224,23 +224,16 @@ export function TransactionForm({
             {/* Amount */}
             <Field>
               <FieldLabel htmlFor="amount">{t('amount')}</FieldLabel>
-              <InputGroup>
-                <InputGroupAddon align="inline-start">
-                  <InputGroupText>R$</InputGroupText>
-                </InputGroupAddon>
-                <InputGroupInput
-                  ref={amountInputRef}
-                  type="number"
-                  id="amount"
-                  name="amount"
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  required
-                  placeholder={t('amountPlaceholder')}
-                  autoComplete="transaction-amount"
-                />
-              </InputGroup>
+              <CurrencyInputGroupInput
+                ref={amountInputRef}
+                id="amount"
+                name="amount"
+                value={amountCents}
+                onChange={setAmountCents}
+                required
+                placeholder={t('amountPlaceholder')}
+                autoComplete="transaction-amount"
+              />
             </Field>
 
             {/* Description */}
