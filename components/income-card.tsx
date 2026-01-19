@@ -1,18 +1,18 @@
 'use client';
 
-import { useState, useOptimistic, useTransition } from 'react';
+import { useState, useOptimistic, useTransition, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useLongPress } from '@/lib/hooks/use-long-press';
 import { useSwipe } from '@/lib/hooks/use-swipe';
 import { formatCurrency, formatDate, cn } from '@/lib/utils';
 import { triggerHaptic, HapticPatterns } from '@/lib/utils/haptics';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { CategoryIcon } from '@/components/icon-picker';
 import { markIncomeReceived, markIncomePending, deleteIncome, updateIncomeCategory, toggleIgnoreIncome } from '@/lib/actions/income';
 import { CategoryQuickPicker } from '@/components/category-quick-picker';
 import { TransactionDetailSheet } from '@/components/transaction-detail-sheet';
 import { EditTransactionDialog } from '@/components/edit-transaction-dialog';
+import { SwipeActions } from '@/components/swipe-actions';
 import { useIncomeContextOptional } from '@/lib/contexts/income-context';
 import type { Category, Account } from '@/lib/schema';
 import { toast } from 'sonner';
@@ -25,16 +25,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { MoreVerticalIcon, Tick02Icon, Clock01Icon } from '@hugeicons/core-free-icons';
+import { Tick02Icon, Clock01Icon } from '@hugeicons/core-free-icons';
 import { accountTypeConfig } from '@/lib/account-type-config';
 
 type IncomeCardBaseProps = {
@@ -148,8 +141,8 @@ export function IncomeCard(props: IncomeCardProps) {
 
   const longPressHandlers = useLongPress({
     onLongPress: props.selectionMode ? props.onLongPress : (props.onLongPress || (() => { })),
-    onTap: props.selectionMode ? props.onToggleSelection : undefined,
-    disabled: !props.selectionMode && !props.onLongPress,
+    onTap: props.selectionMode ? props.onToggleSelection : () => setDetailOpen(true),
+    disabled: isOptimistic,
   });
 
   const swipe = useSwipe({
@@ -163,6 +156,15 @@ export function IncomeCard(props: IncomeCardProps) {
     threshold: 50,
     velocityThreshold: 0.15,
   });
+
+  // Close revealed actions on click outside
+  useEffect(() => {
+    if (!swipe.isRevealed) return;
+    const close = () => swipe.resetSwipe();
+    document.addEventListener('pointerdown', close);
+    return () => document.removeEventListener('pointerdown', close);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [swipe.isRevealed, swipe.resetSwipe]);
 
   // Combined handlers for long-press and swipe
   const combinedHandlers = {
@@ -215,11 +217,29 @@ export function IncomeCard(props: IncomeCardProps) {
         props.selectionMode && "cursor-pointer",
         props.selectionMode && props.isSelected && "ring-2 ring-primary ring-offset-2"
       )}>
-        {/* Swipe-to-delete background - revealed when swiping left */}
-        {swipe.isSwiping && swipe.swipeOffset < 0 && !props.selectionMode && (
-          <div className="absolute inset-0 bg-red-500 flex items-center justify-end px-6 pointer-events-none">
-            <span className="text-white font-medium">{tCommon('delete')}</span>
-          </div>
+        {/* Swipe actions revealed on swipe */}
+        {(swipe.isSwiping || swipe.isRevealed) && swipe.swipeOffset < 0 && (
+          <SwipeActions
+            onDelete={() => {
+              swipe.resetSwipe();
+              setShowDeleteConfirm(true);
+            }}
+            onTogglePaid={() => {
+              swipe.resetSwipe();
+              if (isReceived) {
+                handleMarkPending();
+              } else {
+                handleMarkReceived();
+              }
+            }}
+            onToggleIgnore={() => {
+              swipe.resetSwipe();
+              handleToggleIgnore();
+            }}
+            isPaid={isReceived}
+            isIgnored={income.ignored}
+            isIncome={true}
+          />
         )}
 
         <CardContent
@@ -330,59 +350,6 @@ export function IncomeCard(props: IncomeCardProps) {
             </div>
           </div>
 
-          {/* Actions dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-11 md:size-8 touch-manipulation"
-                onPointerDown={(e) => e.stopPropagation()}
-                aria-label="Abrir menu de ações"
-              >
-                <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} size={16} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setDetailOpen(true)}>
-                {t('viewDetails')}
-              </DropdownMenuItem>
-              {isReceived ? (
-                <DropdownMenuItem onClick={handleMarkPending}>
-                  {t('markAsPending')}
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem onClick={handleMarkReceived}>
-                  {t('markAsReceived')}
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem onClick={handleToggleIgnore}>
-                {income.ignored ? t('showInTotals') : t('hideFromTotals')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setEditOpen(true)}>
-                {tCommon('edit')}
-              </DropdownMenuItem>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    {t('deleteIncome')}
-                  </DropdownMenuItem>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>{t('deleteConfirmationTitle')}</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {t('deleteConfirmation', { description: income.description })}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete}>{tCommon('delete')}</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </CardContent>
       </Card>
 

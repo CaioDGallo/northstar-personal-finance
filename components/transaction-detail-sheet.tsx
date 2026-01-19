@@ -12,6 +12,7 @@ import { Tick02Icon, Clock01Icon } from '@hugeicons/core-free-icons';
 import type { ExpenseEntry } from '@/lib/contexts/expense-context';
 import type { IncomeEntry } from '@/lib/contexts/income-context';
 import type { Account, Category } from '@/lib/schema';
+import type { UnpaidFatura } from '@/lib/actions/faturas';
 import { useTranslations } from 'next-intl';
 
 type TransactionDetailSheetProps = {
@@ -21,9 +22,12 @@ type TransactionDetailSheetProps = {
   categories?: Category[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  unpaidFaturas?: UnpaidFatura[];
+  onConvertToFatura?: () => void;
+  canConvertToFatura?: boolean;
 };
 
-export function TransactionDetailSheet({ expense, income, accounts, categories, open, onOpenChange }: TransactionDetailSheetProps) {
+export function TransactionDetailSheet({ expense, income, accounts, categories, open, onOpenChange, canConvertToFatura, onConvertToFatura }: TransactionDetailSheetProps) {
   const [editOpen, setEditOpen] = useState(false);
   const isExpense = !!expense;
   const data = expense || income;
@@ -160,6 +164,20 @@ export function TransactionDetailSheet({ expense, income, accounts, categories, 
                 }}
               >
                 {t('viewAllInstallments', { count: expense.totalInstallments })}
+              </Button>
+            )}
+
+            {/* Convert to Fatura button - only for eligible expenses */}
+            {canConvertToFatura && onConvertToFatura && (
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  onOpenChange(false);
+                  onConvertToFatura();
+                }}
+              >
+                {t('convertToFatura')}
               </Button>
             )}
 

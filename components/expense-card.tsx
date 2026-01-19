@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useOptimistic, useTransition } from 'react';
+import { useState, useOptimistic, useTransition, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useLongPress } from '@/lib/hooks/use-long-press';
 import { useSwipe } from '@/lib/hooks/use-swipe';
@@ -8,13 +8,13 @@ import { formatCurrency, formatDate, cn } from '@/lib/utils';
 import { triggerHaptic, HapticPatterns } from '@/lib/utils/haptics';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { CategoryIcon } from '@/components/icon-picker';
 import { markEntryPaid, markEntryPending, deleteExpense, updateTransactionCategory } from '@/lib/actions/expenses';
 import { CategoryQuickPicker } from '@/components/category-quick-picker';
 import { TransactionDetailSheet } from '@/components/transaction-detail-sheet';
 import { EditTransactionDialog } from '@/components/edit-transaction-dialog';
 import { ConvertToFaturaDialog } from '@/components/convert-to-fatura-dialog';
+import { SwipeActions } from '@/components/swipe-actions';
 import { useExpenseContextOptional } from '@/lib/contexts/expense-context';
 import type { Category, Account } from '@/lib/schema';
 import type { UnpaidFatura } from '@/lib/actions/faturas';
@@ -29,14 +29,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { MoreVerticalIcon, Tick02Icon, Clock01Icon } from '@hugeicons/core-free-icons';
+import { Tick02Icon, Clock01Icon } from '@hugeicons/core-free-icons';
 import { accountTypeConfig } from '@/lib/account-type-config';
 
 type ExpenseCardBaseProps = {
@@ -181,9 +175,18 @@ export function ExpenseCard(props: ExpenseCardProps) {
 
   const longPressHandlers = useLongPress({
     onLongPress: props.selectionMode ? props.onLongPress : (props.onLongPress || (() => { })),
-    onTap: props.selectionMode ? props.onToggleSelection : undefined,
-    disabled: !props.selectionMode && !props.onLongPress,
+    onTap: props.selectionMode ? props.onToggleSelection : () => setDetailOpen(true),
+    disabled: isOptimistic,
   });
+
+  // Close revealed actions on click outside
+  useEffect(() => {
+    if (!swipe.isRevealed) return;
+    const close = () => swipe.resetSwipe();
+    document.addEventListener('pointerdown', close);
+    return () => document.removeEventListener('pointerdown', close);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [swipe.isRevealed, swipe.resetSwipe]);
 
   // Merge gesture handlers without override
   const combinedHandlers = {
@@ -236,11 +239,28 @@ export function ExpenseCard(props: ExpenseCardProps) {
         props.selectionMode && "cursor-pointer",
         props.selectionMode && props.isSelected && "ring-2 ring-primary ring-offset-2"
       )}>
-        {/* Delete background revealed on swipe */}
-        {swipe.isSwiping && swipe.swipeOffset < 0 && (
-          <div className="absolute inset-0 bg-red-500 flex items-center justify-end px-4">
-            <span className="text-white font-medium">{t('delete')}</span>
-          </div>
+        {/* Swipe actions revealed on swipe */}
+        {(swipe.isSwiping || swipe.isRevealed) && swipe.swipeOffset < 0 && (
+          <SwipeActions
+            onDelete={() => {
+              swipe.resetSwipe();
+              setShowDeleteConfirm(true);
+            }}
+            onTogglePaid={() => {
+              swipe.resetSwipe();
+              if (isPaid) {
+                handleMarkPending();
+              } else {
+                handleMarkPaid();
+              }
+            }}
+            onToggleIgnore={() => {
+              swipe.resetSwipe();
+              handleToggleIgnore();
+            }}
+            isPaid={isPaid}
+            isIgnored={entry.ignored}
+          />
         )}
 
         <CardContent
@@ -358,48 +378,6 @@ export function ExpenseCard(props: ExpenseCardProps) {
             </div>
           </div>
 
-          {/* Actions dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-11 md:size-8 touch-manipulation"
-                onPointerDown={(e) => e.stopPropagation()}
-                aria-label="Abrir menu de ações"
-              >
-                <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} size={16} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setDetailOpen(true)}>
-                {t('viewDetails')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setEditOpen(true)}>
-                {tCommon('edit')}
-              </DropdownMenuItem>
-              {isPaid ? (
-                <DropdownMenuItem onClick={handleMarkPending}>
-                  {t('markAsPending')}
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem onClick={handleMarkPaid}>
-                  {t('markAsPaid')}
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem onClick={handleToggleIgnore}>
-                {entry.ignored ? t('showInTotals') : t('hideFromTotals')}
-              </DropdownMenuItem>
-              {canConvertToFatura && (
-                <DropdownMenuItem onClick={() => setConvertDialogOpen(true)}>
-                  {t('convertToFaturaPayment')}
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem onClick={() => setShowDeleteConfirm(true)}>
-                {t('deleteTransaction')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </CardContent>
       </Card>
 
@@ -418,6 +396,9 @@ export function ExpenseCard(props: ExpenseCardProps) {
         categories={categories}
         open={detailOpen}
         onOpenChange={setDetailOpen}
+        unpaidFaturas={unpaidFaturas}
+        canConvertToFatura={canConvertToFatura}
+        onConvertToFatura={() => setConvertDialogOpen(true)}
       />
 
       <EditTransactionDialog

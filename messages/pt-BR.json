@@ -355,7 +355,8 @@
     "pending": "Pendente",
     "received": "Recebido",
     "edit": "Editar",
-    "viewAllInstallments": "Ver Todas as {count} Parcelas"
+    "viewAllInstallments": "Ver Todas as {count} Parcelas",
+    "convertToFatura": "Converter em pagamento de fatura"
   },
   "faturas": {
     "title": "Faturas",
@@ -862,6 +863,14 @@
       "cash": "Dinheiro",
       "credit_card": "Cartão de Crédito"
     }
+  },
+  "swipeActions": {
+    "delete": "Excluir",
+    "markPaid": "Pago",
+    "markPending": "Pendente",
+    "markReceived": "Recebido",
+    "ignore": "Ignorar",
+    "include": "Incluir"
   },
   "dataSettings": {
     "title": "Configurações",

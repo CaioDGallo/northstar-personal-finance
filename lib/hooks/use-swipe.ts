@@ -17,6 +17,7 @@ export function useSwipe({
 }: UseSwipeOptions) {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
+  const [isRevealed, setIsRevealed] = useState(false);
   const startXRef = useRef<number | null>(null);
   const startYRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
@@ -86,6 +87,13 @@ export function useSwipe({
       if (distance < 0 && onSwipeLeft) {
         onSwipeLeft();
         actionTriggered = true;
+        // Keep card revealed at -120px (snap to revealed position)
+        setIsRevealed(true);
+        setSwipeOffset(-120);
+        startXRef.current = null;
+        startYRef.current = null;
+        setIsSwiping(false);
+        return actionTriggered;
       } else if (distance > 0 && onSwipeRight) {
         onSwipeRight();
         actionTriggered = true;
@@ -101,6 +109,11 @@ export function useSwipe({
     return actionTriggered;
   }, [disabled, threshold, velocityThreshold, onSwipeLeft, onSwipeRight]);
 
+  const resetSwipe = useCallback(() => {
+    setSwipeOffset(0);
+    setIsRevealed(false);
+  }, []);
+
   return {
     handlers: {
       onPointerDown: handlePointerDown,
@@ -111,5 +124,7 @@ export function useSwipe({
     },
     swipeOffset,
     isSwiping,
+    isRevealed,
+    resetSwipe,
   };
 }

@@ -355,7 +355,8 @@
     "pending": "Pending",
     "received": "Received",
     "edit": "Edit",
-    "viewAllInstallments": "View All {count} Installments"
+    "viewAllInstallments": "View All {count} Installments",
+    "convertToFatura": "Convert to bill payment"
   },
   "faturas": {
     "title": "Bills",
@@ -862,6 +863,14 @@
       "cash": "Cash",
       "credit_card": "Credit Card"
     }
+  },
+  "swipeActions": {
+    "delete": "Delete",
+    "markPaid": "Paid",
+    "markPending": "Pending",
+    "markReceived": "Received",
+    "ignore": "Ignore",
+    "include": "Include"
   },
   "dataSettings": {
     "title": "Settings",
