@@ -41,6 +41,7 @@ import {
 } from '@/components/ui/collapsible';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { LanguageToggleSidebar } from '@/components/language-toggle-sidebar';
+import { LogoutButton } from '@/components/logout-button';
 
 const navItems = [
   { key: 'dashboard', href: '/dashboard', icon: Home01Icon },
@@ -127,6 +128,12 @@ export function AppSidebar() {
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                       ))}
+                      <SidebarMenuSubItem>
+                        <ThemeToggle />
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <LanguageToggleSidebar />
+                      </SidebarMenuSubItem>
                     </SidebarMenuSub>
                   </CollapsibleContent>
                 </SidebarMenuItem>
@@ -139,10 +146,7 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <ThemeToggle />
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <LanguageToggleSidebar />
+            <LogoutButton variant="desktop" />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

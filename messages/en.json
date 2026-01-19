@@ -19,7 +19,8 @@
     "yes": "Yes",
     "no": "No",
     "undo": "Undo",
-    "actionCannotBeUndone": "This action cannot be undone."
+    "actionCannotBeUndone": "This action cannot be undone.",
+    "loggingOut": "Logging out..."
   },
   "errors": {
     "descriptionRequired": "Description is required",
@@ -105,7 +106,10 @@
     "tasks": "Tasks",
     "reminders": "Reminders",
     "preferences": "Preferences",
-    "expandSidebar": "Expand sidebar"
+    "expandSidebar": "Expand sidebar",
+    "logout": "Logout",
+    "logoutConfirmTitle": "Sign out of your account?",
+    "logoutConfirmDescription": "You will be signed out and need to log in again to access your account."
   },
   "dashboard": {
     "title": "Dashboard",

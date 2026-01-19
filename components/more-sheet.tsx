@@ -24,6 +24,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ThemeToggleRow } from './theme-toggle-row';
 import { LanguageToggleRow } from './language-toggle-row';
+import { LogoutButton } from './logout-button';
 
 const moreItems = [
   { key: 'reminders', href: '/reminders', icon: Notification02Icon },
@@ -80,12 +81,13 @@ export function MoreSheet({
               <span>{t(item.key)}</span>
             </Link>
           ))}
-        </nav>
-
-        {/* Theme toggle at bottom */}
-        <div className="border-t pt-4 pb-3 mt-2 shrink-0">
           <ThemeToggleRow />
           <LanguageToggleRow />
+        </nav>
+
+        {/* Logout button at bottom */}
+        <div className="border-t pt-4 pb-3 mt-2 shrink-0">
+          <LogoutButton variant="mobile" />
         </div>
       </SheetContent>
     </Sheet>

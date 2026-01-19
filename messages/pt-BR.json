@@ -19,7 +19,8 @@
     "yes": "Sim",
     "no": "Não",
     "undo": "Desfazer",
-    "actionCannotBeUndone": "Esta ação não pode ser desfeita."
+    "actionCannotBeUndone": "Esta ação não pode ser desfeita.",
+    "loggingOut": "Saindo..."
   },
   "errors": {
     "descriptionRequired": "Descrição é obrigatória",
@@ -105,7 +106,10 @@
     "tasks": "Tarefas",
     "reminders": "Lembretes",
     "preferences": "Preferências",
-    "expandSidebar": "Expandir barra lateral"
+    "expandSidebar": "Expandir barra lateral",
+    "logout": "Sair",
+    "logoutConfirmTitle": "Sair da sua conta?",
+    "logoutConfirmDescription": "Você será desconectado e precisará fazer login novamente para acessar sua conta."
   },
   "dashboard": {
     "title": "Visão Geral",
