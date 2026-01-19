@@ -2,6 +2,7 @@
 
 import { useState, useOptimistic, useTransition, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { useLongPress } from '@/lib/hooks/use-long-press';
 import { useSwipe } from '@/lib/hooks/use-swipe';
 import { formatCurrency, formatDate, cn } from '@/lib/utils';
@@ -74,6 +75,7 @@ export function IncomeCard(props: IncomeCardProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isPending, startTransition] = useTransition();
   const context = useIncomeContextOptional();
+  const router = useRouter();
 
   const t = useTranslations('income');
   const tCommon = useTranslations('common');
@@ -94,6 +96,7 @@ export function IncomeCard(props: IncomeCardProps) {
       await context.toggleReceived(income.id, income.receivedAt);
     } else {
       await markIncomeReceived(income.id);
+      router.refresh();
     }
   };
 
@@ -102,6 +105,7 @@ export function IncomeCard(props: IncomeCardProps) {
       await context.toggleReceived(income.id, income.receivedAt);
     } else {
       await markIncomePending(income.id);
+      router.refresh();
     }
   };
 
@@ -110,6 +114,7 @@ export function IncomeCard(props: IncomeCardProps) {
       await context.toggleIgnore(income.id);
     } else {
       await toggleIgnoreIncome(income.id);
+      router.refresh();
     }
   };
 
@@ -119,6 +124,7 @@ export function IncomeCard(props: IncomeCardProps) {
       await context.removeIncome(income.id);
     } else {
       await deleteIncome(income.id);
+      router.refresh();
     }
     toast.success(t('incomeDeleted'));
   };
@@ -146,12 +152,6 @@ export function IncomeCard(props: IncomeCardProps) {
   });
 
   const swipe = useSwipe({
-    onSwipeLeft: () => {
-      if (!props.selectionMode) {
-        triggerHaptic(HapticPatterns.light);
-        setShowDeleteConfirm(true);
-      }
-    },
     disabled: props.selectionMode || isOptimistic,
     threshold: 50,
     velocityThreshold: 0.15,
@@ -224,17 +224,17 @@ export function IncomeCard(props: IncomeCardProps) {
               swipe.resetSwipe();
               setShowDeleteConfirm(true);
             }}
-            onTogglePaid={() => {
+            onTogglePaid={async () => {
               swipe.resetSwipe();
               if (isReceived) {
-                handleMarkPending();
+                await handleMarkPending();
               } else {
-                handleMarkReceived();
+                await handleMarkReceived();
               }
             }}
-            onToggleIgnore={() => {
+            onToggleIgnore={async () => {
               swipe.resetSwipe();
-              handleToggleIgnore();
+              await handleToggleIgnore();
             }}
             isPaid={isReceived}
             isIgnored={income.ignored}

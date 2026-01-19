@@ -1396,7 +1396,7 @@ async function seedDatabase() {
         rrule: 'FREQ=YEARLY;BYMONTH=6;BYMONTHDAY=15',
       },
     ];
-    const seededRecurrenceRules = await seedRows('recurrenceRules', recurrenceRuleRecords);
+    await seedRows('recurrenceRules', recurrenceRuleRecords);
     console.log(`  ✓ ${recurrenceRuleRecords.length} recurrence rules created\n`);
 
     // 17. Insert notifications (configuration for when to send notifications)
@@ -1516,7 +1516,7 @@ async function seedDatabase() {
         sentAt: null,
       },
     ];
-    const seededNotificationJobs = await seedRows('notificationJobs', notificationJobRecords);
+    await seedRows('notificationJobs', notificationJobRecords);
     console.log(`  ✓ ${notificationJobRecords.length} notification jobs created\n`);
 
     // 19. Insert bill reminders
@@ -1654,7 +1654,7 @@ async function seedDatabase() {
         lastAcknowledgedMonth: getYearMonth(-3),
       },
     ];
-    const seededBillReminders = await seedRows('billReminders', billReminderRecords);
+    await seedRows('billReminders', billReminderRecords);
     console.log(`  ✓ ${billReminderRecords.length} bill reminders created\n`);
 
     await resetSequences();

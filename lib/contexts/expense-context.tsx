@@ -276,12 +276,13 @@ export function ExpenseListProvider({
 
       try {
         if (currentPaidAt) {
-          await serverMarkEntryPaid(id);
-        } else {
           await serverMarkEntryPending(id);
+        } else {
+          await serverMarkEntryPaid(id);
         }
-        // Clear current month cache
+        // Clear current month cache and trigger re-fetch
         useMonthStore.getState().clearMonthCache(getCurrentYearMonth());
+        useMonthStore.getState().invalidateExpensesCache();
       } catch {
         toast.error('Failed to update status');
       }
@@ -298,8 +299,9 @@ export function ExpenseListProvider({
 
       try {
         await serverDeleteExpense(transactionId);
-        // Clear all caches since we don't know which months the transaction spans
+        // Clear all caches and trigger re-fetch
         useMonthStore.getState().clearAllCache();
+        useMonthStore.getState().invalidateExpensesCache();
       } catch {
         toast.error('Failed to delete expense');
       }
@@ -323,8 +325,9 @@ export function ExpenseListProvider({
 
       try {
         await serverBulkUpdateTransactionCategories(transactionIds, categoryId);
-        // Clear all caches since we don't know which months the transactions span
+        // Clear all caches and trigger re-fetch
         useMonthStore.getState().clearAllCache();
+        useMonthStore.getState().invalidateExpensesCache();
         toast.success(`Updated ${transactionIds.length} item${transactionIds.length > 1 ? 's' : ''}`);
       } catch (error) {
         console.error('Failed to bulk update categories:', error);
@@ -344,8 +347,9 @@ export function ExpenseListProvider({
 
       try {
         await serverToggleIgnoreTransaction(transactionId);
-        // Clear all caches since we don't know which months the transaction spans
+        // Clear all caches and trigger re-fetch
         useMonthStore.getState().clearAllCache();
+        useMonthStore.getState().invalidateExpensesCache();
       } catch {
         toast.error('Failed to update ignore status');
       }

@@ -36,11 +36,19 @@ export function useSwipe({
   }, [disabled]);
 
   const handlePointerCancel = useCallback(() => {
+    // Don't reset if actions are revealed - let user interact with them
+    if (isRevealed) {
+      startXRef.current = null;
+      startYRef.current = null;
+      setIsSwiping(false);
+      return;
+    }
+
     startXRef.current = null;
     startYRef.current = null;
     setIsSwiping(false);
     setSwipeOffset(0);
-  }, []);
+  }, [isRevealed]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (disabled || startXRef.current === null || !isSwiping) return;
@@ -64,7 +72,7 @@ export function useSwipe({
 
     currentXRef.current = e.clientX;
     // Cap maximum swipe distance
-    const cappedDiff = Math.max(diff, -120);
+    const cappedDiff = Math.max(diff, -160);
     setSwipeOffset(cappedDiff);
   }, [disabled, isSwiping, verticalThreshold, handlePointerCancel]);
 
@@ -72,42 +80,33 @@ export function useSwipe({
     if (disabled || startXRef.current === null) return;
 
     const distance = currentXRef.current - startXRef.current;
-    const duration = Date.now() - startTimeRef.current;
-    const velocity = Math.abs(distance) / duration;
 
     // Only preventDefault if we were actually swiping
     if (Math.abs(distance) > 10) {
       e.preventDefault();
     }
 
-    let actionTriggered = false;
-
-    // Check if swipe meets threshold
-    if (Math.abs(distance) >= threshold && velocity >= velocityThreshold) {
-      if (distance < 0 && onSwipeLeft) {
-        onSwipeLeft();
-        actionTriggered = true;
-        // Keep card revealed at -120px (snap to revealed position)
-        setIsRevealed(true);
-        setSwipeOffset(-120);
-        startXRef.current = null;
-        startYRef.current = null;
-        setIsSwiping(false);
-        return actionTriggered;
-      } else if (distance > 0 && onSwipeRight) {
-        onSwipeRight();
-        actionTriggered = true;
-      }
+    // If swiped left past threshold, reveal and keep actions open
+    if (distance < -threshold) {
+      setIsRevealed(true);
+      setSwipeOffset(-150);
+      startXRef.current = null;
+      startYRef.current = null;
+      setIsSwiping(false);
+      return;
     }
 
-    // Reset state
+    // If swiped right past threshold, trigger right swipe callback
+    if (distance > threshold && onSwipeRight) {
+      onSwipeRight();
+    }
+
+    // Reset if threshold not met
     startXRef.current = null;
     startYRef.current = null;
     setIsSwiping(false);
     setSwipeOffset(0);
-
-    return actionTriggered;
-  }, [disabled, threshold, velocityThreshold, onSwipeLeft, onSwipeRight]);
+  }, [disabled, threshold, onSwipeRight]);
 
   const resetSwipe = useCallback(() => {
     setSwipeOffset(0);

@@ -64,7 +64,7 @@ describe('BudgetForm', () => {
       />
     );
 
-    const [totalInput] = screen.getAllByPlaceholderText('0.00');
+    const [totalInput] = screen.getAllByPlaceholderText('R$ 0,00');
 
     await user.type(totalInput, '100.00');
     fireEvent.blur(totalInput);

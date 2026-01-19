@@ -61,7 +61,7 @@ export function useLongPress({
     }
   }, [cancel, moveThreshold]);
 
-  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+  const handlePointerUp = useCallback((_e: React.PointerEvent) => {
     // Don't preventDefault - allow native scrolling to work
     cancel();
     startPositionRef.current = null;

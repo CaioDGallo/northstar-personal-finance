@@ -35,7 +35,7 @@ export function SwipeActions({
       <button
         type="button"
         onPointerDown={handleAction(onDelete)}
-        className="w-10 bg-red-500 flex items-center justify-center pointer-events-auto touch-manipulation"
+        className="w-12 bg-red-600 flex items-center justify-center pointer-events-auto touch-manipulation"
         aria-label="Excluir"
       >
         <HugeiconsIcon icon={Delete02Icon} size={20} className="text-white" strokeWidth={2} />
@@ -46,8 +46,8 @@ export function SwipeActions({
         type="button"
         onPointerDown={handleAction(onTogglePaid)}
         className={cn(
-          'w-10 flex items-center justify-center pointer-events-auto touch-manipulation',
-          isPaid ? 'bg-amber-500' : 'bg-green-500'
+          'w-12 flex items-center justify-center pointer-events-auto touch-manipulation',
+          isPaid ? 'bg-amber-600' : 'bg-green-600'
         )}
         aria-label={isPaid ? (isIncome ? 'Marcar como pendente' : 'Marcar como pendente') : (isIncome ? 'Marcar como recebido' : 'Marcar como pago')}
       >
@@ -64,8 +64,8 @@ export function SwipeActions({
         type="button"
         onPointerDown={handleAction(onToggleIgnore)}
         className={cn(
-          'w-10 flex items-center justify-center pointer-events-auto touch-manipulation',
-          isIgnored ? 'bg-blue-400' : 'bg-gray-400'
+          'w-12 flex items-center justify-center pointer-events-auto touch-manipulation',
+          isIgnored ? 'bg-blue-400' : 'bg-gray-500'
         )}
         aria-label={isIgnored ? 'Incluir nos cálculos' : 'Ignorar nos cálculos'}
       >

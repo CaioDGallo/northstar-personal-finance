@@ -234,8 +234,9 @@ export function IncomeListProvider({
         } else {
           await serverMarkIncomeReceived(id);
         }
-        // Clear current month cache
+        // Clear current month cache and trigger re-fetch
         useMonthStore.getState().clearMonthCache(getCurrentYearMonth());
+        useMonthStore.getState().invalidateIncomeCache();
       } catch {
         toast.error('Failed to update status');
       }
@@ -252,8 +253,9 @@ export function IncomeListProvider({
 
       try {
         await serverDeleteIncome(id);
-        // Clear all caches since we don't know which month the income was in
+        // Clear all caches and trigger re-fetch
         useMonthStore.getState().clearAllCache();
+        useMonthStore.getState().invalidateIncomeCache();
       } catch {
         toast.error('Failed to delete income');
       }
@@ -277,8 +279,9 @@ export function IncomeListProvider({
 
       try {
         await serverBulkUpdateIncomeCategories(incomeIds, categoryId);
-        // Clear all caches since we don't know which months the income spans
+        // Clear all caches and trigger re-fetch
         useMonthStore.getState().clearAllCache();
+        useMonthStore.getState().invalidateIncomeCache();
         toast.success(`Updated ${incomeIds.length} item${incomeIds.length > 1 ? 's' : ''}`);
       } catch (error) {
         console.error('Failed to bulk update categories:', error);
@@ -298,8 +301,9 @@ export function IncomeListProvider({
 
       try {
         await serverToggleIgnoreIncome(id);
-        // Clear all caches since we don't know which month the income was in
+        // Clear all caches and trigger re-fetch
         useMonthStore.getState().clearAllCache();
+        useMonthStore.getState().invalidateIncomeCache();
       } catch {
         toast.error('Failed to update ignore status');
       }

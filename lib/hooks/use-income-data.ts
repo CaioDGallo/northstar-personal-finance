@@ -9,6 +9,7 @@ type IncomeData = Awaited<ReturnType<typeof getIncome>>;
 export function useIncomeData(filters: IncomeFilters = {}) {
   const getCachedData = useMonthStore((state) => state.getCachedData);
   const setCachedData = useMonthStore((state) => state.setCachedData);
+  const incomeCacheVersion = useMonthStore((state) => state.incomeCacheVersion);
 
   const month = filters.yearMonth || '';
   const [data, setData] = useState<IncomeData | null>(null);
@@ -47,7 +48,7 @@ export function useIncomeData(filters: IncomeFilters = {}) {
         setLoading(false);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [month, filters.categoryId, filters.accountId, filters.status, getCachedData, setCachedData]);
+  }, [month, filters.categoryId, filters.accountId, filters.status, incomeCacheVersion, getCachedData, setCachedData]);
 
   return { data, loading, error };
 }

@@ -3,7 +3,7 @@ import { setupTestDb, teardownTestDb, clearAllTables, getTestDb } from '@/test/d
 import { mockAuth } from '@/test/auth-utils';
 import * as schema from '@/lib/schema';
 import { createTestBillReminder, TEST_USER_ID } from '@/test/fixtures';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 type BillReminderActions = typeof import('@/lib/actions/bill-reminders');
 type BillReminderJobs = typeof import('@/lib/actions/bill-reminder-jobs');
@@ -340,7 +340,7 @@ describe('Bill Reminders - Scheduling', () => {
       timezone: 'UTC',
     });
 
-    const [reminder] = await db
+    await db
       .insert(schema.billReminders)
       .values(createTestBillReminder({ dueDay: 15, startMonth: '2026-02' }))
       .returning();

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vites
 import { setupTestDb, teardownTestDb, clearAllTables, getTestDb } from '@/test/db-utils';
 import * as schema from '@/lib/schema';
 import { TEST_USER_ID, testAccounts, testCategories } from '@/test/fixtures';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 type ExpenseActions = typeof import('@/lib/actions/expenses');
 type IncomeActions = typeof import('@/lib/actions/income');
@@ -273,7 +273,7 @@ describe('Ignore Transactions', () => {
       const category = await seedCategory('expense');
       await seedBudget(category.id, '2025-01', 50000);
 
-      const { transaction: tx1 } = await seedTransaction(account.id, category.id, 10000, '2025-01-10');
+      await seedTransaction(account.id, category.id, 10000, '2025-01-10');
       const { transaction: tx2 } = await seedTransaction(account.id, category.id, 15000, '2025-01-15');
       const { transaction: tx3 } = await seedTransaction(account.id, category.id, 20000, '2025-01-20');
 
@@ -303,7 +303,7 @@ describe('Ignore Transactions', () => {
       const account = await seedAccount(testAccounts.checking);
       const category = await seedCategory('income');
 
-      const income1 = await seedIncome(account.id, category.id, 50000, '2025-01-01');
+      await seedIncome(account.id, category.id, 50000, '2025-01-01');
       const income2 = await seedIncome(account.id, category.id, 30000, '2025-01-15');
       const income3 = await seedIncome(account.id, category.id, 20000, '2025-01-25');
 
@@ -328,12 +328,12 @@ describe('Ignore Transactions', () => {
       const account = await seedAccount(testAccounts.checking);
 
       // Deposits (transfers in)
-      const deposit1 = await seedTransfer(null, account.id, 50000, '2025-01-05', 'deposit');
+      await seedTransfer(null, account.id, 50000, '2025-01-05', 'deposit');
       const deposit2 = await seedTransfer(null, account.id, 30000, '2025-01-10', 'deposit');
 
       // Withdrawals (transfers out)
       const withdrawal1 = await seedTransfer(account.id, null, 20000, '2025-01-15', 'withdrawal');
-      const withdrawal2 = await seedTransfer(account.id, null, 15000, '2025-01-20', 'withdrawal');
+      await seedTransfer(account.id, null, 15000, '2025-01-20', 'withdrawal');
 
       // Before ignoring
       let dashboard = await getDashboardData('2025-01');
@@ -395,7 +395,7 @@ describe('Ignore Transactions', () => {
 
       // Spend R$ 750 (75% of budget)
       const { transaction: tx1 } = await seedTransaction(account.id, category.id, 50000, '2025-01-10');
-      const { transaction: tx2 } = await seedTransaction(account.id, category.id, 25000, '2025-01-15');
+      await seedTransaction(account.id, category.id, 25000, '2025-01-15');
 
       let budgets = await getBudgetsWithSpending('2025-01');
       expect(budgets.budgets[0].spent).toBe(75000);

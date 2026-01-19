@@ -25,6 +25,10 @@ interface MonthStore {
   budgetsCache: Map<string, MonthCache<BudgetData>>;
   faturasCache: Map<string, MonthCache<FaturaData>>;
 
+  // Cache version counters for invalidation triggers
+  expensesCacheVersion: number;
+  incomeCacheVersion: number;
+
   // Actions
   setMonth: (month: string) => void;
 
@@ -53,6 +57,10 @@ interface MonthStore {
   clearMonthRange: (startMonth: string, endMonth: string) => void;
   clearAllCache: () => void;
 
+  // Cache invalidation triggers
+  invalidateExpensesCache: () => void;
+  invalidateIncomeCache: () => void;
+
   // Evict old months outside ±2 window
   evictOldMonths: () => void;
 }
@@ -65,6 +73,9 @@ export const useMonthStore = create<MonthStore>((set, get) => ({
   incomeCache: new Map(),
   budgetsCache: new Map(),
   faturasCache: new Map(),
+
+  expensesCacheVersion: 0,
+  incomeCacheVersion: 0,
 
   setMonth: (month: string) => {
     set({ currentMonth: month });
@@ -163,5 +174,17 @@ export const useMonthStore = create<MonthStore>((set, get) => ({
         faturasCache: filterCache(state.faturasCache),
       };
     });
+  },
+
+  invalidateExpensesCache: () => {
+    set((state) => ({
+      expensesCacheVersion: state.expensesCacheVersion + 1,
+    }));
+  },
+
+  invalidateIncomeCache: () => {
+    set((state) => ({
+      incomeCacheVersion: state.incomeCacheVersion + 1,
+    }));
   },
 }));

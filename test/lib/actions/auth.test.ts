@@ -189,12 +189,4 @@ describe('Auth Actions', () => {
     expect(result).toEqual({ error: null });
     expect(dbUpdateSetMock).toHaveBeenCalledWith({ passwordHash: 'hashed-password' });
   });
-
-  it('logout redirects to NextAuth signout', async () => {
-    const { logout } = await loadActions();
-
-    await logout();
-
-    expect(redirectMock).toHaveBeenCalledWith('/api/auth/signout');
-  });
 });

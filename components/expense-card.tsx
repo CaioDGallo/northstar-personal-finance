@@ -2,6 +2,7 @@
 
 import { useState, useOptimistic, useTransition, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { useLongPress } from '@/lib/hooks/use-long-press';
 import { useSwipe } from '@/lib/hooks/use-swipe';
 import { formatCurrency, formatDate, cn } from '@/lib/utils';
@@ -84,18 +85,13 @@ export function ExpenseCard(props: ExpenseCardProps) {
   const [isPending, startTransition] = useTransition();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const context = useExpenseContextOptional();
+  const router = useRouter();
 
   // Check if expense can be converted to fatura payment
   const canConvertToFatura = entry.accountType !== 'credit_card' && entry.totalInstallments === 1 && unpaidFaturas.length > 0;
 
-  // Swipe-to-delete gesture (disabled in selection mode)
+  // Swipe gesture to reveal actions (disabled in selection mode)
   const swipe = useSwipe({
-    onSwipeLeft: () => {
-      if (!props.selectionMode) {
-        triggerHaptic(HapticPatterns.light);
-        setShowDeleteConfirm(true);
-      }
-    },
     disabled: props.selectionMode || isOptimistic,
     threshold: 50,
     velocityThreshold: 0.15,
@@ -120,6 +116,7 @@ export function ExpenseCard(props: ExpenseCardProps) {
       await context.togglePaid(entry.id, entry.paidAt);
     } else {
       await markEntryPaid(entry.id);
+      router.refresh();
     }
   };
 
@@ -128,12 +125,18 @@ export function ExpenseCard(props: ExpenseCardProps) {
       await context.togglePaid(entry.id, entry.paidAt);
     } else {
       await markEntryPending(entry.id);
+      router.refresh();
     }
   };
 
   const handleToggleIgnore = async () => {
     if (context) {
       await context.toggleIgnore(entry.transactionId);
+    } else {
+      // Fallback: call server action directly if no context
+      const { toggleIgnoreTransaction } = await import('@/lib/actions/expenses');
+      await toggleIgnoreTransaction(entry.transactionId);
+      router.refresh();
     }
   };
 
@@ -149,6 +152,7 @@ export function ExpenseCard(props: ExpenseCardProps) {
       await context.removeExpense(transactionId);
     } else {
       await deleteExpense(transactionId);
+      router.refresh();
     }
 
     // Show undo toast
@@ -246,17 +250,17 @@ export function ExpenseCard(props: ExpenseCardProps) {
               swipe.resetSwipe();
               setShowDeleteConfirm(true);
             }}
-            onTogglePaid={() => {
+            onTogglePaid={async () => {
               swipe.resetSwipe();
               if (isPaid) {
-                handleMarkPending();
+                await handleMarkPending();
               } else {
-                handleMarkPaid();
+                await handleMarkPaid();
               }
             }}
-            onToggleIgnore={() => {
+            onToggleIgnore={async () => {
               swipe.resetSwipe();
-              handleToggleIgnore();
+              await handleToggleIgnore();
             }}
             isPaid={isPaid}
             isIgnored={entry.ignored}
