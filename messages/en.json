@@ -488,6 +488,7 @@
     "description": "Check your connection and try again"
   },
   "theme": {
+    "label": "Theme",
     "system": "System",
     "light": "Light",
     "dark": "Dark"
@@ -956,11 +957,11 @@
     "footerTitle": "Fluxo.sh",
     "footerText": "Personal finance tracking built for Brazil.",
     "faqTitle": "Quick answers",
-    "faqOneQ": "Is Fluxo paid?",
-    "faqOneA": "Yes. We will launch with a single, simple plan.",
-    "faqTwoQ": "Does it work with Brazilian banks?",
-    "faqTwoA": "Yes. CSV/OFX imports for common banks and cards.",
-    "faqThreeQ": "Is there an app?",
-    "faqThreeA": "Use it in the browser with app-like experience (PWA)."
+    "faq1Q": "Is Fluxo paid?",
+    "faq1A": "Yes. We will launch with a single, simple plan.",
+    "faq2Q": "Does it work with Brazilian banks?",
+    "faq2A": "Yes. CSV/OFX imports for common banks and cards.",
+    "faq3Q": "Is there an app?",
+    "faq3A": "Use it in the browser with app-like experience (PWA)."
   }
 }

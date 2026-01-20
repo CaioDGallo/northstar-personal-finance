@@ -497,6 +497,7 @@
     "description": "Verifique sua conexão e tente novamente"
   },
   "theme": {
+    "label": "Tema",
     "system": "Sistema",
     "light": "Claro",
     "dark": "Escuro"
@@ -965,11 +966,11 @@
     "footerTitle": "Fluxo.sh",
     "footerText": "Controle financeiro pessoal focado no Brasil.",
     "faqTitle": "Dúvidas rápidas",
-    "faqOneQ": "O Fluxo é pago?",
-    "faqOneA": "Sim. Vamos lançar um plano único, simples e acessível.",
-    "faqTwoQ": "Funciona com bancos brasileiros?",
-    "faqTwoA": "Sim. Importação via CSV/OFX para bancos comuns e cartões.",
-    "faqThreeQ": "Tem aplicativo?",
-    "faqThreeA": "Você usa no navegador com experiência de app (PWA)."
+    "faq1Q": "O Fluxo é pago?",
+    "faq1A": "Sim. Vamos lançar um plano único, simples e acessível.",
+    "faq2Q": "Funciona com bancos brasileiros?",
+    "faq2A": "Sim. Importação via CSV/OFX para bancos comuns e cartões.",
+    "faq3Q": "Tem aplicativo?",
+    "faq3A": "Você usa no navegador com experiência de app (PWA)."
   }
 }

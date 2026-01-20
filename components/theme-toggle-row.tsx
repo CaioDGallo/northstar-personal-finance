@@ -8,13 +8,24 @@ import { useTranslations } from 'next-intl';
 
 type Theme = 'light' | 'dark' | 'system';
 
-export function ThemeToggleRow() {
+type ThemeToggleRowProps = {
+  className?: string;
+  showLabel?: boolean;
+  labelClassName?: string;
+};
+
+export function ThemeToggleRow({
+  className,
+  showLabel = true,
+  labelClassName,
+}: ThemeToggleRowProps) {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window === 'undefined') return 'system';
     return (localStorage.getItem('theme') as Theme | null) || 'system';
   });
   const mounted = useRef(false);
   const t = useTranslations('theme');
+  const label = t('label');
 
   useEffect(() => {
     mounted.current = true;
@@ -63,11 +74,14 @@ export function ThemeToggleRow() {
       suppressHydrationWarning
       className={cn(
         'flex items-center gap-3 px-4 py-3 rounded-md w-full',
-        'text-foreground hover:bg-muted transition-colors'
+        'text-foreground hover:bg-muted transition-colors',
+        className
       )}
     >
       <HugeiconsIcon icon={theme === 'light' ? Sun03Icon : SunCloudLittleRain01Icon} className="size-5" />
-      <span>Theme: {t(theme)}</span>
+      <span className={cn('text-xs font-semibold uppercase tracking-[0.2em]', labelClassName)}>
+        {showLabel ? `${label}: ${t(theme)}` : t(theme)}
+      </span>
     </button>
   );
 }

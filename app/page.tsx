@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { ThemeToggleRow } from '@/components/theme-toggle-row';
 
 export const metadata: Metadata = {
   title: 'Fluxo.sh | Financas pessoais no Brasil',
@@ -21,13 +22,13 @@ export default async function Home() {
 
   return (
     <div className="bg-background text-foreground">
-      <header className="sticky top-0 z-30 border-b border-border/80 bg-background/95 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-border/80 bg-background/95 backdrop-blur text-foreground">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 md:px-6">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center border-2 border-foreground bg-background text-xs font-bold">FX</div>
             <div className="leading-tight">
               <p className="text-sm font-semibold">Fluxo</p>
-              <p className="text-xs text-muted-foreground">fluxo.sh</p>
+              <p className="text-xs text-foreground/80">fluxo.sh</p>
             </div>
           </div>
           <nav className="hidden items-center gap-6 text-xs font-medium uppercase tracking-[0.2em] md:flex">
@@ -36,28 +37,40 @@ export default async function Home() {
             <Link href="#faq" className="hover:text-foreground/70">{t('navFaq')}</Link>
           </nav>
           <div className="hidden items-center gap-3 md:flex">
+            <ThemeToggleRow
+              showLabel={false}
+              className="h-9 w-auto border border-foreground px-3 py-0"
+              labelClassName="text-[11px]"
+            />
             <Button variant="hollow" asChild>
               <a href="#espera">{t('ctaPrimary')}</a>
             </Button>
           </div>
-          <Button variant="hollow" className="md:hidden" asChild>
-            <a href="#espera">{t('ctaPrimary')}</a>
-          </Button>
+          <div className="flex items-center gap-3 md:hidden">
+            <ThemeToggleRow
+              showLabel={false}
+              className="h-9 w-auto border border-foreground px-3 py-0"
+              labelClassName="text-[11px]"
+            />
+            <Button variant="hollow" asChild>
+              <a href="#espera">{t('ctaPrimary')}</a>
+            </Button>
+          </div>
         </div>
       </header>
 
       <main>
         <section className="relative overflow-hidden border-b border-border/80">
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,#f5f5f5_0%,#ffffff_45%,#e9e9e9_100%)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,#f5f5f5_0%,#ffffff_45%,#e9e9e9_100%)] dark:bg-[linear-gradient(120deg,#0d0d0d_0%,#171717_45%,#101010_100%)]" />
           <div className="relative mx-auto grid w-full max-w-6xl gap-10 px-4 py-16 md:grid-cols-[1.1fr_0.9fr] md:px-6 md:py-24">
             <div className="space-y-6">
-              <Badge variant="outline" className="border-foreground text-foreground">
+              <Badge variant="outline" className="border-foreground text-foreground bg-background/80 dark:bg-background/10">
                 {t('heroBadge')}
               </Badge>
               <h1 className="text-4xl font-black leading-tight md:text-5xl">
                 {t('title')}
               </h1>
-              <p className="text-base text-muted-foreground md:text-lg">
+              <p className="text-base text-foreground/80 md:text-lg">
                 {t('subtitle')}
               </p>
               <div className="flex flex-col gap-3 sm:flex-row">
@@ -68,7 +81,7 @@ export default async function Home() {
                   <a href="#recursos">{t('ctaSecondary')}</a>
                 </Button>
               </div>
-              <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+              <p className="text-xs uppercase tracking-[0.25em] text-foreground/80">
                 {t('tagline')}
               </p>
             </div>
@@ -118,12 +131,12 @@ export default async function Home() {
           </div>
         </section>
 
-        <section id="recursos" className="border-b border-border/80 bg-muted/20">
+        <section id="recursos" className="border-b border-border/80 bg-muted dark:bg-muted/40">
           <div className="mx-auto w-full max-w-6xl px-4 py-16 md:px-6">
             <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div className="max-w-xl space-y-3">
                 <h2 className="text-2xl font-bold md:text-3xl">{t('featureTitle')}</h2>
-                <p className="text-sm text-muted-foreground md:text-base">{t('featureSubtitle')}</p>
+                <p className="text-sm text-foreground/80 md:text-base">{t('featureSubtitle')}</p>
               </div>
             </div>
             <div className="grid gap-6 md:grid-cols-2">
@@ -133,7 +146,7 @@ export default async function Home() {
                   <CardDescription>{t('featureOneText')}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid gap-2 text-xs text-muted-foreground">
+                  <div className="grid gap-2 text-xs text-foreground/80">
                     <span>• {t('featureOneBulletOne')}</span>
                     <span>• {t('featureOneBulletTwo')}</span>
                     <span>• {t('featureOneBulletThree')}</span>
@@ -146,7 +159,7 @@ export default async function Home() {
                   <CardDescription>{t('featureTwoText')}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid gap-2 text-xs text-muted-foreground">
+                  <div className="grid gap-2 text-xs text-foreground/80">
                     <span>• {t('featureTwoBulletOne')}</span>
                     <span>• {t('featureTwoBulletTwo')}</span>
                     <span>• {t('featureTwoBulletThree')}</span>
@@ -159,7 +172,7 @@ export default async function Home() {
                   <CardDescription>{t('featureThreeText')}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid gap-2 text-xs text-muted-foreground">
+                  <div className="grid gap-2 text-xs text-foreground/80">
                     <span>• {t('featureThreeBulletOne')}</span>
                     <span>• {t('featureThreeBulletTwo')}</span>
                     <span>• {t('featureThreeBulletThree')}</span>
@@ -172,7 +185,7 @@ export default async function Home() {
                   <CardDescription>{t('featureFourText')}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid gap-2 text-xs text-muted-foreground">
+                  <div className="grid gap-2 text-xs text-foreground/80">
                     <span>• {t('featureFourBulletOne')}</span>
                     <span>• {t('featureFourBulletTwo')}</span>
                     <span>• {t('featureFourBulletThree')}</span>
@@ -187,7 +200,7 @@ export default async function Home() {
           <div className="mx-auto w-full max-w-6xl px-4 py-16 md:px-6">
             <div className="mb-10 max-w-xl space-y-3">
               <h2 className="text-2xl font-bold md:text-3xl">{t('howTitle')}</h2>
-              <p className="text-sm text-muted-foreground md:text-base">{t('howSubtitle')}</p>
+              <p className="text-sm text-foreground/80 md:text-base">{t('howSubtitle')}</p>
             </div>
             <div className="grid gap-6 md:grid-cols-3">
               {[
@@ -214,7 +227,7 @@ export default async function Home() {
                   <span className="text-sm font-semibold">{item.index}</span>
                   <div className="mt-6 space-y-3">
                     <h3 className="text-base font-semibold">{item.title}</h3>
-                    <p className="text-muted-foreground">{item.text}</p>
+                    <p className="text-foreground/80">{item.text}</p>
                   </div>
                 </div>
               ))}
@@ -231,7 +244,7 @@ export default async function Home() {
               </div>
               <Button
                 variant="popout"
-                className="bg-background text-foreground hover:bg-background hover:text-foreground"
+                className="border-2 border-background bg-background text-foreground hover:bg-background hover:text-foreground"
                 asChild
               >
                 <a href="#espera">{t('ctaPrimary')}</a>
@@ -258,7 +271,7 @@ export default async function Home() {
           </div>
         </section>
 
-        <section id="espera" className="border-b border-border/80 bg-muted/20">
+        <section id="espera" className="border-b border-border/80 bg-muted dark:bg-muted/40">
           <div className="mx-auto w-full max-w-6xl px-4 py-16 md:px-6">
             <Card className="border-2 border-foreground shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
               <CardHeader className="border-b border-border">
@@ -271,7 +284,7 @@ export default async function Home() {
                     {t('emailLabel')}
                   </label>
                   <Input id="waitlist-email" type="email" placeholder={t('emailPlaceholder')} />
-                  <p className="text-xs text-muted-foreground">{t('submitNote')}</p>
+                  <p className="text-xs text-foreground/80">{t('submitNote')}</p>
                 </div>
                 <div className="flex h-full flex-col justify-between gap-4">
                   <Button variant="popout" className="w-full" disabled>
@@ -279,7 +292,7 @@ export default async function Home() {
                   </Button>
                   <div className="border border-border p-4 text-xs">
                     <p className="font-semibold">{t('footerTitle')}</p>
-                    <p className="text-muted-foreground">{t('footerText')}</p>
+                    <p className="text-foreground/80">{t('footerText')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -292,9 +305,9 @@ export default async function Home() {
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-10 text-xs md:flex-row md:items-center md:justify-between md:px-6">
           <div>
             <p className="font-semibold">{t('footerTitle')}</p>
-            <p className="text-muted-foreground">{t('footerText')}</p>
+            <p className="text-foreground/80">{t('footerText')}</p>
           </div>
-          <div className="flex flex-wrap gap-4 uppercase tracking-[0.2em] text-[10px] text-muted-foreground">
+          <div className="flex flex-wrap gap-4 uppercase tracking-[0.2em] text-[10px] text-foreground/80">
             <span>{t('footerMadeIn')}</span>
             <span>•</span>
             <span>{t('footerInstallments')}</span>
