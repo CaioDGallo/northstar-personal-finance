@@ -106,15 +106,17 @@ test('mark expense as paid', async ({ page }) => {
   await dialog.getByRole('button', { name: 'Criar' }).click();
   await expect(dialog).toBeHidden();
 
-  // Find the expense card and click the "Mark as paid" button (green, revealed by swipe)
+  // Find the expense card and use the desktop context menu
   const expenseCard = page.locator('h3', { hasText: DESCRIPTION }).first().locator('../../..');
-  await expenseCard.getByRole('button', { name: 'Marcar como pago' }).click();
+  await expenseCard.getByRole('button', { name: 'Abrir menu de ações' }).click();
+  await page.getByRole('menuitem', { name: 'Marcar como Pago' }).click();
 
   // Wait for the status update to process
   await page.waitForTimeout(500);
 
-  // Verify: The pending button is now available (amber)
-  await expect(expenseCard.getByRole('button', { name: 'Marcar como pendente' })).toBeVisible();
+  // Verify: The pending option is now available
+  await expenseCard.getByRole('button', { name: 'Abrir menu de ações' }).click();
+  await expect(page.getByRole('menuitem', { name: 'Marcar como Pendente' })).toBeVisible();
 });
 
 test('mark expense as pending (unpay)', async ({ page }) => {
@@ -147,15 +149,18 @@ test('mark expense as pending (unpay)', async ({ page }) => {
   const expenseCard = page.locator('h3', { hasText: DESCRIPTION }).first().locator('../../..');
 
   // First mark as paid
-  await expenseCard.getByRole('button', { name: 'Marcar como pago' }).click();
+  await expenseCard.getByRole('button', { name: 'Abrir menu de ações' }).click();
+  await page.getByRole('menuitem', { name: 'Marcar como Pago' }).click();
   await page.waitForTimeout(500);
 
-  // Then mark as pending (unpay) using the amber button
-  await expenseCard.getByRole('button', { name: 'Marcar como pendente' }).click();
+  // Then mark as pending (unpay) using the menu
+  await expenseCard.getByRole('button', { name: 'Abrir menu de ações' }).click();
+  await page.getByRole('menuitem', { name: 'Marcar como Pendente' }).click();
   await page.waitForTimeout(500);
 
-  // Verify: The paid button is now available again (green)
-  await expect(expenseCard.getByRole('button', { name: 'Marcar como pago' })).toBeVisible();
+  // Verify: The paid option is available again
+  await expenseCard.getByRole('button', { name: 'Abrir menu de ações' }).click();
+  await expect(page.getByRole('menuitem', { name: 'Marcar como Pago' })).toBeVisible();
 });
 
 test('mark income as received', async ({ page }) => {
@@ -184,15 +189,17 @@ test('mark income as received', async ({ page }) => {
   await dialog.getByRole('button', { name: 'Criar' }).click();
   await expect(dialog).toBeHidden();
 
-  // Find the income card and click the "Mark as received" button (green, revealed by swipe)
+  // Find the income card and use the desktop context menu
   const incomeCard = page.locator('h3', { hasText: DESCRIPTION }).first().locator('../../..');
-  await incomeCard.getByRole('button', { name: 'Marcar como recebido' }).click();
+  await incomeCard.getByRole('button', { name: 'Abrir menu de ações' }).click();
+  await page.getByRole('menuitem', { name: 'Marcar como Recebido' }).click();
 
   // Wait for the status update to process
   await page.waitForTimeout(500);
 
-  // Verify: The pending button is now available (amber)
-  await expect(incomeCard.getByRole('button', { name: 'Marcar como pendente' })).toBeVisible();
+  // Verify: The pending option is now available
+  await incomeCard.getByRole('button', { name: 'Abrir menu de ações' }).click();
+  await expect(page.getByRole('menuitem', { name: 'Marcar como Pendente' })).toBeVisible();
 });
 
 test('mark income as pending (unreceive)', async ({ page }) => {
@@ -225,13 +232,16 @@ test('mark income as pending (unreceive)', async ({ page }) => {
   const incomeCard = page.locator('h3', { hasText: DESCRIPTION }).first().locator('../../..');
 
   // First mark as received
-  await incomeCard.getByRole('button', { name: 'Marcar como recebido' }).click();
+  await incomeCard.getByRole('button', { name: 'Abrir menu de ações' }).click();
+  await page.getByRole('menuitem', { name: 'Marcar como Recebido' }).click();
   await page.waitForTimeout(500);
 
-  // Then mark as pending (unreceive) using the amber button
-  await incomeCard.getByRole('button', { name: 'Marcar como pendente' }).click();
+  // Then mark as pending (unreceive) using the menu
+  await incomeCard.getByRole('button', { name: 'Abrir menu de ações' }).click();
+  await page.getByRole('menuitem', { name: 'Marcar como Pendente' }).click();
   await page.waitForTimeout(500);
 
-  // Verify: The received button is now available again (green)
-  await expect(incomeCard.getByRole('button', { name: 'Marcar como recebido' })).toBeVisible();
+  // Verify: The received option is available again
+  await incomeCard.getByRole('button', { name: 'Abrir menu de ações' }).click();
+  await expect(page.getByRole('menuitem', { name: 'Marcar como Recebido' })).toBeVisible();
 });

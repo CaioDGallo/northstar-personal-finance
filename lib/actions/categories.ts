@@ -32,6 +32,9 @@ export async function createCategory(data: Omit<NewCategory, 'id' | 'userId' | '
     const userId = await getCurrentUserId();
     await db.insert(categories).values({ ...data, userId });
     revalidatePath('/settings/categories');
+    revalidatePath('/settings/budgets');
+    revalidatePath('/budgets');
+    revalidateTag(`user-${userId}`, 'max');
     revalidateTag('categories', 'max');
     if (data.type === 'expense') {
       revalidateTag('expense-categories', 'max');
@@ -50,6 +53,9 @@ export async function updateCategory(id: number, data: Partial<Omit<NewCategory,
     const userId = await getCurrentUserId();
     await db.update(categories).set(data).where(and(eq(categories.id, id), eq(categories.userId, userId)));
     revalidatePath('/settings/categories');
+    revalidatePath('/settings/budgets');
+    revalidatePath('/budgets');
+    revalidateTag(`user-${userId}`, 'max');
     revalidateTag('categories', 'max');
     revalidateTag('expense-categories', 'max');
     revalidateTag('income-categories', 'max');
@@ -88,6 +94,9 @@ export async function deleteCategory(id: number): Promise<ActionResult> {
 
     await db.delete(categories).where(and(eq(categories.id, id), eq(categories.userId, userId)));
     revalidatePath('/settings/categories');
+    revalidatePath('/settings/budgets');
+    revalidatePath('/budgets');
+    revalidateTag(`user-${userId}`, 'max');
     revalidateTag('categories', 'max');
     revalidateTag('expense-categories', 'max');
     revalidateTag('income-categories', 'max');
@@ -132,6 +141,9 @@ export async function setImportDefault(categoryId: number, isDefault: boolean): 
       .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)));
 
     revalidatePath('/settings/categories');
+    revalidatePath('/settings/budgets');
+    revalidatePath('/budgets');
+    revalidateTag(`user-${userId}`, 'max');
     revalidateTag('categories', 'max');
     revalidateTag('expense-categories', 'max');
     revalidateTag('income-categories', 'max');

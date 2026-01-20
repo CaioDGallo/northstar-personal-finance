@@ -7,8 +7,10 @@ import { useLongPress } from '@/lib/hooks/use-long-press';
 import { useSwipe } from '@/lib/hooks/use-swipe';
 import { formatCurrency, formatDate, cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { CategoryIcon } from '@/components/icon-picker';
 import { markIncomeReceived, markIncomePending, deleteIncome, updateIncomeCategory, toggleIgnoreIncome, setIncomeReplenishment, getReplenishableCategories } from '@/lib/actions/income';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { CategoryQuickPicker } from '@/components/category-quick-picker';
 import { ReplenishmentPicker } from '@/components/replenishment-picker';
 import { TransactionDetailSheet } from '@/components/transaction-detail-sheet';
@@ -27,8 +29,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Tick02Icon, Clock01Icon, ArrowReloadHorizontalIcon } from '@hugeicons/core-free-icons';
+import { Tick02Icon, Clock01Icon, ArrowReloadHorizontalIcon, MoreVerticalIcon } from '@hugeicons/core-free-icons';
 import { accountTypeConfig } from '@/lib/account-type-config';
 
 type IncomeCardBaseProps = {
@@ -81,6 +89,7 @@ export function IncomeCard(props: IncomeCardProps) {
   const [isPending, startTransition] = useTransition();
   const context = useIncomeContextOptional();
   const router = useRouter();
+  const isMobile = useIsMobile();
 
   const t = useTranslations('income');
   const tCommon = useTranslations('common');
@@ -169,8 +178,12 @@ export function IncomeCard(props: IncomeCardProps) {
     disabled: isOptimistic,
   });
 
+  const stopCardGesture = (event: Event | React.SyntheticEvent) => {
+    event.stopPropagation();
+  };
+
   const swipe = useSwipe({
-    disabled: props.selectionMode || isOptimistic,
+    disabled: props.selectionMode || isOptimistic || !isMobile,
     threshold: 50,
     velocityThreshold: 0.15,
   });
@@ -182,7 +195,7 @@ export function IncomeCard(props: IncomeCardProps) {
     document.addEventListener('pointerdown', close);
     return () => document.removeEventListener('pointerdown', close);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [swipe.isRevealed, swipe.resetSwipe]);
+  }, [swipe.isRevealed, swipe.resetSwipe, isMobile]);
 
   // Combined handlers for long-press and swipe
   const combinedHandlers = {
@@ -235,8 +248,8 @@ export function IncomeCard(props: IncomeCardProps) {
         props.selectionMode && "cursor-pointer",
         props.selectionMode && props.isSelected && "ring-2 ring-primary ring-offset-2"
       )}>
-        {/* Swipe actions revealed on swipe */}
-        {(swipe.isSwiping || swipe.isRevealed) && swipe.swipeOffset < 0 && (
+        {/* Swipe actions revealed on swipe (mobile only) */}
+        {isMobile && (swipe.isSwiping || swipe.isRevealed) && swipe.swipeOffset < 0 && (
           <SwipeActions
             onDelete={() => {
               swipe.resetSwipe();
@@ -265,7 +278,7 @@ export function IncomeCard(props: IncomeCardProps) {
           onClick={handleCardClick}
           className="flex items-center gap-3 md:gap-4 px-3 md:px-4 py-3 relative bg-card select-none touch-pan-y"
           style={{
-            transform: swipe.swipeOffset < 0 ? `translateX(${swipe.swipeOffset}px)` : undefined,
+            transform: isMobile && swipe.swipeOffset < 0 ? `translateX(${swipe.swipeOffset}px)` : undefined,
             transition: swipe.isSwiping ? 'none' : 'transform 0.2s ease-out',
           }}
         >
@@ -388,6 +401,67 @@ export function IncomeCard(props: IncomeCardProps) {
               </div>
             </div>
           </div>
+
+          {!isMobile && (
+            <div className="hidden md:block">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-11 md:size-8 touch-manipulation"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    aria-label="Abrir menu de ações"
+                  >
+                    <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} size={16} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" onPointerDown={stopCardGesture}>
+                <DropdownMenuItem
+                  onClick={() => setDetailOpen(true)}
+                  onSelect={stopCardGesture}
+                  onPointerDown={stopCardGesture}
+                >
+                  {t('viewDetails')}
+                </DropdownMenuItem>
+                {isReceived ? (
+                  <DropdownMenuItem
+                    onClick={handleMarkPending}
+                    onSelect={stopCardGesture}
+                    onPointerDown={stopCardGesture}
+                  >
+                    {t('markAsPending')}
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem
+                    onClick={handleMarkReceived}
+                    onSelect={stopCardGesture}
+                    onPointerDown={stopCardGesture}
+                  >
+                    {t('markAsReceived')}
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onClick={handleToggleIgnore} onSelect={stopCardGesture} onPointerDown={stopCardGesture}>
+                  {income.ignored ? t('showInTotals') : t('hideFromTotals')}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setEditOpen(true)}
+                  onSelect={stopCardGesture}
+                  onPointerDown={stopCardGesture}
+                >
+                  {tCommon('edit')}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setShowDeleteConfirm(true)}
+                  onSelect={stopCardGesture}
+                  onPointerDown={stopCardGesture}
+                >
+                  {t('deleteIncome')}
+                </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
 
         </CardContent>
       </Card>

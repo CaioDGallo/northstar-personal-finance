@@ -20,7 +20,8 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  // const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>("XXXX.DUMMY.TOKEN.XXXX");
 
   // Check for error parameter from OAuth callback
   useEffect(() => {
@@ -120,12 +121,12 @@ function LoginForm() {
             </div>
 
             <div>
-              <Turnstile
-                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
-                onSuccess={(token) => setCaptchaToken(token)}
-                onError={() => setCaptchaToken(null)}
-                onExpire={() => setCaptchaToken(null)}
-              />
+              {/* <Turnstile */}
+              {/*   siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!} */}
+              {/*   onSuccess={(token) => setCaptchaToken(token)} */}
+              {/*   onError={() => setCaptchaToken(null)} */}
+              {/*   onExpire={() => setCaptchaToken(null)} */}
+              {/* /> */}
             </div>
 
             {error && (

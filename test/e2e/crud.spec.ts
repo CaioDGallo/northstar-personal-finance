@@ -280,9 +280,10 @@ test('delete expense', async ({ page }) => {
   await dialog.getByRole('button', { name: 'Criar' }).click();
   await expect(dialog).toBeHidden();
 
-  // Find the expense card and click the delete button (red, revealed by swipe)
-  const expenseCard = page.locator('.py-0.relative.overflow-hidden').first();
-  await expenseCard.getByRole('button', { name: 'Excluir' }).click();
+  // Find the expense card and use the context menu
+  const expenseCard = page.locator('h3', { hasText: DESCRIPTION }).first().locator('../../..');
+  await expenseCard.getByRole('button', { name: 'Abrir menu de ações' }).click();
+  await page.getByRole('menuitem', { name: 'Excluir Transação' }).click();
 
   // Confirmation dialog should appear
   const confirmDialog = page.getByRole('alertdialog');
@@ -376,9 +377,10 @@ test('delete income', async ({ page }) => {
   await dialog.getByRole('button', { name: 'Criar' }).click();
   await expect(dialog).toBeHidden();
 
-  // Find the income card and click the delete button (red, revealed by swipe)
+  // Find the income card and use the context menu
   const incomeCard = page.locator('h3', { hasText: DESCRIPTION }).first().locator('../../..');
-  await incomeCard.getByRole('button', { name: 'Excluir' }).click();
+  await incomeCard.getByRole('button', { name: 'Abrir menu de ações' }).click();
+  await page.getByRole('menuitem', { name: 'Excluir Receita' }).click();
 
   // Confirmation dialog should appear
   const confirmDialog = page.getByRole('alertdialog', { name: 'Excluir Receita' });
