@@ -5,7 +5,7 @@ import { transactions, entries, accounts, categories, income, transfers, categor
 import { eq, and, inArray, desc, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import type { ValidatedImportRow, CategorySuggestion } from '@/lib/import/types';
-import { computeClosingDate, computeFaturaWindowStart, getFaturaMonth, getFaturaPaymentDueDate } from '@/lib/fatura-utils';
+import { computeClosingDate, computeFaturaWindowStart, getFaturaMonth, getFaturaMonthFromClosingDate, getFaturaPaymentDueDate } from '@/lib/fatura-utils';
 import { addMonths } from '@/lib/utils';
 import { ensureFaturaExists, updateFaturaTotal } from '@/lib/actions/faturas';
 import { syncAccountBalance } from '@/lib/actions/accounts';
@@ -381,12 +381,14 @@ type AccountInfo = {
  * @param basePurchaseDate - The original purchase date (for first installment)
  * @param installmentNumber - Which installment (1, 2, 3, ...)
  * @param account - Account info with closingDay and paymentDueDay
+ * @param ofxClosingDate - Optional OFX closing date to use for fatura assignment
  * @returns Entry dates (purchaseDate, faturaMonth, dueDate)
  */
 function computeEntryDates(
   basePurchaseDate: string,
   installmentNumber: number,
-  account: AccountInfo
+  account: AccountInfo,
+  ofxClosingDate?: string
 ): EntryDateInfo {
   const baseDate = new Date(basePurchaseDate + 'T00:00:00Z');
 
@@ -395,7 +397,13 @@ function computeEntryDates(
 
   if (hasBillingConfig) {
     // Calculate base fatura month from the original purchase date
-    const baseFaturaMonth = getFaturaMonth(baseDate, account.closingDay!);
+    let baseFaturaMonth: string;
+    if (ofxClosingDate) {
+      const closingDate = new Date(ofxClosingDate + 'T00:00:00Z');
+      baseFaturaMonth = getFaturaMonthFromClosingDate(baseDate, closingDate);
+    } else {
+      baseFaturaMonth = getFaturaMonth(baseDate, account.closingDay!);
+    }
 
     // Calculate the fatura month for this installment
     const faturaMonth = addMonths(baseFaturaMonth, installmentNumber - 1);
@@ -452,7 +460,8 @@ async function processInstallmentGroup(
   account: AccountInfo & { id: number },
   categoryOverrides: Record<number, number>,
   expenseCategoryId: number,
-  affectedFaturas: Set<string>
+  affectedFaturas: Set<string>,
+  ofxClosingDate?: string
 ) {
   // All rows in group have same baseDescription and total
   const firstRow = rows[0];
@@ -558,13 +567,13 @@ async function processInstallmentGroup(
 
       existingAmounts.set(installmentNumber, row.amountCents);
 
-      const dates = computeEntryDates(baseDate, installmentNumber, account);
+      const dates = computeEntryDates(baseDate, installmentNumber, account, ofxClosingDate);
       affectedFaturas.add(dates.faturaMonth);
     }
   }
 
   for (const installmentNumber of entriesToCreate) {
-    const dates = computeEntryDates(baseDate, installmentNumber, account);
+    const dates = computeEntryDates(baseDate, installmentNumber, account, ofxClosingDate);
     affectedFaturas.add(dates.faturaMonth);
 
     await tx.insert(entries).values({
@@ -680,7 +689,8 @@ export async function importMixed(data: ImportMixedData): Promise<ImportMixedRes
           account[0],
           categoryOverrides,
           expenseCategoryId,
-          affectedFaturas
+          affectedFaturas,
+          faturaOverrides?.closingDate
         );
       }
 
@@ -693,7 +703,15 @@ export async function importMixed(data: ImportMixedData): Promise<ImportMixedRes
 
         if (hasBillingConfig) {
           const purchaseDate = new Date(row.date + 'T00:00:00Z');
-          faturaMonth = getFaturaMonth(purchaseDate, account[0].closingDay!);
+
+          // Use OFX closing date if provided, otherwise use account's closing day
+          if (faturaOverrides?.closingDate) {
+            const closingDate = new Date(faturaOverrides.closingDate + 'T00:00:00Z');
+            faturaMonth = getFaturaMonthFromClosingDate(purchaseDate, closingDate);
+          } else {
+            faturaMonth = getFaturaMonth(purchaseDate, account[0].closingDay!);
+          }
+
           dueDate = getFaturaPaymentDueDate(faturaMonth, account[0].paymentDueDay!, account[0].closingDay!);
           affectedFaturas.add(faturaMonth);
         } else {
