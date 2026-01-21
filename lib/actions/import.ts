@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache';
 import type { ValidatedImportRow, CategorySuggestion } from '@/lib/import/types';
 import { computeClosingDate, computeFaturaWindowStart, getFaturaMonth, getFaturaMonthFromClosingDate, getFaturaPaymentDueDate } from '@/lib/fatura-utils';
 import { addMonths } from '@/lib/utils';
-import { ensureFaturaExists, updateFaturaTotal } from '@/lib/actions/faturas';
+import { ensureFaturaExists, updateFaturaTotal, recalculateInstallmentDates } from '@/lib/actions/faturas';
 import { syncAccountBalance } from '@/lib/actions/accounts';
 import { getDefaultImportCategories } from '@/lib/actions/categories';
 import { getCurrentUserId } from '@/lib/auth';
@@ -382,13 +382,15 @@ type AccountInfo = {
  * @param installmentNumber - Which installment (1, 2, 3, ...)
  * @param account - Account info with closingDay and paymentDueDay
  * @param ofxClosingDate - Optional OFX closing date to use for fatura assignment
+ * @param overrideBaseFaturaMonth - Optional base fatura month to use instead of calculating from dates
  * @returns Entry dates (purchaseDate, faturaMonth, dueDate)
  */
 function computeEntryDates(
   basePurchaseDate: string,
   installmentNumber: number,
   account: AccountInfo,
-  ofxClosingDate?: string
+  ofxClosingDate?: string,
+  overrideBaseFaturaMonth?: string
 ): EntryDateInfo {
   const baseDate = new Date(basePurchaseDate + 'T00:00:00Z');
 
@@ -398,7 +400,10 @@ function computeEntryDates(
   if (hasBillingConfig) {
     // Calculate base fatura month from the original purchase date
     let baseFaturaMonth: string;
-    if (ofxClosingDate) {
+    if (overrideBaseFaturaMonth) {
+      // Use provided base fatura month (already calculated correctly for historic installments)
+      baseFaturaMonth = overrideBaseFaturaMonth;
+    } else if (ofxClosingDate) {
       const closingDate = new Date(ofxClosingDate + 'T00:00:00Z');
       baseFaturaMonth = getFaturaMonthFromClosingDate(baseDate, closingDate);
     } else {
@@ -551,6 +556,18 @@ async function processInstallmentGroup(
   // Create entries for each installment
   const baseDate = calculateBasePurchaseDate(rows);
 
+  // Calculate base fatura month for installments
+  // For OFX imports with historic installments, work backwards from OFX fatura month
+  const minInstallment = rows[0].installmentInfo!.current;
+  let baseFaturaMonthOverride: string | undefined;
+
+  if (ofxClosingDate && account.type === 'credit_card' && account.closingDay) {
+    // OFX fatura month = closing date's month (YYYY-MM)
+    const ofxFaturaMonth = ofxClosingDate.slice(0, 7);
+    // If installment N is in ofxFaturaMonth, installment 1 was in ofxFaturaMonth - (N-1) months
+    baseFaturaMonthOverride = addMonths(ofxFaturaMonth, -(minInstallment - 1));
+  }
+
   if (existing) {
     for (const row of rows) {
       const installmentNumber = row.installmentInfo!.current;
@@ -567,13 +584,13 @@ async function processInstallmentGroup(
 
       existingAmounts.set(installmentNumber, row.amountCents);
 
-      const dates = computeEntryDates(baseDate, installmentNumber, account, ofxClosingDate);
+      const dates = computeEntryDates(baseDate, installmentNumber, account, ofxClosingDate, baseFaturaMonthOverride);
       affectedFaturas.add(dates.faturaMonth);
     }
   }
 
   for (const installmentNumber of entriesToCreate) {
-    const dates = computeEntryDates(baseDate, installmentNumber, account, ofxClosingDate);
+    const dates = computeEntryDates(baseDate, installmentNumber, account, ofxClosingDate, baseFaturaMonthOverride);
     affectedFaturas.add(dates.faturaMonth);
 
     await tx.insert(entries).values({
@@ -800,6 +817,11 @@ export async function importMixed(data: ImportMixedData): Promise<ImportMixedRes
 
         await ensureFaturaExists(accountId, month, overridesForMonth);
         await updateFaturaTotal(accountId, month);
+      }
+
+      // Recalculate installment dates using actual fatura windows
+      for (const month of sortedFaturas) {
+        await recalculateInstallmentDates(accountId, month);
       }
     }
 
