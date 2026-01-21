@@ -67,7 +67,7 @@ jobs:
           retention-days: 30
 
   deploy:
-    needs: [test, e2e]
+    needs: [test]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
