@@ -12,15 +12,15 @@ import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import {
   Select,
   SelectContent,
@@ -202,151 +202,182 @@ export function TransactionForm({
     : t('descriptionPlaceholder.income');
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      {trigger && <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>}
-      <AlertDialogContent
-        className="max-w-lg"
-        closeOnBackdropClick
-        onOpenAutoFocus={(e) => {
-          e.preventDefault();
+    <Sheet open={open} onOpenChange={setOpen}>
+      {trigger && <SheetTrigger asChild>{trigger}</SheetTrigger>}
+      <SheetContent
+        side="bottom"
+        className="max-h-[80vh] p-0 flex flex-col"
+        showCloseButton={false}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
           amountInputRef.current?.focus();
         }}
       >
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription className="sr-only">
-            {t('dialogDescription')}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-
-        <form onSubmit={handleSubmit}>
-          <FieldGroup>
-            {/* Amount */}
-            <Field>
-              <FieldLabel htmlFor="amount">{t('amount')}</FieldLabel>
-              <CurrencyInputGroupInput
-                ref={amountInputRef}
-                id="amount"
-                name="amount"
-                value={amountCents}
-                onChange={setAmountCents}
-                required
-                placeholder={t('amountPlaceholder')}
-                autoComplete="transaction-amount"
+        <SheetHeader className="border-b border-border/60 bg-muted/70 dark:bg-muted/20 px-4 py-3">
+          <div className="grid grid-cols-[1fr_auto_auto] items-center gap-3">
+            <SheetTitle className="text-start text-sm font-semibold">{title}</SheetTitle>
+            <div className="flex items-center gap-2">
+              <span
+                className="size-4 rounded-full border border-green-700 bg-green-500 shadow-[1px_1px_0px_rgba(0,0,0,0.6)]"
+                aria-hidden
               />
-            </Field>
-
-            {/* Description */}
-            <Field>
-              <FieldLabel htmlFor="description">{t('description')}</FieldLabel>
-              <Input
-                type="text"
-                id="description"
-                name="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-                placeholder={descriptionPlaceholder}
-                autoComplete="off"
-                spellCheck={false}
+              <span
+                className="size-4 rounded-full border border-amber-600 bg-amber-400 shadow-[1px_1px_0px_rgba(0,0,0,0.6)]"
+                aria-hidden
               />
-            </Field>
-
-            {/* Category */}
-            <Field>
-              <FieldLabel htmlFor="category">{t('category')}</FieldLabel>
-              {hasCategories ? (
-                <CategorySelect
-                  categories={categories}
-                  value={categoryId}
-                  onChange={setCategoryId}
-                  triggerId="category"
-                />
-              ) : (
-                <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-800">
-                  {mode === 'expense' ? t('noExpenseCategories') : t('noIncomeCategories')}
-                </div>
-              )}
-            </Field>
-
-            {/* Account */}
-            <Field>
-              <FieldLabel htmlFor="account">{t('account')}</FieldLabel>
-              {hasAccounts ? (
-                <Select
-                  value={accountId.toString()}
-                  onValueChange={(value) => setAccountId(parseInt(value))}
+              <SheetClose asChild>
+                <button
+                  type="button"
+                  className="group size-4 rounded-full border border-red-700 bg-red-500 text-[10px] font-bold text-red-950 shadow-[1px_1px_0px_rgba(0,0,0,0.6)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60"
+                  aria-label={tCommon('close')}
                 >
-                  <SelectTrigger id="account">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {accounts.map((account) => (
-                        <SelectItem key={account.id} value={account.id.toString()}>
-                          {account.name}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              ) : (
-                <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-800">
-                  {t('noAccounts')}
-                </div>
-              )}
-            </Field>
+                  <span className="relative block -mt-px text-white leading-none opacity-80 group-hover:opacity-100">
+                    <span className='w-14 h-10 absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2' />
+                    x
+                  </span>
+                </button>
+              </SheetClose>
+            </div>
+          </div>
+          <SheetDescription className="sr-only">
+            {t('dialogDescription')}
+          </SheetDescription>
+        </SheetHeader>
 
-            {/* Date */}
-            <Field>
-              <FieldLabel htmlFor="date">{dateLabel}</FieldLabel>
-              <Input
-                type="date"
-                id="date"
-                name="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-                autoComplete="transaction-date"
-              />
-            </Field>
-
-            {/* Installments (expense only) */}
-            {mode === 'expense' && (
+        <form onSubmit={handleSubmit} className="flex bg-muted/20 dark:bg-muted flex-1 flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto px-4 pb-4 pt-4">
+            <FieldGroup>
+              {/* Amount */}
               <Field>
-                <div className="flex items-center justify-between mb-2">
-                  <FieldLabel htmlFor="installments">{t('installments')}</FieldLabel>
-                  {installments > 1 && (
-                    <span className="text-xs text-neutral-500">
-                      {installments}x de {formatCurrency(perInstallment)}
-                    </span>
-                  )}
-                </div>
-                <Slider
-                  id="installments"
-                  min={1}
-                  max={24}
-                  step={1}
-                  value={[installments]}
-                  onValueChange={(value) => setInstallments(value[0])}
+                <FieldLabel htmlFor="amount">{t('amount')}</FieldLabel>
+                <CurrencyInputGroupInput
+                  ref={amountInputRef}
+                  id="amount"
+                  name="amount"
+                  value={amountCents}
+                  onChange={setAmountCents}
+                  required
+                  placeholder={t('amountPlaceholder')}
+                  autoComplete="transaction-amount"
                 />
-                <div className="flex justify-between text-xs text-neutral-500 mt-1">
-                  <span>1x</span>
-                  <span>{installments}x</span>
-                  <span>24x</span>
-                </div>
               </Field>
-            )}
 
-            <AlertDialogFooter>
-              <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
-              <Button type="submit" disabled={!canSubmit}>
-                {isSubmitting ? tCommon('saving') : existingData ? tCommon('update') : tCommon('create')}
+              {/* Description */}
+              <Field>
+                <FieldLabel htmlFor="description">{t('description')}</FieldLabel>
+                <Input
+                  type="text"
+                  id="description"
+                  name="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  required
+                  placeholder={descriptionPlaceholder}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              </Field>
+
+              {/* Category */}
+              <Field>
+                <FieldLabel htmlFor="category">{t('category')}</FieldLabel>
+                {hasCategories ? (
+                  <CategorySelect
+                    categories={categories}
+                    value={categoryId}
+                    onChange={setCategoryId}
+                    triggerId="category"
+                  />
+                ) : (
+                  <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-800">
+                    {mode === 'expense' ? t('noExpenseCategories') : t('noIncomeCategories')}
+                  </div>
+                )}
+              </Field>
+
+              {/* Account */}
+              <Field>
+                <FieldLabel htmlFor="account">{t('account')}</FieldLabel>
+                {hasAccounts ? (
+                  <Select
+                    value={accountId.toString()}
+                    onValueChange={(value) => setAccountId(parseInt(value))}
+                  >
+                    <SelectTrigger id="account">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {accounts.map((account) => (
+                          <SelectItem key={account.id} value={account.id.toString()}>
+                            {account.name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-800">
+                    {t('noAccounts')}
+                  </div>
+                )}
+              </Field>
+
+              {/* Date */}
+              <Field>
+                <FieldLabel htmlFor="date">{dateLabel}</FieldLabel>
+                <Input
+                  type="date"
+                  id="date"
+                  name="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  required
+                  autoComplete="transaction-date"
+                />
+              </Field>
+
+              {/* Installments (expense only) */}
+              {mode === 'expense' && (
+                <Field>
+                  <div className="flex items-center justify-between mb-2">
+                    <FieldLabel htmlFor="installments">{t('installments')}</FieldLabel>
+                    {installments > 1 && (
+                      <span className="text-xs text-neutral-500">
+                        {installments}x de {formatCurrency(perInstallment)}
+                      </span>
+                    )}
+                  </div>
+                  <Slider
+                    id="installments"
+                    min={1}
+                    max={24}
+                    step={1}
+                    value={[installments]}
+                    onValueChange={(value) => setInstallments(value[0])}
+                  />
+                  <div className="flex justify-between text-xs text-neutral-500 mt-1">
+                    <span>1x</span>
+                    <span>{installments}x</span>
+                    <span>24x</span>
+                  </div>
+                </Field>
+              )}
+            </FieldGroup>
+          </div>
+
+          <SheetFooter className="border-t border-border/60 bg-muted/70 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+            <SheetClose asChild>
+              <Button type="button" variant="outline">
+                {tCommon('cancel')}
               </Button>
-            </AlertDialogFooter>
-          </FieldGroup>
+            </SheetClose>
+            <Button type="submit" disabled={!canSubmit}>
+              {isSubmitting ? tCommon('saving') : existingData ? tCommon('update') : tCommon('create')}
+            </Button>
+          </SheetFooter>
         </form>
-      </AlertDialogContent>
-    </AlertDialog>
+      </SheetContent>
+    </Sheet>
   );
 }
