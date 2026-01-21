@@ -35,6 +35,7 @@ export type ExpenseEntry = {
   accountId: number;
   accountName: string;
   accountType: 'credit_card' | 'checking' | 'savings' | 'cash';
+  bankLogo: string | null;
   ignored: boolean;
 };
 
@@ -58,6 +59,7 @@ export type CreateExpenseInput = {
   categoryIcon: string | null;
   accountName: string;
   accountType: 'credit_card' | 'checking' | 'savings' | 'cash';
+  bankLogo: string | null;
 };
 
 // Reducer actions
@@ -192,6 +194,7 @@ function generateOptimisticEntries(
       accountId: input.accountId,
       accountName: input.accountName,
       accountType: input.accountType,
+      bankLogo: input.bankLogo,
       ignored: false,
       _optimistic: true,
       _tempId: `${tempId}-${i}`,

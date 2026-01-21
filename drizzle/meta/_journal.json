@@ -169,6 +169,13 @@
       "when": 1768915284643,
       "tag": "0023_nappy_sunspot",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1768990944031,
+      "tag": "0024_fair_bruce_banner",
+      "breakpoints": true
     }
   ]
 }

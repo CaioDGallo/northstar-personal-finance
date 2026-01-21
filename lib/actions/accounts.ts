@@ -9,6 +9,7 @@ import { t } from '@/lib/i18n/server-errors';
 import { handleDbError } from '@/lib/db-errors';
 import { computeBalance } from '@/lib/balance';
 import { activeTransactionCondition, activeIncomeCondition, activeTransferCondition } from '@/lib/query-helpers';
+import { isValidBankLogo } from '@/lib/bank-logos';
 
 type ActionResult<T = void> =
   | { success: true; data?: T }
@@ -60,6 +61,15 @@ async function validateCurrentBalance(balance: unknown) {
   }
   if (typeof balance !== 'number' || !Number.isInteger(balance)) {
     throw new Error(await t('errors.invalidBalance'));
+  }
+}
+
+async function validateBankLogo(logo: unknown) {
+  if (logo === null || logo === undefined) {
+    return;
+  }
+  if (typeof logo !== 'string' || !isValidBankLogo(logo)) {
+    throw new Error(await t('errors.invalidBankLogo'));
   }
 }
 
@@ -249,6 +259,7 @@ export async function createAccount(data: Omit<NewAccount, 'id' | 'userId' | 'cr
     await validateCreditLimit(data.creditLimit);
     await validateCreditLimitRequired(data.type, data.creditLimit);
     await validateCurrentBalance(data.currentBalance);
+    await validateBankLogo(data.bankLogo);
 
     const userId = await getCurrentUserId();
     const accountData = {
@@ -294,6 +305,9 @@ export async function updateAccount(id: number, data: Partial<Omit<NewAccount, '
     }
     if (updates.currentBalance !== undefined) {
       await validateCurrentBalance(updates.currentBalance);
+    }
+    if (updates.bankLogo !== undefined) {
+      await validateBankLogo(updates.bankLogo);
     }
 
     // When changing type to credit card, require credit limit

@@ -86,6 +86,7 @@
     "invalidCreditLimit": "Limite de crédito deve ser um inteiro não-negativo (centavos)",
     "creditLimitRequired": "O limite de crédito é obrigatório para cartões de crédito",
     "invalidBalance": "Saldo inválido",
+    "invalidBankLogo": "Logo de banco inválido",
     "nameRequired": "Nome é obrigatório",
     "invalidDueDay": "Dia de vencimento deve estar entre 1 e 31"
   },
@@ -531,6 +532,9 @@
   "accountForm": {
     "name": "Nome",
     "type": "Tipo",
+    "bankLogo": "Logo do banco",
+    "selectBankLogo": "Selecionar logo",
+    "noBankLogo": "Sem logo",
     "initialBalance": "Saldo Inicial",
     "initialBalancePlaceholder": "1000,00",
     "closingDay": "Dia do Fechamento (1-28)",

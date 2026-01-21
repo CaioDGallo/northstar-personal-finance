@@ -133,6 +133,7 @@ export function TransactionForm({
               categoryIcon: category?.icon || null,
               accountName: account?.name || '',
               accountType: account?.type || 'checking',
+              bankLogo: account?.bankLogo || null,
             });
           } else {
             await createExpense(data);

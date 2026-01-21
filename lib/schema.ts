@@ -36,6 +36,7 @@ export const accounts = pgTable('accounts', {
   closingDay: integer('closing_day'),
   paymentDueDay: integer('payment_due_day'),
   creditLimit: integer('credit_limit'), // nullable, cents - only for credit cards
+  bankLogo: text('bank_logo'), // nullable, bank logo key (e.g., "nubank", "inter")
   createdAt: timestamp('created_at').defaultNow(),
 });
 

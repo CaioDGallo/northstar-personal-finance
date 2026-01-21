@@ -27,6 +27,7 @@ import { MoreVerticalIcon } from '@hugeicons/core-free-icons';
 import { accountTypeConfig } from '@/lib/account-type-config';
 import { formatCurrency } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
+import { BankLogo } from '@/components/bank-logo';
 
 type AccountCardProps = {
   account: Account;
@@ -75,13 +76,19 @@ export function AccountCard({ account, onChange }: AccountCardProps) {
   return (
     <Card className="py-0">
       <CardContent className="flex items-center gap-3 md:gap-4 px-3 md:px-4 py-3">
-        {/* Account type icon */}
-        <div
-          className="size-10 shrink-0 rounded-full flex items-center justify-center text-white"
-          style={{ backgroundColor: config.color }}
-        >
-          <HugeiconsIcon icon={config.icon} strokeWidth={2} size={20} />
-        </div>
+        {/* Account icon (bank logo or type icon) */}
+        {account.bankLogo ? (
+          <div className="size-10 shrink-0 rounded-full flex items-center justify-center bg-white p-1.5">
+            <BankLogo logo={account.bankLogo} size={32} />
+          </div>
+        ) : (
+          <div
+            className="size-10 shrink-0 rounded-full flex items-center justify-center text-white"
+            style={{ backgroundColor: config.color }}
+          >
+            <HugeiconsIcon icon={config.icon} strokeWidth={2} size={20} />
+          </div>
+        )}
 
         {/* Account name + type */}
         <div className="flex-1 min-w-0">

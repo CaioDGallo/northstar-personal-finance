@@ -41,6 +41,7 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react';
 import { MoreVerticalIcon, Tick02Icon, Clock01Icon } from '@hugeicons/core-free-icons';
 import { accountTypeConfig } from '@/lib/account-type-config';
+import { BankLogo } from '@/components/bank-logo';
 
 type ExpenseCardBaseProps = {
   entry: {
@@ -61,6 +62,7 @@ type ExpenseCardBaseProps = {
     accountId: number;
     accountName: string;
     accountType: 'credit_card' | 'checking' | 'savings' | 'cash';
+    bankLogo: string | null;
     ignored: boolean;
   };
   categories: Category[];
@@ -380,19 +382,25 @@ export function ExpenseCard(props: ExpenseCardProps) {
                 strokeWidth={2}
                 aria-hidden="true"
               />
-              {/* Account type icon */}
-              <div
-                className="size-4 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: accountTypeConfig[entry.accountType].color }}
-                aria-hidden="true"
-              >
-                <HugeiconsIcon
-                  icon={accountTypeConfig[entry.accountType].icon}
-                  size={10}
-                  className="text-white"
-                  strokeWidth={2}
-                />
-              </div>
+              {/* Account icon (bank logo or type icon) */}
+              {entry.bankLogo ? (
+                <div className="size-4 rounded-full flex items-center justify-center bg-white p-0.5" aria-hidden="true">
+                  <BankLogo logo={entry.bankLogo} size={16} />
+                </div>
+              ) : (
+                <div
+                  className="size-4 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: accountTypeConfig[entry.accountType].color }}
+                  aria-hidden="true"
+                >
+                  <HugeiconsIcon
+                    icon={accountTypeConfig[entry.accountType].icon}
+                    size={10}
+                    className="text-white"
+                    strokeWidth={2}
+                  />
+                </div>
+              )}
             </div>
           </div>
 

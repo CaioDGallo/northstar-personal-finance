@@ -10,6 +10,11 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Button } from '@/components/ui/button';
 import { AlertDialogCancel, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { useTranslations } from 'next-intl';
+import { BankLogoPicker } from '@/components/bank-logo-picker';
+import { BankLogo } from '@/components/bank-logo';
+import { BANK_LOGOS } from '@/lib/bank-logos';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { BankIcon } from '@hugeicons/core-free-icons';
 
 type AccountFormProps = {
   account?: Account;
@@ -27,6 +32,8 @@ export function AccountForm({ account, onSuccess }: AccountFormProps) {
   const [creditLimitCents, setCreditLimitCents] = useState(
     account?.creditLimit ?? 0
   );
+  const [bankLogo, setBankLogo] = useState<string | null>(account?.bankLogo ?? null);
+  const [logoPickerOpen, setLogoPickerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const t = useTranslations('accountForm');
   const tAccountTypes = useTranslations('accountTypes');
@@ -45,6 +52,7 @@ export function AccountForm({ account, onSuccess }: AccountFormProps) {
       const data = {
         name,
         type,
+        bankLogo,
         ...(!account && { currentBalance: initialBalanceCents }),
         ...(type === 'credit_card' && {
           closingDay,
@@ -95,6 +103,39 @@ export function AccountForm({ account, onSuccess }: AccountFormProps) {
               </SelectGroup>
             </SelectContent>
           </Select>
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="bankLogo">{t('bankLogo')}</FieldLabel>
+          <button
+            type="button"
+            onClick={() => setLogoPickerOpen(true)}
+            className="flex items-center gap-3 px-3 py-2 border rounded-md hover:bg-muted transition-colors text-left w-full"
+          >
+            {bankLogo ? (
+              <>
+                <div className="size-8 rounded-full flex items-center justify-center bg-white shrink-0 p-1">
+                  <BankLogo logo={bankLogo} size={24} />
+                </div>
+                <span className="text-sm">
+                  {BANK_LOGOS[bankLogo as keyof typeof BANK_LOGOS]?.name}
+                </span>
+              </>
+            ) : (
+              <>
+                <div className="size-8 rounded-full flex items-center justify-center bg-muted shrink-0">
+                  <HugeiconsIcon
+                    icon={BankIcon}
+                    className="size-4 text-muted-foreground"
+                    strokeWidth={2}
+                  />
+                </div>
+                <span className="text-sm text-muted-foreground">
+                  {t('selectBankLogo')}
+                </span>
+              </>
+            )}
+          </button>
         </Field>
 
         {!account && (
@@ -174,6 +215,16 @@ export function AccountForm({ account, onSuccess }: AccountFormProps) {
           </Button>
         </AlertDialogFooter>
       </FieldGroup>
+
+      <BankLogoPicker
+        currentLogo={bankLogo}
+        open={logoPickerOpen}
+        onOpenChange={setLogoPickerOpen}
+        onSelect={(logo) => {
+          setBankLogo(logo);
+          setLogoPickerOpen(false);
+        }}
+      />
     </form>
   );
 }
