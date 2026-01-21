@@ -53,13 +53,13 @@ type IncomeCardBaseProps = {
     categoryIcon: string | null;
     accountId: number;
     accountName: string;
-     accountType: 'credit_card' | 'checking' | 'savings' | 'cash';
-     bankLogo: string | null;
-     ignored: boolean;
-     replenishCategoryId: number | null;
-     replenishCategoryName: string | null;
-     replenishCategoryColor: string | null;
-   };
+    accountType: 'credit_card' | 'checking' | 'savings' | 'cash';
+    bankLogo: string | null;
+    ignored: boolean;
+    replenishCategoryId: number | null;
+    replenishCategoryName: string | null;
+    replenishCategoryColor: string | null;
+  };
 
   categories: Category[];
   accounts: Account[];
@@ -392,7 +392,7 @@ export function IncomeCard(props: IncomeCardProps) {
               />
               {/* Account icon (bank logo or type icon) */}
               {income.bankLogo ? (
-                <div className="size-4 rounded-full flex items-center justify-center bg-white p-0.5" aria-hidden="true">
+                <div className="size-4 rounded-full flex items-center border border-gray-300 justify-center bg-white p-0.5" aria-hidden="true">
                   <BankLogo logo={income.bankLogo} size={16} />
                 </div>
               ) : (

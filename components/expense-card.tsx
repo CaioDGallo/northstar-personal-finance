@@ -384,7 +384,7 @@ export function ExpenseCard(props: ExpenseCardProps) {
               />
               {/* Account icon (bank logo or type icon) */}
               {entry.bankLogo ? (
-                <div className="size-4 rounded-full flex items-center justify-center bg-white p-0.5" aria-hidden="true">
+                <div className="size-4 rounded-full flex items-center justify-center border border-gray-300 bg-white p-0.5" aria-hidden="true">
                   <BankLogo logo={entry.bankLogo} size={16} />
                 </div>
               ) : (
@@ -419,56 +419,56 @@ export function ExpenseCard(props: ExpenseCardProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" onPointerDown={stopCardGesture}>
-                <DropdownMenuItem
-                  onClick={() => setDetailOpen(true)}
-                  onSelect={stopCardGesture}
-                  onPointerDown={stopCardGesture}
-                >
-                  {t('viewDetails')}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setEditOpen(true)}
-                  onSelect={stopCardGesture}
-                  onPointerDown={stopCardGesture}
-                >
-                  {tCommon('edit')}
-                </DropdownMenuItem>
-                {isPaid ? (
                   <DropdownMenuItem
-                    onClick={handleMarkPending}
+                    onClick={() => setDetailOpen(true)}
                     onSelect={stopCardGesture}
                     onPointerDown={stopCardGesture}
                   >
-                    {t('markAsPending')}
+                    {t('viewDetails')}
                   </DropdownMenuItem>
-                ) : (
                   <DropdownMenuItem
-                    onClick={handleMarkPaid}
+                    onClick={() => setEditOpen(true)}
                     onSelect={stopCardGesture}
                     onPointerDown={stopCardGesture}
                   >
-                    {t('markAsPaid')}
+                    {tCommon('edit')}
                   </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onClick={handleToggleIgnore} onSelect={stopCardGesture} onPointerDown={stopCardGesture}>
-                  {entry.ignored ? t('showInTotals') : t('hideFromTotals')}
-                </DropdownMenuItem>
-                {canConvertToFatura && (
+                  {isPaid ? (
+                    <DropdownMenuItem
+                      onClick={handleMarkPending}
+                      onSelect={stopCardGesture}
+                      onPointerDown={stopCardGesture}
+                    >
+                      {t('markAsPending')}
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem
+                      onClick={handleMarkPaid}
+                      onSelect={stopCardGesture}
+                      onPointerDown={stopCardGesture}
+                    >
+                      {t('markAsPaid')}
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={handleToggleIgnore} onSelect={stopCardGesture} onPointerDown={stopCardGesture}>
+                    {entry.ignored ? t('showInTotals') : t('hideFromTotals')}
+                  </DropdownMenuItem>
+                  {canConvertToFatura && (
+                    <DropdownMenuItem
+                      onClick={() => setConvertDialogOpen(true)}
+                      onSelect={stopCardGesture}
+                      onPointerDown={stopCardGesture}
+                    >
+                      {t('convertToFaturaPayment')}
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem
-                    onClick={() => setConvertDialogOpen(true)}
+                    onClick={() => setShowDeleteConfirm(true)}
                     onSelect={stopCardGesture}
                     onPointerDown={stopCardGesture}
                   >
-                    {t('convertToFaturaPayment')}
+                    {t('deleteTransaction')}
                   </DropdownMenuItem>
-                )}
-                <DropdownMenuItem
-                  onClick={() => setShowDeleteConfirm(true)}
-                  onSelect={stopCardGesture}
-                  onPointerDown={stopCardGesture}
-                >
-                  {t('deleteTransaction')}
-                </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -497,14 +497,14 @@ export function ExpenseCard(props: ExpenseCardProps) {
         onConvertToFatura={() => setConvertDialogOpen(true)}
       />
 
-        <EditTransactionDialog
-          mode="expense"
-          transactionId={entry.transactionId}
-          accounts={accounts}
-          categories={categories}
-          open={editOpen}
-          onOpenChange={setEditOpen}
-        />
+      <EditTransactionDialog
+        mode="expense"
+        transactionId={entry.transactionId}
+        accounts={accounts}
+        categories={categories}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
 
 
       {canConvertToFatura && (
