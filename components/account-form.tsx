@@ -15,6 +15,7 @@ import { BankLogo } from '@/components/bank-logo';
 import { BANK_LOGOS } from '@/lib/bank-logos';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { BankIcon } from '@hugeicons/core-free-icons';
+import { toast } from 'sonner';
 
 type AccountFormProps = {
   account?: Account;
@@ -43,7 +44,7 @@ export function AccountForm({ account, onSuccess }: AccountFormProps) {
 
     // Validate credit limit for credit cards
     if (type === 'credit_card' && creditLimitCents === 0) {
-      alert(t('creditLimitRequired'));
+      toast.error(t('creditLimitRequired'));
       return;
     }
 
