@@ -3,7 +3,7 @@ import { getAccounts, getRecentAccounts } from '@/lib/actions/accounts';
 import { getCategories, getRecentCategories } from '@/lib/actions/categories';
 import { getUnpaidFaturas } from '@/lib/actions/faturas';
 import { getCurrentYearMonth } from '@/lib/utils';
-import { ExpensesClient } from '@/app/(app)/expenses/expenses-client';
+import { ExpensesClient } from '../../expenses/expenses-client';
 
 export default async function QuickAddExpense({
   searchParams,
