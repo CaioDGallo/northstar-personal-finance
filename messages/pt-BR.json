@@ -951,6 +951,15 @@
     "resetTransactionsSuccess": "Dados removidos com sucesso ({transactions} despesas, {entries} parcelas, {income} receitas, {transfers} transferências, {faturas} faturas, {accounts} contas rebalanceadas)",
     "resetting": "Limpando..."
   },
+  "pwa": {
+    "title": "Instalar Fluxo.sh",
+    "description": "Instale o app para acesso rápido e offline.",
+    "descriptionIos": "Adicione à tela inicial para acesso rápido.",
+    "install": "Instalar App",
+    "dismiss": "Agora não",
+    "iosStep1": "Toque em",
+    "iosStep2": "\"Adicionar à Tela de Início\""
+  },
   "landing": {
     "tagline": "Controle financeiro sem planilha",
     "title": "Fluxo. Seu dinheiro no piloto automático.",

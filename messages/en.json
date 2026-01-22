@@ -941,6 +941,15 @@
     "resetTransactionsSuccess": "Data removed successfully ({transactions} expenses, {entries} entries, {income} income, {transfers} transfers, {faturas} invoices, {accounts} accounts rebalanced)",
     "resetting": "Resetting..."
   },
+  "pwa": {
+    "title": "Install Fluxo.sh",
+    "description": "Install the app for quick offline access.",
+    "descriptionIos": "Add to home screen for quick access.",
+    "install": "Install App",
+    "dismiss": "Not now",
+    "iosStep1": "Tap",
+    "iosStep2": "\"Add to Home Screen\""
+  },
   "landing": {
     "tagline": "Finance control without spreadsheets",
     "title": "Fluxo. Your money on autopilot.",

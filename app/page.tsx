@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ThemeToggleRow } from '@/components/theme-toggle-row';
+import { HeroTitle } from '@/components/hero-title';
+import { PwaInstallBanner } from '@/components/pwa-install-banner';
 
 export const metadata: Metadata = {
   title: 'Fluxo.sh | Financas pessoais no Brasil',
@@ -69,9 +71,7 @@ export default async function Home() {
               <Badge variant="outline" className="border-foreground text-foreground bg-background/80 dark:bg-background/10">
                 {t('heroBadge')}
               </Badge>
-              <h1 className="text-4xl font-black leading-tight md:text-5xl">
-                {t('title')}
-              </h1>
+              <HeroTitle className="text-4xl font-black leading-tight md:text-5xl" />
               <p className="text-base text-foreground/80 md:text-lg">
                 {t('subtitle')}
               </p>
@@ -318,6 +318,8 @@ export default async function Home() {
           </div>
         </div>
       </footer>
+
+      <PwaInstallBanner />
     </div>
   );
 }

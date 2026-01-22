@@ -105,18 +105,15 @@ export async function updateFaturaTotal(accountId: number, yearMonth: string): P
 
   const entriesTotal = entriesResult[0]?.total || 0;
 
-  // Sum all refunds for this fatura (income records linked to transactions)
-  // Refunds are stored with the month they credit the fatura, not the original transaction month
+  // Sum all refunds for this fatura (all income records for this account and month)
+  // Refunds are stored with the month they credit the fatura
   const refundsResult = await db
     .select({ total: sql<number>`COALESCE(SUM(${income.amount}), 0)` })
     .from(income)
-    .innerJoin(entries, eq(entries.transactionId, income.refundOfTransactionId))
     .where(
       and(
         eq(income.userId, userId),
         eq(income.accountId, accountId),
-        isNotNull(income.refundOfTransactionId),
-        // Match refunds by the received date month, not the original transaction
         sql`to_char(${income.receivedDate}, 'YYYY-MM') = ${yearMonth}`
       )
     );
@@ -404,7 +401,6 @@ export async function batchUpdateFaturaTotals(
       FROM income i
       WHERE i.user_id = ${userId}
         AND i.account_id = ${accountId}
-        AND i.refund_of_transaction_id IS NOT NULL
         AND to_char(i.received_date, 'YYYY-MM') = ANY(${months})
       GROUP BY i.user_id, i.account_id, to_char(i.received_date, 'YYYY-MM')
     ) AS refunds_agg
@@ -586,7 +582,7 @@ export const getFaturaWithEntries = cache(async (faturaId: number) => {
         )
         .orderBy(desc(entries.purchaseDate));
 
-      // Get refunds for this fatura
+      // Get refunds for this fatura (all income records for this account and month)
       const faturaRefunds = await db
         .select({
           id: income.id,
@@ -606,7 +602,6 @@ export const getFaturaWithEntries = cache(async (faturaId: number) => {
           and(
             eq(income.userId, userId),
             eq(income.accountId, fatura[0].accountId),
-            isNotNull(income.refundOfTransactionId),
             sql`to_char(${income.receivedDate}, 'YYYY-MM') = ${fatura[0].yearMonth}`
           )
         )
