@@ -12,9 +12,11 @@ type Props = {
   onToggleRow: (rowIndex: number) => void;
   onSelectAll: () => void;
   onDeselectAll: () => void;
+  startDate?: string;
+  closingDate?: string;
 };
 
-export function ImportPreview({ parseResult, rowsWithSuggestions, selectedRows, onToggleRow, onSelectAll, onDeselectAll }: Props) {
+export function ImportPreview({ parseResult, rowsWithSuggestions, selectedRows, onToggleRow, onSelectAll, onDeselectAll, startDate, closingDate }: Props) {
   const { rows, errors, skipped } = parseResult;
   const tParsers = useTranslations('parsers');
   const t = useTranslations('import');
@@ -24,6 +26,12 @@ export function ImportPreview({ parseResult, rowsWithSuggestions, selectedRows, 
 
   const expenseCount = displayRows.filter((r) => r.type === 'expense' && 'suggestedCategory' in r && r.suggestedCategory).length;
   const incomeCount = displayRows.filter((r) => r.type === 'income' && 'suggestedCategory' in r && r.suggestedCategory).length;
+
+  // Check for transactions outside OFX date range
+  const outOfRangeCount = (startDate && closingDate) ? displayRows.filter((r) => {
+    const date = r.date;
+    return date < startDate || date > closingDate;
+  }).length : 0;
 
   return (
     <div className="space-y-4">
@@ -51,6 +59,12 @@ export function ImportPreview({ parseResult, rowsWithSuggestions, selectedRows, 
           <div className="flex items-center justify-between text-sm mt-2">
             <span className="text-gray-600 dark:text-gray-400">Skipped</span>
             <span className="font-medium text-gray-500">{skipped}</span>
+          </div>
+        )}
+        {outOfRangeCount > 0 && (
+          <div className="flex items-center justify-between text-sm mt-2">
+            <span className="text-gray-600 dark:text-gray-400">Fora do período OFX</span>
+            <span className="font-medium text-yellow-600 dark:text-yellow-400">{outOfRangeCount}</span>
           </div>
         )}
         <div className="flex items-center justify-between text-sm mt-2 pt-2 border-t dark:border-gray-800">

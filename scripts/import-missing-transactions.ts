@@ -63,10 +63,11 @@ async function importMissing() {
     }
 
     // Skip fatura payments
-    if (row.isFaturaPayment) {
-      console.log(`  Skipping fatura payment: ${row.description}`);
-      continue;
-    }
+    // TODO: Add proper fatura payment detection (isFaturaPayment property removed)
+    // if (row.isFaturaPayment) {
+    //   console.log(`  Skipping fatura payment: ${row.description}`);
+    //   continue;
+    // }
 
     // Skip income/refunds for now (need special handling)
     if (row.type === 'income') {
@@ -154,10 +155,11 @@ async function importMissing() {
     }
 
     // Skip fatura payments
-    if (row.isFaturaPayment) {
-      console.log(`  Skipping fatura payment: ${row.description}`);
-      continue;
-    }
+    // TODO: Add proper fatura payment detection (isFaturaPayment property removed)
+    // if (row.isFaturaPayment) {
+    //   console.log(`  Skipping fatura payment: ${row.description}`);
+    //   continue;
+    // }
 
     // Skip income/refunds
     if (row.type === 'income') {

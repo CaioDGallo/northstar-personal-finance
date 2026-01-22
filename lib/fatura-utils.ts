@@ -164,8 +164,10 @@ export function getFaturaMonthFromClosingDate(
     return `${year}-${String(month).padStart(2, '0')}`;
   } else {
     // Purchase after closing → belongs to next month's fatura
-    const year = purchaseDate.getUTCFullYear();
-    const month = purchaseDate.getUTCMonth() + 1; // Already 1-indexed
+    const nextMonth = new Date(closingDate);
+    nextMonth.setUTCMonth(nextMonth.getUTCMonth() + 1);
+    const year = nextMonth.getUTCFullYear();
+    const month = nextMonth.getUTCMonth() + 1;
     return `${year}-${String(month).padStart(2, '0')}`;
   }
 }
