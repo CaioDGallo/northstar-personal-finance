@@ -119,29 +119,22 @@ export async function bulkIncrementCategoryFrequency(
     >
   );
 
-  // Insert/update each unique combination
-  for (const item of Object.values(grouped)) {
-    await db
-      .insert(categoryFrequency)
-      .values({
-        userId,
-        descriptionNormalized: item.descriptionNormalized,
-        categoryId: item.categoryId,
-        type: item.type,
-        count: item.count,
-        lastUsedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: [
-          categoryFrequency.userId,
-          categoryFrequency.descriptionNormalized,
-          categoryFrequency.categoryId,
-          categoryFrequency.type,
-        ],
-        set: {
-          count: sql`${categoryFrequency.count} + ${item.count}`,
-          lastUsedAt: new Date(),
-        },
-      });
-  }
+  // Batch insert/update all unique combinations
+  const values = Object.values(grouped);
+  if (values.length === 0) return;
+
+  // Use raw SQL for bulk upsert (Drizzle doesn't support bulk onConflictDoUpdate)
+  await db.execute(sql`
+    INSERT INTO category_frequency (user_id, description_normalized, category_id, type, count, last_used_at)
+    VALUES ${sql.join(
+      values.map(
+        (v) => sql`(${userId}, ${v.descriptionNormalized}, ${v.categoryId}, ${v.type}, ${v.count}, NOW())`
+      ),
+      sql`, `
+    )}
+    ON CONFLICT (user_id, description_normalized, category_id, type)
+    DO UPDATE SET
+      count = category_frequency.count + EXCLUDED.count,
+      last_used_at = NOW()
+  `);
 }

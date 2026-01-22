@@ -6,7 +6,7 @@ import { computeClosingDate, computeFaturaWindowStart, getFaturaPaymentDueDate }
 import { t } from '@/lib/i18n/server-errors';
 import { checkBulkRateLimit } from '@/lib/rate-limit';
 import { accounts, categories, entries, faturas, income, transactions, transfers, type Fatura } from '@/lib/schema';
-import { and, desc, eq, isNotNull, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import { unstable_cache, revalidatePath, revalidateTag } from 'next/cache';
 import { cache } from 'react';
 import { syncAccountBalance } from '@/lib/actions/accounts';
@@ -309,12 +309,159 @@ export async function recalculateInstallmentDates(
       )
     );
 
-  // Update each entry's purchaseDate to the fatura window start
-  for (const entry of entriesToUpdate) {
-    await db
-      .update(entries)
-      .set({ purchaseDate: windowStart })
-      .where(eq(entries.id, entry.entryId));
+  // Bulk update entry purchaseDates to the fatura window start
+  if (entriesToUpdate.length > 0) {
+    const entryIds = entriesToUpdate.map((e) => e.entryId);
+    await db.update(entries).set({ purchaseDate: windowStart }).where(inArray(entries.id, entryIds));
+  }
+}
+
+/**
+ * Batch ensures faturas exist for multiple months.
+ * Creates missing faturas for the given account and months.
+ */
+export async function batchEnsureFaturasExist(
+  accountId: number,
+  months: string[]
+): Promise<void> {
+  if (months.length === 0) return;
+
+  const userId = await getCurrentUserId();
+
+  // Get account to compute dates
+  const account = await db
+    .select()
+    .from(accounts)
+    .where(and(eq(accounts.userId, userId), eq(accounts.id, accountId)))
+    .limit(1);
+
+  if (!account[0]) {
+    throw new Error(await t('errors.accountNotFound'));
+  }
+
+  const paymentDueDay = account[0].paymentDueDay || 1;
+  const closingDay = account[0].closingDay || 1;
+
+  // Check which faturas already exist
+  const existingFaturas = await db
+    .select({ yearMonth: faturas.yearMonth })
+    .from(faturas)
+    .where(and(eq(faturas.userId, userId), eq(faturas.accountId, accountId), inArray(faturas.yearMonth, months)));
+
+  const existingMonths = new Set(existingFaturas.map((f) => f.yearMonth));
+  const missingMonths = months.filter((m) => !existingMonths.has(m));
+
+  if (missingMonths.length === 0) return;
+
+  // Bulk insert missing faturas
+  const faturaValues = missingMonths.map((yearMonth) => ({
+    userId,
+    accountId,
+    yearMonth,
+    closingDate: computeClosingDate(yearMonth, closingDay),
+    startDate: null,
+    totalAmount: 0,
+    dueDate: getFaturaPaymentDueDate(yearMonth, paymentDueDay, closingDay),
+  }));
+
+  await db.insert(faturas).values(faturaValues);
+}
+
+/**
+ * Batch updates fatura totals for multiple months.
+ * Uses a subquery to calculate all totals in a single UPDATE.
+ */
+export async function batchUpdateFaturaTotals(
+  accountId: number,
+  months: string[]
+): Promise<void> {
+  if (months.length === 0) return;
+
+  const userId = await getCurrentUserId();
+
+  // Update all fatura totals in a single query using subqueries
+  await db.execute(sql`
+    UPDATE faturas
+    SET total_amount = COALESCE(entries_total, 0) - COALESCE(refunds_total, 0)
+    FROM (
+      SELECT
+        e.user_id,
+        e.account_id,
+        e.fatura_month AS year_month,
+        SUM(e.amount) AS entries_total
+      FROM entries e
+      WHERE e.user_id = ${userId}
+        AND e.account_id = ${accountId}
+        AND e.fatura_month = ANY(${months})
+      GROUP BY e.user_id, e.account_id, e.fatura_month
+    ) AS entries_agg
+    FULL OUTER JOIN (
+      SELECT
+        i.user_id,
+        i.account_id,
+        to_char(i.received_date, 'YYYY-MM') AS year_month,
+        SUM(i.amount) AS refunds_total
+      FROM income i
+      WHERE i.user_id = ${userId}
+        AND i.account_id = ${accountId}
+        AND i.refund_of_transaction_id IS NOT NULL
+        AND to_char(i.received_date, 'YYYY-MM') = ANY(${months})
+      GROUP BY i.user_id, i.account_id, to_char(i.received_date, 'YYYY-MM')
+    ) AS refunds_agg
+    ON entries_agg.user_id = refunds_agg.user_id
+      AND entries_agg.account_id = refunds_agg.account_id
+      AND entries_agg.year_month = refunds_agg.year_month
+    WHERE faturas.user_id = ${userId}
+      AND faturas.account_id = ${accountId}
+      AND faturas.year_month = COALESCE(entries_agg.year_month, refunds_agg.year_month)
+  `);
+}
+
+/**
+ * Batch recalculates installment dates for multiple months.
+ * Updates entry purchaseDates for installments within the fatura window.
+ */
+export async function batchRecalculateInstallmentDates(
+  accountId: number,
+  months: string[]
+): Promise<void> {
+  if (months.length === 0) return;
+
+  const userId = await getCurrentUserId();
+
+  // Get account billing config
+  const account = await db
+    .select({ closingDay: accounts.closingDay })
+    .from(accounts)
+    .where(and(eq(accounts.userId, userId), eq(accounts.id, accountId)))
+    .limit(1);
+
+  if (!account[0]?.closingDay) return;
+
+  const closingDay = account[0].closingDay;
+
+  // For each month, compute window start and update entries
+  for (const yearMonth of months) {
+    const windowStart = computeFaturaWindowStart(yearMonth, closingDay);
+
+    const entriesToUpdate = await db
+      .select({ entryId: entries.id })
+      .from(entries)
+      .innerJoin(transactions, eq(entries.transactionId, transactions.id))
+      .where(
+        and(
+          eq(entries.userId, userId),
+          eq(entries.accountId, accountId),
+          eq(entries.faturaMonth, yearMonth),
+          sql`${transactions.totalInstallments} > 1`,
+          sql`${entries.installmentNumber} > 1`
+        )
+      );
+
+    if (entriesToUpdate.length > 0) {
+      const entryIds = entriesToUpdate.map((e) => e.entryId);
+      await db.update(entries).set({ purchaseDate: windowStart }).where(inArray(entries.id, entryIds));
+    }
   }
 }
 

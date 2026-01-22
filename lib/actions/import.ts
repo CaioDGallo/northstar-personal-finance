@@ -7,7 +7,13 @@ import { revalidatePath } from 'next/cache';
 import type { ValidatedImportRow, CategorySuggestion } from '@/lib/import/types';
 import { computeClosingDate, computeFaturaWindowStart, getFaturaMonth, getFaturaMonthFromClosingDate, getFaturaPaymentDueDate } from '@/lib/fatura-utils';
 import { addMonths } from '@/lib/utils';
-import { ensureFaturaExists, updateFaturaTotal, recalculateInstallmentDates } from '@/lib/actions/faturas';
+import {
+  ensureFaturaExists,
+  updateFaturaTotal,
+  batchEnsureFaturasExist,
+  batchUpdateFaturaTotals,
+  batchRecalculateInstallmentDates,
+} from '@/lib/actions/faturas';
 import { syncAccountBalance } from '@/lib/actions/accounts';
 import { getDefaultImportCategories } from '@/lib/actions/categories';
 import { getCurrentUserId } from '@/lib/auth';
@@ -234,6 +240,21 @@ export async function importExpenses(data: ImportExpenseData): Promise<ImportRes
 
     // Use transaction for atomicity
     await db.transaction(async (tx) => {
+      // Pre-calculate all transaction and entry values
+      const transactionValues: Array<{
+        userId: string;
+        description: string;
+        totalAmount: number;
+        totalInstallments: number;
+        categoryId: number;
+      }> = [];
+      const entryMetadata: Array<{
+        amountCents: number;
+        purchaseDate: string;
+        faturaMonth: string;
+        dueDate: string;
+      }> = [];
+
       for (const row of rows) {
         // Calculate fatura month and due date based on account type
         let faturaMonth: string;
@@ -251,39 +272,50 @@ export async function importExpenses(data: ImportExpenseData): Promise<ImportRes
           dueDate = row.date;
         }
 
-        // 1. Create transaction (single installment)
-        const [transaction] = await tx
-          .insert(transactions)
-          .values({
-            userId,
-            description: row.description,
-            totalAmount: row.amountCents,
-            totalInstallments: 1,
-            categoryId,
-          })
-          .returning();
-
-        // 2. Create single entry with correct fatura month and due date
-        await tx.insert(entries).values({
+        transactionValues.push({
           userId,
-          transactionId: transaction.id,
-          accountId,
-          amount: row.amountCents,
+          description: row.description,
+          totalAmount: row.amountCents,
+          totalInstallments: 1,
+          categoryId,
+        });
+
+        entryMetadata.push({
+          amountCents: row.amountCents,
           purchaseDate: row.date,
           faturaMonth,
           dueDate,
-          installmentNumber: 1,
-          paidAt: null,
         });
       }
+
+      // Bulk insert transactions with returning (PostgreSQL guarantees order)
+      const insertedTxs = await tx
+        .insert(transactions)
+        .values(transactionValues)
+        .returning({ id: transactions.id });
+
+      // Map entry values using returned IDs
+      const entryValues = insertedTxs.map((tx, i) => ({
+        userId,
+        transactionId: tx.id,
+        accountId,
+        amount: entryMetadata[i].amountCents,
+        purchaseDate: entryMetadata[i].purchaseDate,
+        faturaMonth: entryMetadata[i].faturaMonth,
+        dueDate: entryMetadata[i].dueDate,
+        installmentNumber: 1,
+        paidAt: null,
+      }));
+
+      // Bulk insert entries
+      await tx.insert(entries).values(entryValues);
     });
 
     // Ensure faturas exist and update totals for credit cards
-    if (hasBillingConfig) {
-      for (const month of affectedFaturas) {
-        await ensureFaturaExists(accountId, month);
-        await updateFaturaTotal(accountId, month);
-      }
+    if (hasBillingConfig && affectedFaturas.size > 0) {
+      const months = Array.from(affectedFaturas);
+      await batchEnsureFaturasExist(accountId, months);
+      await batchUpdateFaturaTotals(accountId, months);
     }
 
     await syncAccountBalance(accountId);
@@ -321,19 +353,6 @@ type ImportMixedResult =
 
 // Helper: Find existing installment transaction by description and total installments
 type DbClient = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
-
-async function getTransactionCategoryId(
-  dbClient: DbClient,
-  transactionId: number
-): Promise<number | undefined> {
-  const result = await dbClient
-    .select({ categoryId: transactions.categoryId })
-    .from(transactions)
-    .where(eq(transactions.id, transactionId))
-    .limit(1);
-
-  return result.length > 0 ? result[0].categoryId : undefined;
-}
 
 async function findExistingInstallmentTransaction(
   dbClient: DbClient,
@@ -583,6 +602,7 @@ async function processInstallmentGroup(
   }
 
   if (existing) {
+    // Bulk update existing entries with new amounts
     for (const row of rows) {
       const installmentNumber = row.installmentInfo!.current;
       const entryId = existingEntryIds.get(installmentNumber);
@@ -603,23 +623,40 @@ async function processInstallmentGroup(
     }
   }
 
-  for (const installmentNumber of entriesToCreate) {
-    const dates = computeEntryDates(baseDate, installmentNumber, account, ofxClosingDate, baseFaturaMonthOverride);
-    affectedFaturas.add(dates.faturaMonth);
+  // Bulk create new entries
+  if (entriesToCreate.length > 0) {
+    const entryValues: Array<{
+      userId: string;
+      transactionId: number;
+      accountId: number;
+      amount: number;
+      purchaseDate: string;
+      faturaMonth: string;
+      dueDate: string;
+      installmentNumber: number;
+      paidAt: null;
+    }> = [];
+    for (const installmentNumber of entriesToCreate) {
+      const dates = computeEntryDates(baseDate, installmentNumber, account, ofxClosingDate, baseFaturaMonthOverride);
+      affectedFaturas.add(dates.faturaMonth);
 
-    await tx.insert(entries).values({
-      userId,
-      transactionId,
-      accountId: account.id,
-      amount: getInstallmentAmount(installmentNumber, existingAmounts),
-      purchaseDate: dates.purchaseDate,
-      faturaMonth: dates.faturaMonth,
-      dueDate: dates.dueDate,
-      installmentNumber,
-      paidAt: null,
-    });
+      const amount = getInstallmentAmount(installmentNumber, existingAmounts);
+      entryValues.push({
+        userId,
+        transactionId,
+        accountId: account.id,
+        amount,
+        purchaseDate: dates.purchaseDate,
+        faturaMonth: dates.faturaMonth,
+        dueDate: dates.dueDate,
+        installmentNumber,
+        paidAt: null,
+      });
 
-    existingAmounts.set(installmentNumber, getInstallmentAmount(installmentNumber, existingAmounts));
+      existingAmounts.set(installmentNumber, amount);
+    }
+
+    await tx.insert(entries).values(entryValues);
   }
 
   if (existing) {
@@ -729,85 +766,155 @@ export async function importMixed(data: ImportMixedData): Promise<ImportMixedRes
       }
 
       // Insert regular expenses
-      for (const row of regularExpenses) {
-        const categoryId = categoryOverrides[row.rowIndex] ?? expenseCategoryId;
+      if (regularExpenses.length > 0) {
+        const transactionValues: Array<{
+          userId: string;
+          description: string;
+          totalAmount: number;
+          totalInstallments: number;
+          categoryId: number;
+          externalId?: string;
+        }> = [];
+        const entryMetadata: Array<{
+          amountCents: number;
+          purchaseDate: string;
+          faturaMonth: string;
+          dueDate: string;
+        }> = [];
 
-        let faturaMonth: string;
-        let dueDate: string;
+        for (const row of regularExpenses) {
+          const categoryId = categoryOverrides[row.rowIndex] ?? expenseCategoryId;
 
-        if (hasBillingConfig) {
-          const purchaseDate = new Date(row.date + 'T00:00:00Z');
+          let faturaMonth: string;
+          let dueDate: string;
 
-          // Use OFX closing date if provided, otherwise use account's closing day
-          if (faturaOverrides?.closingDate) {
-            const closingDate = new Date(faturaOverrides.closingDate + 'T00:00:00Z');
-            faturaMonth = getFaturaMonthFromClosingDate(purchaseDate, closingDate);
+          if (hasBillingConfig) {
+            const purchaseDate = new Date(row.date + 'T00:00:00Z');
+
+            // Use OFX closing date if provided, otherwise use account's closing day
+            if (faturaOverrides?.closingDate) {
+              const closingDate = new Date(faturaOverrides.closingDate + 'T00:00:00Z');
+              faturaMonth = getFaturaMonthFromClosingDate(purchaseDate, closingDate);
+            } else {
+              faturaMonth = getFaturaMonth(purchaseDate, account[0].closingDay!);
+            }
+
+            dueDate = getFaturaPaymentDueDate(faturaMonth, account[0].paymentDueDay!, account[0].closingDay!);
+            affectedFaturas.add(faturaMonth);
           } else {
-            faturaMonth = getFaturaMonth(purchaseDate, account[0].closingDay!);
+            faturaMonth = row.date.slice(0, 7);
+            dueDate = row.date;
           }
 
-          dueDate = getFaturaPaymentDueDate(faturaMonth, account[0].paymentDueDay!, account[0].closingDay!);
-          affectedFaturas.add(faturaMonth);
-        } else {
-          faturaMonth = row.date.slice(0, 7);
-          dueDate = row.date;
-        }
-
-        const [transaction] = await tx
-          .insert(transactions)
-          .values({
+          transactionValues.push({
             userId,
             description: row.description,
             totalAmount: row.amountCents,
             totalInstallments: 1,
             categoryId,
             externalId: row.externalId,
-          })
-          .returning();
+          });
 
-        await tx.insert(entries).values({
+          entryMetadata.push({
+            amountCents: row.amountCents,
+            purchaseDate: row.date,
+            faturaMonth,
+            dueDate,
+          });
+        }
+
+        // Bulk insert transactions
+        const insertedTxs = await tx
+          .insert(transactions)
+          .values(transactionValues)
+          .returning({ id: transactions.id });
+
+        // Bulk insert entries
+        const entryValues = insertedTxs.map((transaction, i) => ({
           userId,
           transactionId: transaction.id,
           accountId,
-          amount: row.amountCents,
-          purchaseDate: row.date,
-          faturaMonth,
-          dueDate,
+          amount: entryMetadata[i].amountCents,
+          purchaseDate: entryMetadata[i].purchaseDate,
+          faturaMonth: entryMetadata[i].faturaMonth,
+          dueDate: entryMetadata[i].dueDate,
           installmentNumber: 1,
           paidAt: null,
-        });
+        }));
+
+        await tx.insert(entries).values(entryValues);
       }
 
       // Insert income (marked as received)
-      for (const row of newIncome) {
-        const categoryId = categoryOverrides[row.rowIndex] ?? incomeCategoryId;
-        const matchInfo = refundMatches.get(row.rowIndex);
+      if (newIncome.length > 0) {
+        // Pre-fetch category IDs for all high-confidence refund matches
+        const matchedTransactionIds = Array.from(refundMatches.values())
+          .filter((match) => match.matchConfidence === 'high' && match.matchedTransactionId !== undefined)
+          .map((match) => match.matchedTransactionId!)
+          .filter((id): id is number => id !== undefined);
 
-        // If high-confidence refund match, link to original transaction
-        const refundOfTransactionId = matchInfo?.matchConfidence === 'high' ? matchInfo.matchedTransactionId : undefined;
-        const replenishCategoryId = matchInfo?.matchConfidence === 'high' && matchInfo.matchedTransactionId
-          ? await getTransactionCategoryId(tx, matchInfo.matchedTransactionId)
-          : undefined;
+        const categoryIdMap = new Map<number, number>();
+        if (matchedTransactionIds.length > 0) {
+          const categoryResults = await tx
+            .select({ id: transactions.id, categoryId: transactions.categoryId })
+            .from(transactions)
+            .where(inArray(transactions.id, matchedTransactionIds));
 
-        await tx.insert(income).values({
-          userId,
-          description: row.description,
-          amount: row.amountCents,
-          categoryId,
-          accountId,
-          receivedDate: row.date,
-          receivedAt: new Date(), // Mark as received
-          externalId: row.externalId,
-          refundOfTransactionId,
-          replenishCategoryId,
-        });
+          for (const result of categoryResults) {
+            categoryIdMap.set(result.id, result.categoryId);
+          }
+        }
 
-        // Update transaction's refundedAmount if linked
-        if (refundOfTransactionId) {
+        // Prepare income values and track refund amounts
+        const incomeValues: Array<{
+          userId: string;
+          description: string;
+          amount: number;
+          categoryId: number;
+          accountId: number;
+          receivedDate: string;
+          receivedAt: Date;
+          externalId?: string;
+          refundOfTransactionId?: number;
+          replenishCategoryId?: number;
+        }> = [];
+        const refundAmounts = new Map<number, number>(); // transactionId -> total refund amount
+
+        for (const row of newIncome) {
+          const categoryId = categoryOverrides[row.rowIndex] ?? incomeCategoryId;
+          const matchInfo = refundMatches.get(row.rowIndex);
+
+          const refundOfTransactionId = matchInfo?.matchConfidence === 'high' ? matchInfo.matchedTransactionId : undefined;
+          const replenishCategoryId = refundOfTransactionId ? categoryIdMap.get(refundOfTransactionId) : undefined;
+
+          incomeValues.push({
+            userId,
+            description: row.description,
+            amount: row.amountCents,
+            categoryId,
+            accountId,
+            receivedDate: row.date,
+            receivedAt: new Date(),
+            externalId: row.externalId,
+            refundOfTransactionId,
+            replenishCategoryId,
+          });
+
+          // Accumulate refund amounts
+          if (refundOfTransactionId) {
+            refundAmounts.set(refundOfTransactionId, (refundAmounts.get(refundOfTransactionId) || 0) + row.amountCents);
+          }
+        }
+
+        // Bulk insert income
+        await tx.insert(income).values(incomeValues);
+
+        // Bulk update refunded amounts
+        for (const [transactionId, refundAmount] of refundAmounts) {
           await tx
             .update(transactions)
-            .set({ refundedAmount: sql`COALESCE(${transactions.refundedAmount}, 0) + ${row.amountCents}` })
-            .where(eq(transactions.id, refundOfTransactionId));
+            .set({ refundedAmount: sql`COALESCE(${transactions.refundedAmount}, 0) + ${refundAmount}` })
+            .where(eq(transactions.id, transactionId));
         }
       }
     });
@@ -853,10 +960,8 @@ export async function importMixed(data: ImportMixedData): Promise<ImportMixedRes
         await updateFaturaTotal(accountId, month);
       }
 
-      // Recalculate installment dates using actual fatura windows
-      for (const month of sortedFaturas) {
-        await recalculateInstallmentDates(accountId, month);
-      }
+      // Batch recalculate installment dates using actual fatura windows
+      await batchRecalculateInstallmentDates(accountId, sortedFaturas);
     }
 
     await syncAccountBalance(accountId);
