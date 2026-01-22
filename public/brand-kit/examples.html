@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>fluxo.sh Brand Examples</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1.6;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1, h2, h3 {
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+
+    h1 { font-size: 1.875rem; }
+    h2 { font-size: 1.5rem; margin-top: 3rem; }
+    h3 { font-size: 1.25rem; margin-top: 2rem; }
+
+    .section {
+      margin-bottom: 4rem;
+    }
+
+    .logo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+      margin: 2rem 0;
+    }
+
+    .logo-example {
+      padding: 2rem;
+      border: 2px solid #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo-example.dark {
+      background: #000;
+      color: #fff;
+    }
+
+    .logo-example.light {
+      background: #fff;
+      color: #000;
+    }
+
+    .logo-example.gray {
+      background: #f5f5f5;
+      color: #000;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid currentColor;
+      background: transparent;
+      font-weight: 700;
+    }
+
+    .logo.small {
+      width: 32px;
+      height: 32px;
+      font-size: 7px;
+    }
+
+    .logo.medium {
+      width: 64px;
+      height: 64px;
+      font-size: 14px;
+    }
+
+    .logo.large {
+      width: 128px;
+      height: 128px;
+      font-size: 28px;
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+
+    .color-swatch {
+      padding: 3rem 1rem 1rem;
+      border: 2px solid #000;
+      text-align: center;
+    }
+
+    .color-info {
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .button-grid {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin: 2rem 0;
+    }
+
+    button, .button {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+      padding: 0.5rem 1rem;
+      border: 2px solid #000;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-primary {
+      background: #000;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #fff;
+      color: #000;
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: #000;
+    }
+
+    .btn-secondary:hover {
+      background: #f5f5f5;
+    }
+
+    .btn-destructive {
+      background: #ef4444;
+      color: #fff;
+      border-color: #ef4444;
+    }
+
+    .btn-destructive:hover {
+      background: #dc2626;
+      border-color: #dc2626;
+    }
+
+    .card {
+      border: 2px solid #000;
+      padding: 1.5rem;
+      margin: 1rem 0;
+    }
+
+    .card-header {
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .input-example {
+      margin: 1rem 0;
+    }
+
+    input, select, textarea {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+      padding: 0.5rem;
+      border: 2px solid #000;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid #000;
+      outline-offset: 2px;
+    }
+
+    .grid-demo {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+
+    .grid-item {
+      aspect-ratio: 1;
+      border: 2px solid #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    code {
+      background: #f5f5f5;
+      padding: 0.125rem 0.25rem;
+      border: 1px solid #000;
+      font-size: 0.875rem;
+    }
+
+    .dos-donts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin: 2rem 0;
+    }
+
+    .do-example, .dont-example {
+      border: 2px solid #000;
+      padding: 2rem;
+    }
+
+    .do-example {
+      border-color: #22c55e;
+    }
+
+    .dont-example {
+      border-color: #ef4444;
+      opacity: 0.7;
+    }
+
+    .do-example::before {
+      content: '✓ DO';
+      color: #22c55e;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 1rem;
+    }
+
+    .dont-example::before {
+      content: '✗ DON\'T';
+      color: #ef4444;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 1rem;
+    }
+
+    .header-example {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      border: 2px solid #000;
+      margin: 2rem 0;
+    }
+
+    .header-example .logo {
+      width: 40px;
+      height: 40px;
+      font-size: 9px;
+      border: 2px solid #000;
+      background: #fff;
+      color: #000;
+    }
+
+    .wordmark {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <h1>fluxo.sh Brand Kit Examples</h1>
+  <p>Visual reference for implementing the fluxo.sh brand system</p>
+
+  <section class="section">
+    <h2>Logo Variations</h2>
+    <div class="logo-grid">
+      <div class="logo-example light">
+        <div class="logo medium">FX$H</div>
+        <span>Light theme</span>
+      </div>
+      <div class="logo-example dark">
+        <div class="logo medium" style="border-color: #fff; color: #fff;">FX$H</div>
+        <span>Dark theme</span>
+      </div>
+      <div class="logo-example gray">
+        <div class="logo medium">FX$H</div>
+        <span>On gray background</span>
+      </div>
+    </div>
+
+    <h3>Size Variations</h3>
+    <div class="logo-grid">
+      <div class="logo-example light">
+        <div class="logo small">FX$H</div>
+        <span>32×32 (Small)</span>
+      </div>
+      <div class="logo-example light">
+        <div class="logo medium">FX$H</div>
+        <span>64×64 (Medium)</span>
+      </div>
+      <div class="logo-example light">
+        <div class="logo large">FX$H</div>
+        <span>128×128 (Large)</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Header with Logo</h2>
+    <div class="header-example">
+      <div class="logo">FX$H</div>
+      <span class="wordmark">fluxo.sh</span>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Color Palette</h2>
+    <div class="color-grid">
+      <div class="color-swatch" style="background: #fff; border-color: #000;">
+        <div class="color-info">
+          <strong>Background</strong><br>
+          #FFFFFF
+        </div>
+      </div>
+      <div class="color-swatch" style="background: #000; color: #fff;">
+        <div class="color-info">
+          <strong>Foreground</strong><br>
+          #000000
+        </div>
+      </div>
+      <div class="color-swatch" style="background: #f5f5f5;">
+        <div class="color-info">
+          <strong>Muted</strong><br>
+          #F5F5F5
+        </div>
+      </div>
+      <div class="color-swatch" style="background: #737373; color: #fff;">
+        <div class="color-info">
+          <strong>Muted Text</strong><br>
+          #737373
+        </div>
+      </div>
+      <div class="color-swatch" style="background: #ef4444; color: #fff;">
+        <div class="color-info">
+          <strong>Destructive</strong><br>
+          #EF4444
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Buttons</h2>
+    <div class="button-grid">
+      <button class="btn-primary">Primary Action</button>
+      <button class="btn-secondary">Secondary Action</button>
+      <button class="btn-destructive">Delete</button>
+    </div>
+
+    <h3>With Icons</h3>
+    <div class="button-grid">
+      <button class="btn-primary">+ Add Account</button>
+      <button class="btn-secondary">→ Export CSV</button>
+      <button class="btn-destructive">× Remove</button>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Form Inputs</h2>
+    <div class="input-example">
+      <label for="name">Account Name</label><br>
+      <input type="text" id="name" placeholder="Enter account name">
+    </div>
+    <div class="input-example">
+      <label for="amount">Amount (R$)</label><br>
+      <input type="number" id="amount" placeholder="0.00">
+    </div>
+    <div class="input-example">
+      <label for="category">Category</label><br>
+      <select id="category">
+        <option>Select category...</option>
+        <option>Food & Dining</option>
+        <option>Transportation</option>
+        <option>Shopping</option>
+      </select>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Cards</h2>
+    <div class="card">
+      <div class="card-header">Account Balance</div>
+      <div style="font-size: 2rem; font-weight: 700; margin: 1rem 0;">R$ 1.234,56</div>
+      <div style="color: #737373; font-size: 0.875rem;">Updated 2 minutes ago</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Recent Transactions</div>
+      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <div style="display: flex; justify-content: space-between;">
+          <span>Coffee Shop</span>
+          <span>-R$ 12,50</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span>Salary</span>
+          <span style="color: #22c55e;">+R$ 5.000,00</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span>Internet Bill</span>
+          <span>-R$ 89,90</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Grid Layouts</h2>
+    <div class="grid-demo">
+      <div class="grid-item">1</div>
+      <div class="grid-item">2</div>
+      <div class="grid-item">3</div>
+      <div class="grid-item">4</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Do's and Don'ts</h2>
+    <div class="dos-donts">
+      <div class="do-example">
+        <div class="logo medium">FX$H</div>
+        <p style="margin-top: 1rem; font-size: 0.875rem;">Use sharp corners and solid borders</p>
+      </div>
+      <div class="dont-example">
+        <div class="logo medium" style="border-radius: 8px;">FX$H</div>
+        <p style="margin-top: 1rem; font-size: 0.875rem;">Don't use rounded corners</p>
+      </div>
+    </div>
+
+    <div class="dos-donts">
+      <div class="do-example">
+        <div class="logo medium" style="border-width: 2px;">FX$H</div>
+        <p style="margin-top: 1rem; font-size: 0.875rem;">Maintain 2px border at standard size</p>
+      </div>
+      <div class="dont-example">
+        <div class="logo medium" style="border-width: 1px; opacity: 0.5;">FX$H</div>
+        <p style="margin-top: 1rem; font-size: 0.875rem;">Don't use thin borders or transparency</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Typography Scale</h2>
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+      <div style="font-size: 0.75rem;">12px - xs - Labels, captions</div>
+      <div style="font-size: 0.875rem;">14px - sm - Body text, buttons</div>
+      <div style="font-size: 1rem;">16px - base - Default text size</div>
+      <div style="font-size: 1.125rem;">18px - lg - Emphasized text</div>
+      <div style="font-size: 1.25rem;">20px - xl - Subheadings</div>
+      <div style="font-size: 1.5rem; font-weight: 700;">24px - 2xl - Section titles</div>
+      <div style="font-size: 1.875rem; font-weight: 700;">30px - 3xl - Page headings</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Code Examples</h2>
+    <h3>Logo Component (React/TSX)</h3>
+    <pre style="background: #f5f5f5; padding: 1rem; border: 2px solid #000; overflow-x: auto;"><code>&lt;div className="flex h-10 w-10 items-center justify-center border-2 border-foreground bg-background text-xs font-bold"&gt;
+  FX$H
+&lt;/div&gt;</code></pre>
+
+    <h3>Button Component</h3>
+    <pre style="background: #f5f5f5; padding: 1rem; border: 2px solid #000; overflow-x: auto;"><code>&lt;button className="border-2 border-foreground bg-foreground px-4 py-2 font-bold text-background transition-colors hover:bg-background hover:text-foreground"&gt;
+  Confirm
+&lt;/button&gt;</code></pre>
+  </section>
+
+  <footer style="margin-top: 4rem; padding-top: 2rem; border-top: 2px solid #000; text-align: center; color: #737373; font-size: 0.875rem;">
+    <p>fluxo.sh Brand Kit v1.0 • 2026-01-22</p>
+  </footer>
+</body>
+</html>

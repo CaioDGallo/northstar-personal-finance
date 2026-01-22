@@ -16,8 +16,8 @@ interface TypingTextProps {
  */
 export function TypingText({
   text,
-  speed = 50,
-  startDelay = 0,
+  speed = 10,
+  startDelay = 1000,
   onComplete,
   className = "",
 }: TypingTextProps) {
@@ -32,7 +32,7 @@ export function TypingText({
     <span className={className}>
       <span>{displayText}</span>
       <span
-        className="inline-block w-[3px] bg-foreground animate-cursor-blink ml-0.5"
+        className="inline-block w-0.75 bg-foreground animate-cursor-blink ml-0.5"
         aria-hidden="true"
       >
         &nbsp;

@@ -44,7 +44,7 @@ export function PwaInstallBanner() {
             <div className="flex-shrink-0">
               <div className="flex h-16 w-16 items-center justify-center border-2 border-foreground bg-background">
                 <Image
-                  src="/northstar-no-bg.png"
+                  src="/brand-kit/exports/icon-48-light.png"
                   alt="Fluxo.sh"
                   width={48}
                   height={48}

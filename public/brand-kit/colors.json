@@ -1,0 +1,64 @@
+{
+  "palette": {
+    "primary": {
+      "background": {
+        "hex": "#ffffff",
+        "rgb": "255, 255, 255",
+        "hsl": "0, 0%, 100%",
+        "usage": "Main background, card backgrounds"
+      },
+      "foreground": {
+        "hex": "#000000",
+        "rgb": "0, 0, 0",
+        "hsl": "0, 0%, 0%",
+        "usage": "Text, borders, primary elements"
+      }
+    },
+    "neutral": {
+      "muted": {
+        "hex": "#f5f5f5",
+        "rgb": "245, 245, 245",
+        "hsl": "0, 0%, 96%",
+        "usage": "Hover states, disabled backgrounds"
+      },
+      "muted-foreground": {
+        "hex": "#737373",
+        "rgb": "115, 115, 115",
+        "hsl": "0, 0%, 45%",
+        "usage": "Secondary text, subtle labels"
+      }
+    },
+    "semantic": {
+      "destructive": {
+        "hex": "#ef4444",
+        "rgb": "239, 68, 68",
+        "hsl": "0, 84%, 60%",
+        "usage": "Delete actions, errors"
+      },
+      "destructive-hover": {
+        "hex": "#dc2626",
+        "rgb": "220, 38, 38",
+        "hsl": "0, 84%, 51%",
+        "usage": "Destructive button hover state"
+      },
+      "success": {
+        "hex": "#22c55e",
+        "rgb": "34, 197, 94",
+        "hsl": "142, 71%, 45%",
+        "usage": "Success messages, positive values"
+      }
+    }
+  },
+  "contrast": {
+    "black-on-white": "21:1 (AAA)",
+    "gray-on-white": "4.61:1 (AA)",
+    "red-on-white": "3.35:1 (AA Large)"
+  },
+  "tailwind": {
+    "background": "hsl(0 0% 100%)",
+    "foreground": "hsl(0 0% 0%)",
+    "muted": "hsl(0 0% 96%)",
+    "muted-foreground": "hsl(0 0% 45%)",
+    "destructive": "hsl(0 84% 60%)"
+  }
+}
