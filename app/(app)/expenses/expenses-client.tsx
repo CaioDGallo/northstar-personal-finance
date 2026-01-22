@@ -87,6 +87,16 @@ export function ExpensesClient({
     }
   };
 
+  // Clean up URL after dialog opens from deep link
+  useEffect(() => {
+    if (isAddExpenseOpen && searchParams.get('add') === 'true') {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('add');
+      const newUrl = params.toString() ? `${pathname}?${params}` : pathname;
+      router.replace(newUrl);
+    }
+  }, [isAddExpenseOpen, searchParams, pathname, router]);
+
   const categoryFilter = filters.categoryId?.toString() || 'all';
   const accountFilter = filters.accountId?.toString() || 'all';
   const statusFilter = filters.status || 'all';
