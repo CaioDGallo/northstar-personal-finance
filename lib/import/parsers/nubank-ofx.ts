@@ -10,6 +10,7 @@ const REFUND_PATTERNS = [
   /^devolução/i,
   /^devolu[cç][aã]o/i, // handles devolução/devoluçao/devolucao
   /^cr[eé]dito\s+(?:loja|estorno)/i,
+  /^cr[eé]dito\s+de\s+"/i, // "Crédito de "Merchant""
   /chargeback/i,
   /^reembolso/i,
 ];
@@ -65,6 +66,7 @@ export const nubankOfxParser: ImportTemplate = {
           rowIndex: index + 1,
           type: isIncome ? 'income' : 'expense',
           externalId: txn.externalId,
+          rawFitId: txn.rawFitId,
           installmentInfo: installmentInfo ?? undefined,
           isRefundCandidate: isIncome ? isRefundCandidate(txn.description) : undefined,
         });

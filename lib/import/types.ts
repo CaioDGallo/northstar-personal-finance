@@ -4,15 +4,24 @@ export type InstallmentInfo = {
   baseDescription: string; // Description without "- Parcela X/Y"
 };
 
+export type RefundMatchInfo = {
+  matchedTransactionId?: number; // ID of the original transaction being refunded
+  matchedDescription?: string; // Description of matched transaction for display
+  matchConfidence: 'high' | 'medium'; // High = FITID match, Medium = description match
+  matchReason: string; // Human-readable explanation of match
+};
+
 export type ValidatedImportRow = {
   date: string; // YYYY-MM-DD
   description: string;
   amountCents: number;
   rowIndex: number;
   externalId?: string; // UUID from bank statement for idempotency
+  rawFitId?: string; // Original FITID from OFX (for refund matching)
   type?: 'expense' | 'income'; // Determined from amount sign
   installmentInfo?: InstallmentInfo; // Parsed installment data if present
   isRefundCandidate?: boolean; // True if description matches refund patterns
+  refundMatchInfo?: RefundMatchInfo; // Information about matched refund transaction
 };
 
 export type ImportRowError = {

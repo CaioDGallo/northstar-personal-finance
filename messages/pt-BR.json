@@ -470,6 +470,7 @@
     "successMixed": "Importado {expenses} despesa(s) e {income} receita(s)",
     "skippedDuplicates": "{count} duplicata(s) ignorada(s)",
     "alreadyImported": "Já importado",
+    "refundCandidate": "Possível estorno",
     "errorMessage": "Falha ao importar. Tente novamente.",
     "errorParsing": "Falha ao processar arquivo CSV. Verifique o formato e tente novamente.",
     "noDefaultCategories": "Configure as categorias padrão para importação em Configurações > Categorias primeiro"

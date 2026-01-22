@@ -15,6 +15,7 @@ import { checkBulkRateLimit } from '@/lib/rate-limit';
 import { t } from '@/lib/i18n/server-errors';
 import { handleDbError } from '@/lib/db-errors';
 import { bulkIncrementCategoryFrequency } from '@/lib/actions/category-frequency';
+import { findRefundMatches } from '@/lib/import/refund-matcher';
 
 type SuggestionsInput = {
   expenseDescriptions: string[];
@@ -320,6 +321,19 @@ type ImportMixedResult =
 
 // Helper: Find existing installment transaction by description and total installments
 type DbClient = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+async function getTransactionCategoryId(
+  dbClient: DbClient,
+  transactionId: number
+): Promise<number | undefined> {
+  const result = await dbClient
+    .select({ categoryId: transactions.categoryId })
+    .from(transactions)
+    .where(eq(transactions.id, transactionId))
+    .limit(1);
+
+  return result.length > 0 ? result[0].categoryId : undefined;
+}
 
 async function findExistingInstallmentTransaction(
   dbClient: DbClient,
@@ -673,6 +687,9 @@ export async function importMixed(data: ImportMixedData): Promise<ImportMixedRes
     const newIncome = incomeRows.filter((r) => !r.externalId || !existingIds.has(r.externalId));
     const skippedDuplicates = rows.length - newExpenses.length - newIncome.length;
 
+    // Find refund matches for income candidates
+    const refundMatches = await findRefundMatches(userId, accountId, newIncome);
+
     // Check if this is a credit card with billing config
     const isCreditCard = account[0].type === 'credit_card';
     const hasBillingConfig = isCreditCard && account[0].closingDay && account[0].paymentDueDay;
@@ -764,6 +781,13 @@ export async function importMixed(data: ImportMixedData): Promise<ImportMixedRes
       // Insert income (marked as received)
       for (const row of newIncome) {
         const categoryId = categoryOverrides[row.rowIndex] ?? incomeCategoryId;
+        const matchInfo = refundMatches.get(row.rowIndex);
+
+        // If high-confidence refund match, link to original transaction
+        const refundOfTransactionId = matchInfo?.matchConfidence === 'high' ? matchInfo.matchedTransactionId : undefined;
+        const replenishCategoryId = matchInfo?.matchConfidence === 'high' && matchInfo.matchedTransactionId
+          ? await getTransactionCategoryId(tx, matchInfo.matchedTransactionId)
+          : undefined;
 
         await tx.insert(income).values({
           userId,
@@ -774,7 +798,17 @@ export async function importMixed(data: ImportMixedData): Promise<ImportMixedRes
           receivedDate: row.date,
           receivedAt: new Date(), // Mark as received
           externalId: row.externalId,
+          refundOfTransactionId,
+          replenishCategoryId,
         });
+
+        // Update transaction's refundedAmount if linked
+        if (refundOfTransactionId) {
+          await tx
+            .update(transactions)
+            .set({ refundedAmount: sql`COALESCE(${transactions.refundedAmount}, 0) + ${row.amountCents}` })
+            .where(eq(transactions.id, refundOfTransactionId));
+        }
       }
     });
 
