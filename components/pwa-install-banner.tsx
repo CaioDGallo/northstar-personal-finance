@@ -1,11 +1,14 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
+import posthog from "posthog-js";
 import { usePwaInstall } from "@/lib/hooks/use-pwa-install";
 import { Button } from "./ui/button";
 import Image from "next/image";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon } from "@hugeicons/core-free-icons";
+import { getPlatform, getViewportSize } from "@/lib/tracking/landing-events";
 
 /**
  * PWA install prompt banner with platform-specific handling
@@ -16,6 +19,63 @@ export function PwaInstallBanner() {
   const t = useTranslations("pwa");
   const { installState, canInstall, isIos, triggerInstall, dismiss } =
     usePwaInstall();
+  const shownTimeRef = useRef<number>(0);
+  const hasTrackedShownRef = useRef<boolean>(false);
+
+  // Track banner shown
+  useEffect(() => {
+    if (
+      installState !== "hidden" &&
+      installState !== "dismissed" &&
+      installState !== "unsupported" &&
+      !hasTrackedShownRef.current
+    ) {
+      shownTimeRef.current = Date.now();
+      hasTrackedShownRef.current = true;
+
+      const platform = getPlatform();
+      const { width, height } = getViewportSize();
+
+      posthog.capture("landing_pwa_banner_shown", {
+        platform,
+        viewport_size: `${width}x${height}`,
+      });
+    }
+  }, [installState]);
+
+  // Wrapper functions for tracking
+  const handleInstall = () => {
+    const timeToInteraction = shownTimeRef.current
+      ? Math.round((Date.now() - shownTimeRef.current) / 1000)
+      : 0;
+
+    const platform = getPlatform();
+    const { width, height } = getViewportSize();
+
+    posthog.capture("landing_pwa_install_clicked", {
+      platform,
+      viewport_size: `${width}x${height}`,
+      time_to_interaction_seconds: timeToInteraction,
+    });
+
+    triggerInstall();
+  };
+
+  const handleDismiss = () => {
+    const timeVisible = shownTimeRef.current
+      ? Math.round((Date.now() - shownTimeRef.current) / 1000)
+      : 0;
+
+    const platform = getPlatform();
+
+    posthog.capture("landing_pwa_banner_dismissed", {
+      platform,
+      time_visible_seconds: timeVisible,
+      viewport_size: `${getViewportSize().width}x${getViewportSize().height}`,
+    });
+
+    dismiss();
+  };
 
   // Don't render if hidden, dismissed, or unsupported
   if (
@@ -31,7 +91,7 @@ export function PwaInstallBanner() {
       <div className="relative border-2 border-foreground bg-background shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)]">
         {/* Close button */}
         <button
-          onClick={dismiss}
+          onClick={handleDismiss}
           className="absolute right-2 top-2 rounded-sm p-1 hover:bg-muted"
           aria-label={t("dismiss")}
         >
@@ -66,14 +126,14 @@ export function PwaInstallBanner() {
           {canInstall && (
             <div className="mt-4 flex gap-2">
               <Button
-                onClick={triggerInstall}
+                onClick={handleInstall}
                 variant="popout"
                 size="sm"
                 className="flex-1"
               >
                 {t("install")}
               </Button>
-              <Button onClick={dismiss} variant="hollow" size="sm">
+              <Button onClick={handleDismiss} variant="hollow" size="sm">
                 {t("dismiss")}
               </Button>
             </div>
@@ -106,7 +166,7 @@ export function PwaInstallBanner() {
                 <span>{t("iosStep2")}</span>
               </div>
               <Button
-                onClick={dismiss}
+                onClick={handleDismiss}
                 variant="hollow"
                 size="sm"
                 className="mt-2 w-full"

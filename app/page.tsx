@@ -4,10 +4,13 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { ThemeToggleRow } from '@/components/theme-toggle-row';
 import { HeroTitle } from '@/components/hero-title';
 import { PwaInstallBanner } from '@/components/pwa-install-banner';
+import { LandingPageTracker } from '@/components/tracking/landing-page-tracker';
+import { LandingSectionObserver } from '@/components/tracking/landing-section-observer';
+import { LandingCtaTracker } from '@/components/tracking/landing-cta-tracker';
+import { LandingWaitlistForm } from '@/components/tracking/landing-waitlist-form';
 
 export const metadata: Metadata = {
   title: 'Fluxo.sh | Financas pessoais no Brasil',
@@ -23,7 +26,8 @@ export default async function Home() {
   const t = await getTranslations('landing');
 
   return (
-    <div className="bg-background text-foreground">
+    <LandingPageTracker>
+      <div className="bg-background text-foreground">
       <header className="sticky top-0 z-30 border-b border-border/80 bg-background/95 backdrop-blur text-foreground">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 md:px-6">
           <div className="flex items-center gap-3">
@@ -45,9 +49,16 @@ export default async function Home() {
               className="h-9 w-auto border border-foreground px-3 py-0"
               labelClassName="text-[11px]"
             />
-            <Button variant="hollow" asChild>
-              <a href="#espera">{t('ctaPrimary')}</a>
-            </Button>
+            <LandingCtaTracker
+              ctaType="primary"
+              ctaText={t('ctaPrimary')}
+              ctaLocation="header"
+              destination="#espera"
+            >
+              <Button variant="hollow" asChild>
+                <a href="#espera">{t('ctaPrimary')}</a>
+              </Button>
+            </LandingCtaTracker>
           </div>
           <div className="flex items-center gap-3 md:hidden">
             <ThemeToggleRow
@@ -56,17 +67,25 @@ export default async function Home() {
               className="h-9 w-auto border border-foreground px-3 py-0"
               labelClassName="text-[11px]"
             />
-            <Button variant="hollow" asChild>
-              <a href="#espera">{t('ctaPrimary')}</a>
-            </Button>
+            <LandingCtaTracker
+              ctaType="primary"
+              ctaText={t('ctaPrimary')}
+              ctaLocation="header"
+              destination="#espera"
+            >
+              <Button variant="hollow" asChild>
+                <a href="#espera">{t('ctaPrimary')}</a>
+              </Button>
+            </LandingCtaTracker>
           </div>
         </div>
       </header>
 
       <main>
-        <section className="relative overflow-hidden border-b border-border/80">
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,#f5f5f5_0%,#ffffff_45%,#e9e9e9_100%)] dark:bg-[linear-gradient(120deg,#0d0d0d_0%,#171717_45%,#101010_100%)]" />
-          <div className="relative mx-auto grid w-full max-w-6xl gap-10 px-4 py-16 md:grid-cols-[1.1fr_0.9fr] md:px-6 md:py-24">
+        <LandingSectionObserver sectionId="hero">
+          <section className="relative overflow-hidden border-b border-border/80">
+            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,#f5f5f5_0%,#ffffff_45%,#e9e9e9_100%)] dark:bg-[linear-gradient(120deg,#0d0d0d_0%,#171717_45%,#101010_100%)]" />
+            <div className="relative mx-auto grid w-full max-w-6xl gap-10 px-4 py-16 md:grid-cols-[1.1fr_0.9fr] md:px-6 md:py-24">
             <div className="space-y-6">
               <Badge variant="outline" className="border-foreground text-foreground bg-background/80 dark:bg-background/10">
                 {t('heroBadge')}
@@ -76,12 +95,26 @@ export default async function Home() {
                 {t('subtitle')}
               </p>
               <div className="flex flex-col gap-3 sm:flex-row">
-                <Button variant="popout" asChild>
-                  <a href="#espera">{t('ctaPrimary')}</a>
-                </Button>
-                <Button variant="hollow" asChild>
-                  <a href="#recursos">{t('ctaSecondary')}</a>
-                </Button>
+                <LandingCtaTracker
+                  ctaType="primary"
+                  ctaText={t('ctaPrimary')}
+                  ctaLocation="hero"
+                  destination="#espera"
+                >
+                  <Button variant="popout" asChild>
+                    <a href="#espera">{t('ctaPrimary')}</a>
+                  </Button>
+                </LandingCtaTracker>
+                <LandingCtaTracker
+                  ctaType="secondary"
+                  ctaText={t('ctaSecondary')}
+                  ctaLocation="hero"
+                  destination="#recursos"
+                >
+                  <Button variant="hollow" asChild>
+                    <a href="#recursos">{t('ctaSecondary')}</a>
+                  </Button>
+                </LandingCtaTracker>
               </div>
               <p className="text-xs uppercase tracking-[0.25em] text-foreground/80">
                 {t('tagline')}
@@ -131,9 +164,11 @@ export default async function Home() {
               </div>
             </div>
           </div>
-        </section>
+          </section>
+        </LandingSectionObserver>
 
-        <section id="recursos" className="border-b border-border/80 bg-muted dark:bg-muted/40">
+        <LandingSectionObserver sectionId="recursos">
+          <section id="recursos" className="border-b border-border/80 bg-muted dark:bg-muted/40">
           <div className="mx-auto w-full max-w-6xl px-4 py-16 md:px-6">
             <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div className="max-w-xl space-y-3">
@@ -196,9 +231,11 @@ export default async function Home() {
               </Card>
             </div>
           </div>
-        </section>
+          </section>
+        </LandingSectionObserver>
 
-        <section id="como" className="border-b border-border/80">
+        <LandingSectionObserver sectionId="como">
+          <section id="como" className="border-b border-border/80">
           <div className="mx-auto w-full max-w-6xl px-4 py-16 md:px-6">
             <div className="mb-10 max-w-xl space-y-3">
               <h2 className="text-2xl font-bold md:text-3xl">{t('howTitle')}</h2>
@@ -235,7 +272,8 @@ export default async function Home() {
               ))}
             </div>
           </div>
-        </section>
+          </section>
+        </LandingSectionObserver>
 
         <section className="border-b border-border/80 bg-foreground text-background">
           <div className="mx-auto w-full max-w-6xl px-4 py-16 md:px-6">
@@ -244,18 +282,26 @@ export default async function Home() {
                 <p className="text-xs font-semibold uppercase tracking-[0.3em]">{t('proofTitle')}</p>
                 <h2 className="mt-3 text-3xl font-black md:text-4xl">{t('proofSubtitle')}</h2>
               </div>
-              <Button
-                variant="popout"
-                className="border-2 border-background bg-background text-foreground hover:bg-background hover:text-foreground"
-                asChild
+              <LandingCtaTracker
+                ctaType="primary"
+                ctaText={t('ctaPrimary')}
+                ctaLocation="proof"
+                destination="#espera"
               >
-                <a href="#espera">{t('ctaPrimary')}</a>
-              </Button>
+                <Button
+                  variant="popout"
+                  className="border-2 border-background bg-background text-foreground hover:bg-background hover:text-foreground"
+                  asChild
+                >
+                  <a href="#espera">{t('ctaPrimary')}</a>
+                </Button>
+              </LandingCtaTracker>
             </div>
           </div>
         </section>
 
-        <section id="faq" className="border-b border-border/80">
+        <LandingSectionObserver sectionId="faq">
+          <section id="faq" className="border-b border-border/80">
           <div className="mx-auto w-full max-w-6xl px-4 py-16 md:px-6">
             <div className="mb-10 max-w-xl space-y-3">
               <h2 className="text-2xl font-bold md:text-3xl">{t('faqTitle')}</h2>
@@ -271,36 +317,37 @@ export default async function Home() {
               ))}
             </div>
           </div>
-        </section>
+          </section>
+        </LandingSectionObserver>
 
-        <section id="espera" className="border-b border-border/80 bg-muted dark:bg-muted/40">
-          <div className="mx-auto w-full max-w-6xl px-4 py-16 md:px-6">
-            <Card className="border-2 border-foreground shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-              <CardHeader className="border-b border-border">
-                <CardTitle className="text-2xl md:text-3xl">{t('ctaTitle')}</CardTitle>
-                <CardDescription className="text-sm md:text-base">{t('ctaSubtitle')}</CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-6 md:grid-cols-[1.2fr_0.8fr]">
-                <div className="space-y-4">
-                  <label className="text-xs font-semibold uppercase tracking-[0.2em]" htmlFor="waitlist-email">
-                    {t('emailLabel')}
-                  </label>
-                  <Input id="waitlist-email" type="email" placeholder={t('emailPlaceholder')} />
-                  <p className="text-xs text-foreground/80">{t('submitNote')}</p>
-                </div>
-                <div className="flex h-full flex-col justify-between gap-4">
-                  <Button variant="popout" className="w-full" disabled>
-                    {t('ctaDisabled')}
-                  </Button>
-                  <div className="border border-border p-4 text-xs">
-                    <p className="font-semibold">{t('footerTitle')}</p>
-                    <p className="text-foreground/80">{t('footerText')}</p>
+        <LandingSectionObserver sectionId="espera">
+          <section id="espera" className="border-b border-border/80 bg-muted dark:bg-muted/40">
+            <div className="mx-auto w-full max-w-6xl px-4 py-16 md:px-6">
+              <Card className="border-2 border-foreground shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                <CardHeader className="border-b border-border">
+                  <CardTitle className="text-2xl md:text-3xl">{t('ctaTitle')}</CardTitle>
+                  <CardDescription className="text-sm md:text-base">{t('ctaSubtitle')}</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-6 md:grid-cols-[1.2fr_0.8fr]">
+                  <LandingWaitlistForm
+                    emailLabel={t('emailLabel')}
+                    emailPlaceholder={t('emailPlaceholder')}
+                    submitNote={t('submitNote')}
+                  />
+                  <div className="flex h-full flex-col justify-between gap-4">
+                    <Button variant="popout" className="w-full" disabled>
+                      {t('ctaDisabled')}
+                    </Button>
+                    <div className="border border-border p-4 text-xs">
+                      <p className="font-semibold">{t('footerTitle')}</p>
+                      <p className="text-foreground/80">{t('footerText')}</p>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+        </LandingSectionObserver>
       </main>
 
       <footer className="border-b border-border/80 bg-background">
@@ -320,6 +367,7 @@ export default async function Home() {
       </footer>
 
       <PwaInstallBanner />
-    </div>
+      </div>
+    </LandingPageTracker>
   );
 }

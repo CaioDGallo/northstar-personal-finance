@@ -100,28 +100,34 @@ describe('Income Actions - Happy Path', () => {
       expect(incomes[0].description).toBe('Freelance Payment');
     });
 
-    it('validates empty description', async () => {
-      await expect(
-        createIncome({
-          description: '',
-          amount: 500000,
-          categoryId,
-          accountId,
-          receivedDate: '2025-01-15',
-        })
-      ).rejects.toThrow('Description is required');
+    it('auto-generates description from category when empty', async () => {
+      await createIncome({
+        description: '',
+        amount: 500000,
+        categoryId,
+        accountId,
+        receivedDate: '2025-01-15',
+      });
+
+      const incomes = await getIncome();
+      expect(incomes).toHaveLength(1);
+      // Should use category name as description
+      expect(incomes[0].description).toBe('Test Salary');
     });
 
-    it('validates whitespace-only description', async () => {
-      await expect(
-        createIncome({
-          description: '   ',
-          amount: 500000,
-          categoryId,
-          accountId,
-          receivedDate: '2025-01-15',
-        })
-      ).rejects.toThrow('Description is required');
+    it('auto-generates description from category when whitespace-only', async () => {
+      await createIncome({
+        description: '   ',
+        amount: 500000,
+        categoryId,
+        accountId,
+        receivedDate: '2025-01-15',
+      });
+
+      const incomes = await getIncome();
+      expect(incomes).toHaveLength(1);
+      // Should use category name as description
+      expect(incomes[0].description).toBe('Test Salary');
     });
 
     it('validates positive amount', async () => {
@@ -363,15 +369,17 @@ describe('Income Actions - Happy Path', () => {
 
       const initial = await getIncome();
 
-      await expect(
-        updateIncome(initial[0].id, {
-          description: '',
-          amount: 50000,
-          categoryId,
-          accountId,
-          receivedDate: '2025-01-15',
-        })
-      ).rejects.toThrow('Description is required');
+      // Auto-generates description from category when empty
+      await updateIncome(initial[0].id, {
+        description: '',
+        amount: 50000,
+        categoryId,
+        accountId,
+        receivedDate: '2025-01-15',
+      });
+
+      const updated = await getIncome();
+      expect(updated[0].description).toBe('Test Salary'); // Uses category name
     });
   });
 

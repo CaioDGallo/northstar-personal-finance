@@ -18,6 +18,27 @@ vi.mock('next/cache', () => ({
   unstable_cache: vi.fn((fn) => fn),
 }));
 
+// Mock PostHog server client
+vi.mock('@/lib/posthog-server', () => ({
+  getPostHogClient: vi.fn(() => ({
+    capture: vi.fn(),
+    identify: vi.fn(),
+    shutdown: vi.fn().mockResolvedValue(undefined),
+  })),
+  shutdownPostHog: vi.fn().mockResolvedValue(undefined),
+}));
+
+// Mock PostHog client (posthog-js)
+vi.mock('posthog-js', () => ({
+  default: {
+    init: vi.fn(),
+    capture: vi.fn(),
+    identify: vi.fn(),
+    reset: vi.fn(),
+    isFeatureEnabled: vi.fn().mockReturnValue(false),
+  },
+}));
+
 // Mock Next.js headers to provide a stable locale for error translations
 vi.mock('next/headers', () => ({
   cookies: vi.fn().mockResolvedValue({
