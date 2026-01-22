@@ -5,7 +5,7 @@
 
 set -e
 
-LOGO="public/brand-kit/logos/logo.svg"
+LOGO="public/brand-kit/exports/icon-512-light.png"
 OUTPUT_DIR="public/icons"
 BG_COLOR="white"
 
@@ -31,22 +31,15 @@ for size in "${SIZES[@]}"; do
   logo_size=$(echo "$height * 0.20" | bc | cut -d'.' -f1)
 
   output="$OUTPUT_DIR/splash-$size.png"
-  temp_logo="/tmp/logo-${logo_size}.png"
 
   echo "  → $size (logo: ${logo_size}px)"
 
-  # Convert logo to RGB PNG first (prevents grayscale optimization)
-  magick "$LOGO" -background none -resize ${logo_size}x${logo_size} \
-    -define png:color-type=2 \
-    "$temp_logo"
-
-  # Generate splash screen: white canvas + RGB logo composite
+  # Generate splash: white canvas + resized logo composite
   magick -size ${width}x${height} xc:$BG_COLOR \
-    "$temp_logo" -gravity center -composite \
+    \( "$LOGO" -resize ${logo_size}x${logo_size} \) \
+    -gravity center -composite \
     -define png:color-type=2 \
     "$output"
-
-  rm "$temp_logo"
 done
 
 echo "✓ Generated ${#SIZES[@]} splash screens"
