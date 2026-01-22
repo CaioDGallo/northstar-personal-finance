@@ -181,6 +181,7 @@ export const income = pgTable('income', {
   // Optional link to transaction for credit card refunds
   refundOfTransactionId: integer('refund_of_transaction_id')
     .references(() => transactions.id, { onDelete: 'set null' }),
+  faturaMonth: text('fatura_month'), // "YYYY-MM" format - which fatura to credit (nullable for non-CC income)
   createdAt: timestamp('created_at').defaultNow(),
 });
 

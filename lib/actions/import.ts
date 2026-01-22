@@ -877,6 +877,7 @@ export async function importMixed(data: ImportMixedData): Promise<ImportMixedRes
           externalId?: string;
           refundOfTransactionId?: number;
           replenishCategoryId?: number;
+          faturaMonth?: string;
         }> = [];
         const refundAmounts = new Map<number, number>(); // transactionId -> total refund amount
 
@@ -886,6 +887,20 @@ export async function importMixed(data: ImportMixedData): Promise<ImportMixedRes
 
           const refundOfTransactionId = matchInfo?.matchConfidence === 'high' ? matchInfo.matchedTransactionId : undefined;
           const replenishCategoryId = refundOfTransactionId ? categoryIdMap.get(refundOfTransactionId) : undefined;
+
+          // Calculate faturaMonth for credit card refunds
+          let faturaMonth: string | undefined;
+          if (hasBillingConfig) {
+            const receivedDate = new Date(row.date + 'T00:00:00Z');
+
+            // Use OFX closing date if provided, otherwise use account's closing day
+            if (faturaOverrides?.closingDate) {
+              const closingDate = new Date(faturaOverrides.closingDate + 'T00:00:00Z');
+              faturaMonth = getFaturaMonthFromClosingDate(receivedDate, closingDate);
+            } else {
+              faturaMonth = getFaturaMonth(receivedDate, account[0].closingDay!);
+            }
+          }
 
           incomeValues.push({
             userId,
@@ -898,6 +913,7 @@ export async function importMixed(data: ImportMixedData): Promise<ImportMixedRes
             externalId: row.externalId,
             refundOfTransactionId,
             replenishCategoryId,
+            faturaMonth,
           });
 
           // Accumulate refund amounts

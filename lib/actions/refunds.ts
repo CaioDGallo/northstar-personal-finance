@@ -91,6 +91,7 @@ export async function createRefund(data: CreateRefundData) {
       receivedAt: null, // Pending by default
       replenishCategoryId: transaction.categoryId, // Auto budget replenishment
       refundOfTransactionId: data.transactionId, // Link to original transaction
+      faturaMonth: data.faturaMonth, // Which fatura to credit
     });
 
     // 5. Update transaction's refunded amount (denormalized for performance)
@@ -138,11 +139,7 @@ export async function deleteRefund(incomeId: number) {
         accountId: income.accountId,
         refundOfTransactionId: income.refundOfTransactionId,
         accountType: accounts.type,
-        faturaMonth: sql<string>`(
-          SELECT fatura_month FROM ${entries}
-          WHERE transaction_id = ${income.refundOfTransactionId}
-          LIMIT 1
-        )`,
+        faturaMonth: income.faturaMonth,
       })
       .from(income)
       .leftJoin(accounts, eq(income.accountId, accounts.id))

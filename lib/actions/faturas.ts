@@ -6,7 +6,7 @@ import { computeClosingDate, computeFaturaWindowStart, getFaturaPaymentDueDate }
 import { t } from '@/lib/i18n/server-errors';
 import { checkBulkRateLimit } from '@/lib/rate-limit';
 import { accounts, categories, entries, faturas, income, transactions, transfers, type Fatura } from '@/lib/schema';
-import { and, desc, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { unstable_cache, revalidatePath, revalidateTag } from 'next/cache';
 import { cache } from 'react';
 import { syncAccountBalance } from '@/lib/actions/accounts';
@@ -114,7 +114,7 @@ export async function updateFaturaTotal(accountId: number, yearMonth: string): P
       and(
         eq(income.userId, userId),
         eq(income.accountId, accountId),
-        sql`to_char(${income.receivedDate}, 'YYYY-MM') = ${yearMonth}`
+        eq(income.faturaMonth, yearMonth)
       )
     );
 
@@ -396,13 +396,13 @@ export async function batchUpdateFaturaTotals(
       SELECT
         i.user_id,
         i.account_id,
-        to_char(i.received_date, 'YYYY-MM') AS year_month,
+        i.fatura_month AS year_month,
         SUM(i.amount) AS refunds_total
       FROM income i
       WHERE i.user_id = ${userId}
         AND i.account_id = ${accountId}
-        AND to_char(i.received_date, 'YYYY-MM') = ANY(${months})
-      GROUP BY i.user_id, i.account_id, to_char(i.received_date, 'YYYY-MM')
+        AND i.fatura_month = ANY(${months})
+      GROUP BY i.user_id, i.account_id, i.fatura_month
     ) AS refunds_agg
     ON entries_agg.user_id = refunds_agg.user_id
       AND entries_agg.account_id = refunds_agg.account_id
@@ -602,7 +602,7 @@ export const getFaturaWithEntries = cache(async (faturaId: number) => {
           and(
             eq(income.userId, userId),
             eq(income.accountId, fatura[0].accountId),
-            sql`to_char(${income.receivedDate}, 'YYYY-MM') = ${fatura[0].yearMonth}`
+            eq(income.faturaMonth, fatura[0].yearMonth)
           )
         )
         .orderBy(desc(income.receivedDate));
