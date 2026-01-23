@@ -218,7 +218,7 @@
   "settings": {
     "title": "Settings",
     "preferences": "Preferences",
-    "preferencesDescription": "Manage your app preferences and notifications",
+    "preferencesDescription": "Theme, language, timezone, and notifications",
     "accounts": "Accounts",
     "accountsDescription": "Manage bank accounts and credit cards",
     "categories": "Categories",
@@ -1147,7 +1147,10 @@
       "income": "Record your income here",
       "budgets": "Set limits for each category",
       "faturas": "Manage card invoices here",
-      "transfers": "Transfer between your accounts"
+      "transfers": "Transfer between your accounts",
+      "accounts": "Manage your bank accounts and cards",
+      "categories": "Organize your expenses by categories",
+      "budgetsSettings": "Set monthly budgets for each category"
     }
   }
 }

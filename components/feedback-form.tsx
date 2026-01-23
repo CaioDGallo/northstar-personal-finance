@@ -85,7 +85,7 @@ export function FeedbackForm({ onSuccess }: FeedbackFormProps) {
           placeholder={t('messagePlaceholder')}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          rows={5}
+          className="min-h-[100px] resize-y"
           required
         />
       </div>

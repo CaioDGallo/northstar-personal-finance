@@ -24,14 +24,33 @@ const OnboardingContext = createContext<OnboardingContextValue | undefined>(unde
 export function OnboardingProvider({ children }: { children: React.ReactNode }) {
   const [wizardStatus, setWizardStatus] = useState<'loading' | 'pending' | 'in_progress' | 'completed'>('loading');
   const [currentStep, setCurrentStep] = useState(0);
-  const [hintsViewed, setHintsViewed] = useState<Set<string>>(new Set());
+
+  // Initialize hintsViewed from localStorage for instant PWA persistence
+  const [hintsViewed, setHintsViewed] = useState<Set<string>>(() => {
+    const cachedHints = localStorage.getItem('onboarding-hints-viewed');
+    if (cachedHints) {
+      try {
+        return new Set(JSON.parse(cachedHints));
+      } catch (e) {
+        console.error('Failed to parse cached hints:', e);
+        return new Set();
+      }
+    }
+    return new Set();
+  });
+
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
   // Load onboarding status on mount
   useEffect(() => {
+    // Fetch from DB to sync with authoritative source
     getOnboardingStatus().then((status) => {
       setNeedsOnboarding(status.needsOnboarding);
-      setHintsViewed(new Set(status.hintsViewed));
+      const dbHints = new Set(status.hintsViewed);
+      setHintsViewed(dbHints);
+
+      // Update localStorage with DB truth
+      localStorage.setItem('onboarding-hints-viewed', JSON.stringify(status.hintsViewed));
 
       // Check localStorage for current step
       const savedStep = localStorage.getItem('onboarding-step');
@@ -92,7 +111,13 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   const markHintViewed = useCallback(async (key: string) => {
     if (!hintsViewed.has(key)) {
-      setHintsViewed((prev) => new Set([...prev, key]));
+      const newHints = new Set([...hintsViewed, key]);
+      setHintsViewed(newHints);
+
+      // Optimistic localStorage update for PWA persistence
+      localStorage.setItem('onboarding-hints-viewed', JSON.stringify([...newHints]));
+
+      // Persist to DB
       await markHintViewedAction(key);
     }
   }, [hintsViewed]);

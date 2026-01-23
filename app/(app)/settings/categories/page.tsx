@@ -2,9 +2,11 @@ import { getTranslations } from 'next-intl/server';
 import { getCategories } from '@/lib/actions/categories';
 import { AddCategoryButton } from '@/components/add-category-button';
 import { CategoryCard } from '@/components/category-card';
+import { OnboardingTooltip } from '@/components/onboarding/onboarding-tooltip';
 
 export default async function CategoriesPage() {
   const t = await getTranslations('categories');
+  const tOnboarding = await getTranslations('onboarding.hints');
   const categories = await getCategories();
 
   const expenseCategories = categories.filter(cat => cat.type === 'expense');
@@ -12,6 +14,9 @@ export default async function CategoriesPage() {
 
   return (
     <div>
+      <OnboardingTooltip hintKey="categories" className="mb-4">
+        {tOnboarding('categories')}
+      </OnboardingTooltip>
       <div className="mb-6">
         <h1 className="text-2xl font-bold">{t('title')}</h1>
       </div>

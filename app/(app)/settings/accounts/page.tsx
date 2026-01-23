@@ -14,12 +14,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { OnboardingTooltip } from '@/components/onboarding/onboarding-tooltip';
 
 export default function AccountsPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const t = useTranslations('accounts');
+  const tOnboarding = useTranslations('onboarding.hints');
 
   async function loadAccounts() {
     setIsLoading(true);
@@ -45,6 +47,9 @@ export default function AccountsPage() {
 
   return (
     <div>
+      <OnboardingTooltip hintKey="accounts" className="mb-4">
+        {tOnboarding('accounts')}
+      </OnboardingTooltip>
       <div className="mb-6 flex items-center flex-col md:flex-row space-y-4 md:space-y-0 justify-between">
         <h1 className="text-2xl font-bold">{t('title')}</h1>
         <div className="flex items-center gap-2">

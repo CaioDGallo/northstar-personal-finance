@@ -20,14 +20,14 @@ export function FeedbackSheet({ open, onOpenChange }: FeedbackSheetProps) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[80vh] flex flex-col">
-        <SheetHeader>
+      <SheetContent side="bottom" className="max-h-[80vh] flex flex-col pb-[env(safe-area-inset-bottom)]">
+        <SheetHeader className="pb-0">
           <SheetTitle>{t('title')}</SheetTitle>
           <SheetDescription className="sr-only">
             {t('messagePlaceholder')}
           </SheetDescription>
         </SheetHeader>
-        <div className="flex-1 overflow-y-auto py-4">
+        <div className="flex-1 overflow-y-auto px-4 pb-4">
           <FeedbackForm onSuccess={() => onOpenChange(false)} />
         </div>
       </SheetContent>

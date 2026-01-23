@@ -1,10 +1,8 @@
 import Link from 'next/link';
-import { getTranslations, getLocale } from 'next-intl/server';
-import { LanguageToggle } from '@/components/language-toggle';
+import { getTranslations } from 'next-intl/server';
 
 export default async function SettingsPage() {
   const t = await getTranslations('settings');
-  const currentLocale = await getLocale();
 
   return (
     <div>
@@ -52,11 +50,6 @@ export default async function SettingsPage() {
           <h2 className="font-semibold text-destructive">{t('data')}</h2>
           <p className="text-sm text-muted-foreground">{t('dataDescription')}</p>
         </Link>
-        <div className="block border border-gray-300 p-4">
-          <h2 className="font-semibold">{t('language')}</h2>
-          <p className="text-sm text-gray-600">{t('languageDescription')}</p>
-          <LanguageToggle currentLocale={currentLocale} />
-        </div>
       </div>
     </div>
   );

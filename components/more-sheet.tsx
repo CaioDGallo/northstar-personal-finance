@@ -25,8 +25,6 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ThemeToggleRow } from './theme-toggle-row';
-import { LanguageToggleRow } from './language-toggle-row';
 import { LogoutButton } from './logout-button';
 import { FeedbackSheet } from './feedback-sheet';
 
@@ -95,8 +93,6 @@ export function MoreSheet({
                 <span>{t(item.key)}</span>
               </Link>
             ))}
-            <ThemeToggleRow />
-            <LanguageToggleRow />
           </nav>
 
           {/* Feedback and Logout at bottom */}

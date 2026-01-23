@@ -224,7 +224,7 @@
   "settings": {
     "title": "Configurações",
     "preferences": "Preferências",
-    "preferencesDescription": "Gerenciar suas preferências e notificações",
+    "preferencesDescription": "Tema, idioma, fuso horário e notificações",
     "accounts": "Contas",
     "accountsDescription": "Gerenciar contas bancárias e cartões de crédito",
     "categories": "Categorias",
@@ -1157,7 +1157,10 @@
       "income": "Registre suas receitas aqui",
       "budgets": "Defina limites para cada categoria",
       "faturas": "Gerencie faturas de cartão aqui",
-      "transfers": "Transfira entre suas contas"
+      "transfers": "Transfira entre suas contas",
+      "accounts": "Configure suas contas bancárias e cartões",
+      "categories": "Organize suas despesas por categorias",
+      "budgetsSettings": "Defina orçamentos mensais para cada categoria"
     }
   }
 }
