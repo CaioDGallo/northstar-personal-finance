@@ -95,7 +95,12 @@ describe('Category Actions - CRUD', () => {
       type: 'expense',
     });
 
-    expect(result).toEqual({ success: true });
+    expect(result.success).toBe(true);
+    expect(result).toHaveProperty('data');
+    if (result.success) {
+      expect(result.data).toHaveProperty('id');
+      expect(typeof result.data?.id).toBe('number');
+    }
 
     const [created] = await db
       .select()
