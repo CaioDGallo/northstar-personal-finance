@@ -1077,5 +1077,87 @@
     "faq2A": "Sim. Importação via CSV/OFX para bancos comuns e cartões.",
     "faq3Q": "Tem aplicativo?",
     "faq3A": "Você usa no navegador com experiência de app (PWA)."
+  },
+  "onboarding": {
+    "wizard": {
+      "title": "Começar",
+      "skip": "Pular"
+    },
+    "welcome": {
+      "title": "Bem-vindo ao Fluxo!",
+      "description": "Seu controle financeiro pessoal focado no Brasil. Vamos configurar tudo em alguns passos rápidos.",
+      "features": {
+        "title": "O que você pode fazer:",
+        "expenses": "Rastrear despesas e parcelamentos",
+        "budgets": "Definir orçamentos por categoria",
+        "invoices": "Gerenciar faturas de cartão de crédito",
+        "insights": "Visualizar insights do seu fluxo mensal"
+      },
+      "continue": "Continuar"
+    },
+    "account": {
+      "title": "Adicione uma conta",
+      "description": "Comece adicionando uma conta bancária ou cartão de crédito.",
+      "nameLabel": "Nome da conta",
+      "namePlaceholder": "Ex: Nubank, Itau",
+      "typeLabel": "Tipo",
+      "types": {
+        "checking": "Conta Corrente",
+        "savings": "Poupança",
+        "creditCard": "Cartão de Crédito",
+        "cash": "Dinheiro"
+      },
+      "skip": "Pular",
+      "create": "Criar",
+      "creating": "Criando...",
+      "nameRequired": "Nome da conta é obrigatório",
+      "accountCreated": "Conta criada com sucesso!"
+    },
+    "category": {
+      "title": "Crie uma categoria",
+      "description": "Personalize suas categorias de despesa ou use as padrões.",
+      "nameLabel": "Nome da categoria",
+      "namePlaceholder": "Ex: Alimentação, Transporte",
+      "colorLabel": "Cor",
+      "skip": "Pular",
+      "create": "Criar",
+      "creating": "Criando...",
+      "nameRequired": "Nome da categoria é obrigatório",
+      "categoryCreated": "Categoria criada com sucesso!"
+    },
+    "budget": {
+      "title": "Defina um orçamento",
+      "description": "Estabeleça limites mensais para suas categorias.",
+      "categoryLabel": "Categoria",
+      "amountLabel": "Valor mensal (R$)",
+      "amountPlaceholder": "Ex: 1000.00",
+      "skip": "Pular",
+      "create": "Criar",
+      "creating": "Criando...",
+      "loading": "Carregando categorias...",
+      "noCategories": "Você ainda não tem categorias. Pule este passo ou volte para criar uma.",
+      "fieldsRequired": "Todos os campos são obrigatórios",
+      "invalidAmount": "Valor deve ser maior que zero",
+      "budgetCreated": "Orçamento criado com sucesso!"
+    },
+    "completion": {
+      "title": "Tudo pronto!",
+      "description": "Você concluiu a configuração inicial. Agora é hora de começar a usar o Fluxo.",
+      "nextSteps": {
+        "title": "Próximos passos:",
+        "addExpenses": "Adicione suas primeiras despesas",
+        "trackBudgets": "Acompanhe seus orçamentos",
+        "viewInsights": "Visualize seus insights financeiros"
+      },
+      "goToDashboard": "Ir para o Dashboard"
+    },
+    "hints": {
+      "dashboard": "Aqui você acompanha seu fluxo mensal",
+      "expenses": "Adicione despesas com o botão +",
+      "income": "Registre suas receitas aqui",
+      "budgets": "Defina limites para cada categoria",
+      "faturas": "Gerencie faturas de cartão aqui",
+      "transfers": "Transfira entre suas contas"
+    }
   }
 }

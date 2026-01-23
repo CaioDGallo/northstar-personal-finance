@@ -4,6 +4,8 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { BillReminderBanner } from '@/components/bill-reminder-banner';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { BottomTabBar } from '@/components/bottom-tab-bar';
+import { OnboardingProvider } from '@/components/onboarding/onboarding-provider';
+import { OnboardingWizard } from '@/components/onboarding/onboarding-wizard';
 
 export default async function AppLayout({
   children,
@@ -17,21 +19,26 @@ export default async function AppLayout({
   }
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="hidden md:flex h-12 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="hidden md:flex" />
-          <span className="font-semibold md:hidden">fluxo.sh</span>
-        </header>
-        <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8 pb-24 md:pb-8">
-          <BillReminderBanner />
-          {children}
-        </main>
-      </SidebarInset>
+    <OnboardingProvider>
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="hidden md:flex h-12 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger className="hidden md:flex" />
+            <span className="font-semibold md:hidden">fluxo.sh</span>
+          </header>
+          <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8 pb-24 md:pb-8">
+            <BillReminderBanner />
+            {children}
+          </main>
+        </SidebarInset>
 
-      {/* Mobile Bottom Tab Bar */}
-      <BottomTabBar />
-    </SidebarProvider>
+        {/* Mobile Bottom Tab Bar */}
+        <BottomTabBar />
+
+        {/* Onboarding Wizard */}
+        <OnboardingWizard />
+      </SidebarProvider>
+    </OnboardingProvider>
   );
 }

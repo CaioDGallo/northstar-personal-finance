@@ -1067,5 +1067,87 @@
     "faq2A": "Yes. CSV/OFX imports for common banks and cards.",
     "faq3Q": "Is there an app?",
     "faq3A": "Use it in the browser with app-like experience (PWA)."
+  },
+  "onboarding": {
+    "wizard": {
+      "title": "Get Started",
+      "skip": "Skip"
+    },
+    "welcome": {
+      "title": "Welcome to Fluxo!",
+      "description": "Your personal finance tracker built for Brazil. Let's set everything up in a few quick steps.",
+      "features": {
+        "title": "What you can do:",
+        "expenses": "Track expenses and installments",
+        "budgets": "Set budgets by category",
+        "invoices": "Manage credit card invoices",
+        "insights": "View insights of your monthly flow"
+      },
+      "continue": "Continue"
+    },
+    "account": {
+      "title": "Add an account",
+      "description": "Start by adding a bank account or credit card.",
+      "nameLabel": "Account name",
+      "namePlaceholder": "e.g. Nubank, Itau",
+      "typeLabel": "Type",
+      "types": {
+        "checking": "Checking Account",
+        "savings": "Savings",
+        "creditCard": "Credit Card",
+        "cash": "Cash"
+      },
+      "skip": "Skip",
+      "create": "Create",
+      "creating": "Creating...",
+      "nameRequired": "Account name is required",
+      "accountCreated": "Account created successfully!"
+    },
+    "category": {
+      "title": "Create a category",
+      "description": "Customize your expense categories or use the defaults.",
+      "nameLabel": "Category name",
+      "namePlaceholder": "e.g. Food, Transport",
+      "colorLabel": "Color",
+      "skip": "Skip",
+      "create": "Create",
+      "creating": "Creating...",
+      "nameRequired": "Category name is required",
+      "categoryCreated": "Category created successfully!"
+    },
+    "budget": {
+      "title": "Set a budget",
+      "description": "Establish monthly limits for your categories.",
+      "categoryLabel": "Category",
+      "amountLabel": "Monthly amount (R$)",
+      "amountPlaceholder": "e.g. 1000.00",
+      "skip": "Skip",
+      "create": "Create",
+      "creating": "Creating...",
+      "loading": "Loading categories...",
+      "noCategories": "You don't have any categories yet. Skip this step or go back to create one.",
+      "fieldsRequired": "All fields are required",
+      "invalidAmount": "Amount must be greater than zero",
+      "budgetCreated": "Budget created successfully!"
+    },
+    "completion": {
+      "title": "All set!",
+      "description": "You've completed the initial setup. Now it's time to start using Fluxo.",
+      "nextSteps": {
+        "title": "Next steps:",
+        "addExpenses": "Add your first expenses",
+        "trackBudgets": "Track your budgets",
+        "viewInsights": "View your financial insights"
+      },
+      "goToDashboard": "Go to Dashboard"
+    },
+    "hints": {
+      "dashboard": "Here you track your monthly flow",
+      "expenses": "Add expenses with the + button",
+      "income": "Record your income here",
+      "budgets": "Set limits for each category",
+      "faturas": "Manage card invoices here",
+      "transfers": "Transfer between your accounts"
+    }
   }
 }

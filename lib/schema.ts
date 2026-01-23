@@ -321,6 +321,9 @@ export const userSettings = pgTable(
     notificationsEnabled: boolean('notifications_enabled').default(true),
     defaultEventOffsetMinutes: integer('default_event_offset_minutes').default(60),
     defaultTaskOffsetMinutes: integer('default_task_offset_minutes').default(60),
+    onboardingCompletedAt: timestamp('onboarding_completed_at'),
+    onboardingSkippedAt: timestamp('onboarding_skipped_at'),
+    hintsViewed: text('hints_viewed'), // JSON array: ["dashboard", "expenses", ...]
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
   },
