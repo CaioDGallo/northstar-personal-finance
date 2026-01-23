@@ -128,6 +128,7 @@ async function seedRows(tableKey: SeedTableKey, rows: SeedRow[]) {
 
   // Use direct inserts instead of drizzle-seed to avoid constraint violations
   const table = seedSchema[tableKey];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const inserted = await db.insert(table).values(rowsWithIds as any[]).returning();
 
   return inserted;
