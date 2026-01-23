@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -26,6 +27,7 @@ import { usePathname } from 'next/navigation';
 import { ThemeToggleRow } from './theme-toggle-row';
 import { LanguageToggleRow } from './language-toggle-row';
 import { LogoutButton } from './logout-button';
+import { FeedbackForm } from './feedback-form';
 
 const moreItems = [
   { key: 'calendar', href: '/calendar', icon: Calendar03Icon },
@@ -52,10 +54,19 @@ export function MoreSheet({
   onOpenChange,
 }: MoreSheetProps) {
   const t = useTranslations('navigation');
+  const tFeedback = useTranslations('feedback');
   const pathname = usePathname();
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      setShowFeedbackForm(false);
+    }
+    onOpenChange(newOpen);
+  };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent
         side="bottom"
         className={cn(
@@ -68,30 +79,56 @@ export function MoreSheet({
           <SheetTitle>{t('more')}</SheetTitle>
         </SheetHeader>
 
-        <nav className="flex flex-col gap-1 py-4 overflow-y-auto flex-1 min-h-0">
-          {moreItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => onOpenChange(false)}
-              className={cn(
-                'flex items-center gap-3 px-4 py-3 rounded-md shrink-0',
-                'text-foreground hover:bg-muted transition-colors',
-                pathname === item.href && 'bg-muted font-medium'
-              )}
+        {showFeedbackForm ? (
+          <div className="flex flex-col gap-4 py-4 overflow-y-auto flex-1 min-h-0">
+            <button
+              onClick={() => setShowFeedbackForm(false)}
+              className="text-sm text-muted-foreground hover:text-foreground"
             >
-              <HugeiconsIcon icon={item.icon} className="size-5" />
-              <span>{t(item.key)}</span>
-            </Link>
-          ))}
-          <ThemeToggleRow />
-          <LanguageToggleRow />
-        </nav>
+              ← {t('more')}
+            </button>
+            <FeedbackForm onSuccess={() => {
+              handleOpenChange(false);
+            }} />
+          </div>
+        ) : (
+          <>
+            <nav className="flex flex-col gap-1 py-4 overflow-y-auto flex-1 min-h-0">
+              {moreItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => handleOpenChange(false)}
+                  className={cn(
+                    'flex items-center gap-3 px-4 py-3 rounded-md shrink-0',
+                    'text-foreground hover:bg-muted transition-colors',
+                    pathname === item.href && 'bg-muted font-medium'
+                  )}
+                >
+                  <HugeiconsIcon icon={item.icon} className="size-5" />
+                  <span>{t(item.key)}</span>
+                </Link>
+              ))}
+              <ThemeToggleRow iconOnly={false} showLabel={true} />
+              <LanguageToggleRow />
+            </nav>
 
-        {/* Logout button at bottom */}
-        <div className="border-t pt-4 pb-3 mt-2 shrink-0">
-          <LogoutButton variant="mobile" />
-        </div>
+            {/* Feedback and Logout at bottom */}
+            <div className="border-t pt-4 pb-3 mt-2 shrink-0 flex flex-col gap-2">
+              <button
+                onClick={() => setShowFeedbackForm(true)}
+                className={cn(
+                  'flex items-center gap-3 px-4 py-3 rounded-md',
+                  'text-foreground hover:bg-muted transition-colors'
+                )}
+              >
+                <HugeiconsIcon icon={Notification02Icon} className="size-5" />
+                <span>{tFeedback('button')}</span>
+              </button>
+              <LogoutButton variant="mobile" />
+            </div>
+          </>
+        )}
       </SheetContent>
     </Sheet>
   );

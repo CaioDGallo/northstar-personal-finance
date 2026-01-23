@@ -4,7 +4,6 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { BillReminderBanner } from '@/components/bill-reminder-banner';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { BottomTabBar } from '@/components/bottom-tab-bar';
-import { FeedbackButton } from '@/components/feedback-button';
 
 export default async function AppLayout({
   children,
@@ -33,9 +32,6 @@ export default async function AppLayout({
 
       {/* Mobile Bottom Tab Bar */}
       <BottomTabBar />
-
-      {/* Feedback Button */}
-      <FeedbackButton />
     </SidebarProvider>
   );
 }
