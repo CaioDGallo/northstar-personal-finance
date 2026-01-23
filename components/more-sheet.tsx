@@ -17,7 +17,6 @@ import {
   Wallet01Icon,
   Calendar03Icon,
   Notification02Icon,
-  Message01Icon,
   Settings02Icon,
   FileDownloadIcon,
 } from '@hugeicons/core-free-icons';
@@ -77,20 +76,23 @@ export function MoreSheet({
         )}
       >
         <SheetHeader className="shrink-0">
-          <SheetTitle>{t('more')}</SheetTitle>
+          <SheetTitle>{showFeedbackForm ? tFeedback('title') : t('more')}</SheetTitle>
         </SheetHeader>
 
         {showFeedbackForm ? (
-          <div className="flex flex-col gap-4 py-4 overflow-y-auto flex-1 min-h-0">
+          <div className="flex flex-col gap-4 overflow-y-auto flex-1 min-h-0 py-4">
             <button
               onClick={() => setShowFeedbackForm(false)}
-              className="text-sm text-muted-foreground hover:text-foreground"
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground px-4"
             >
-              ← {t('more')}
+              <span>←</span>
+              <span>{t('more')}</span>
             </button>
-            <FeedbackForm onSuccess={() => {
-              handleOpenChange(false);
-            }} />
+            <div className="px-4">
+              <FeedbackForm onSuccess={() => {
+                handleOpenChange(false);
+              }} />
+            </div>
           </div>
         ) : (
           <>
@@ -123,7 +125,7 @@ export function MoreSheet({
                   'text-foreground hover:bg-muted transition-colors'
                 )}
               >
-                <HugeiconsIcon icon={Message01Icon} className="size-5" />
+                <HugeiconsIcon icon={Notification02Icon} className="size-5" />
                 <span>{tFeedback('button')}</span>
               </button>
               <LogoutButton variant="mobile" />
