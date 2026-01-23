@@ -60,10 +60,11 @@ export function OnboardingWizard() {
       <SheetContent
         side="bottom"
         className="max-h-[85vh] flex flex-col pb-[env(safe-area-inset-bottom)]"
+        showCloseButton={false}
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
-        <SheetHeader className="space-y-4 pb-0">
+        <SheetHeader className="space-y-6">
           <div className="flex items-center justify-between">
             <SheetTitle>{t('wizard.title')}</SheetTitle>
             {currentStep < TOTAL_STEPS - 1 && (
@@ -79,12 +80,12 @@ export function OnboardingWizard() {
           </div>
 
           {/* Progress indicator */}
-          <div className="flex gap-2 justify-center">
+          <div className="flex gap-2 justify-center py-2">
             {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
               <div
                 key={i}
                 className={cn(
-                  'size-2 rounded-full transition-colors',
+                  'size-2.5 rounded-full transition-colors',
                   i <= currentStep ? 'bg-foreground' : 'bg-muted'
                 )}
               />
@@ -92,7 +93,7 @@ export function OnboardingWizard() {
           </div>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto px-4 pb-4">
+        <div className="flex-1 overflow-y-auto px-4 pt-2 pb-6">
           {renderStep()}
         </div>
       </SheetContent>
