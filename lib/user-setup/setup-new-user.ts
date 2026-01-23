@@ -1,7 +1,8 @@
 import { db } from '@/lib/db';
 import { users } from '@/lib/auth-schema';
-import { categories, userSettings } from '@/lib/schema';
+import { accounts, categories, userSettings } from '@/lib/schema';
 import { DEFAULT_CATEGORIES } from './default-categories';
+import { DEFAULT_ACCOUNTS } from './default-accounts';
 import { sendEmail } from '@/lib/email/send';
 import { generateWelcomeHtml, generateWelcomeText } from '@/lib/email/welcome-template';
 import { type Locale, defaultLocale } from '@/lib/i18n/config';
@@ -11,6 +12,7 @@ import { eq } from 'drizzle-orm';
 export interface SetupNewUserResult {
   success: boolean;
   categoriesCreated: number;
+  accountsCreated: number;
   emailSent: boolean;
   error?: string;
 }
@@ -35,6 +37,7 @@ export async function setupNewUser(
       return {
         success: false,
         categoriesCreated: 0,
+        accountsCreated: 0,
         emailSent: false,
         error: 'User not found',
       };
@@ -53,12 +56,32 @@ export async function setupNewUser(
       return {
         success: false,
         categoriesCreated: 0,
+        accountsCreated: 0,
         emailSent: false,
         error: 'Failed to create default categories',
       };
     }
 
-    // 3. Create user settings (timezone: America/Sao_Paulo, locale: pt-BR)
+    // 3. Insert default accounts (batch insert)
+    const accountRecords = DEFAULT_ACCOUNTS.map((account) => ({
+      ...account,
+      userId,
+    }));
+
+    try {
+      await db.insert(accounts).values(accountRecords);
+    } catch (error) {
+      console.error('[setup-new-user] Accounts insert failed:', error);
+      return {
+        success: false,
+        categoriesCreated: categoryRecords.length,
+        accountsCreated: 0,
+        emailSent: false,
+        error: 'Failed to create default accounts',
+      };
+    }
+
+    // 4. Create user settings (timezone: America/Sao_Paulo, locale: pt-BR)
     try {
       await db.insert(userSettings).values({
         userId,
@@ -74,7 +97,7 @@ export async function setupNewUser(
       // Non-critical - continue
     }
 
-    // 4. Send welcome email (non-blocking, log failures)
+    // 5. Send welcome email (non-blocking, log failures)
     let emailSent = false;
 
     if (!options?.skipEmail) {
@@ -112,6 +135,7 @@ export async function setupNewUser(
     return {
       success: true,
       categoriesCreated: categoryRecords.length,
+      accountsCreated: accountRecords.length,
       emailSent,
     };
   } catch (error) {
@@ -119,6 +143,7 @@ export async function setupNewUser(
     return {
       success: false,
       categoriesCreated: 0,
+      accountsCreated: 0,
       emailSent: false,
       error: error instanceof Error ? error.message : 'Unknown error',
     };
