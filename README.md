@@ -1,36 +1,115 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Fluxo.sh (northstar)
 
-## Getting Started
+Personal finance tracking app focused on clarity: track spending, income, credit card bills, and installments in the right month, with a mobile-first UI and a strong "you own your data" stance (imports/exports).
 
-First, run the development server:
+The product UI is primarily in pt-BR (see `messages/pt-BR.json`) with a secondary `messages/en.json`.
+
+## What this app does
+
+- Expenses, income, and transfers
+- Credit card bills ("faturas") with closing/due dates
+- Installments: one `transaction` -> many monthly `entries`
+- Budgets by category (monthly)
+- Imports (CSV/OFX) and exports (CSV)
+- PWA experience (Serwist)
+
+## Stack
+
+- Next.js (App Router), React, TypeScript
+- Drizzle ORM + Postgres (local Docker or Supabase)
+- Tailwind CSS + shadcn/ui + Hugeicons
+- Auth.js / NextAuth
+- next-intl for i18n
+- Vitest (unit) and Playwright (e2e)
+
+## Local development
+
+Prereqs:
+
+- Node + pnpm (repo uses `pnpm`)
+- Docker (recommended for local Postgres)
+
+1) Install deps
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2) Start Postgres (Docker)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+docker compose -f compose.yml up -d
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3) Configure env
 
-## Learn More
+```bash
+cp .env.example .env
+```
 
-To learn more about Next.js, take a look at the following resources:
+Minimum for local auth:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `NEXTAUTH_URL=http://localhost:3000`
+- `NEXTAUTH_SECRET=...` (generate with `openssl rand -base64 32`)
+- Turnstile: you can use Cloudflare test keys from `.env.example`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+4) Run migrations (local)
 
-## Deploy on Vercel
+```bash
+pnpm db:setup
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+5) Start the dev server
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+pnpm dev
+```
+
+Open http://localhost:3000
+
+## Useful commands
+
+```bash
+pnpm lint
+pnpm build
+pnpm build:clean
+
+pnpm test
+pnpm test:run
+pnpm test:coverage
+pnpm test:e2e
+
+pnpm db:migrate:local
+pnpm db:seed
+pnpm db:reset
+```
+
+## Database notes
+
+- Money is stored as integer cents. Use `centsToDisplay()` / `displayToCents()` from `lib/utils.ts`.
+- Installments follow the pattern: a single `transactions` row -> multiple `entries` rows (one per month).
+- Schema lives in `lib/schema.ts`.
+- Drizzle config: `drizzle.config.ts`.
+
+## E2E testing notes (Playwright)
+
+- Tests use Portuguese UI text selectors (not test IDs) to validate translations in production.
+- Specs: `test/e2e/*.spec.ts`.
+
+## Project workflow (issues)
+
+This repo uses `bd` (beads) for issue tracking:
+
+```bash
+bd ready
+bd show <id>
+bd update <id> --status in_progress
+bd close <id>
+bd sync
+```
+
+## Contributing
+
+- Keep user-facing strings in `next-intl` messages (pt-BR is primary).
+- Prefer accessible selectors and Portuguese text in e2e tests.
+- Avoid changing money units: always store cents.
