@@ -108,6 +108,7 @@
     "tasks": "Tasks",
     "reminders": "Reminders",
     "preferences": "Preferences",
+    "export": "Export",
     "expandSidebar": "Expand sidebar",
     "logout": "Logout",
     "logoutConfirmTitle": "Sign out of your account?",
@@ -962,6 +963,24 @@
     "dismiss": "Not now",
     "iosStep1": "Tap",
     "iosStep2": "\"Add to Home Screen\""
+  },
+  "export": {
+    "title": "Export Data",
+    "exportType": "Export Type",
+    "transactions": "Expenses and Income",
+    "transfers": "Transfers",
+    "timeRange": "Time Range",
+    "month": "Month",
+    "year": "Year",
+    "allTime": "All Time",
+    "selectMonth": "Select month",
+    "includeExpenses": "Include expenses",
+    "includeIncome": "Include income",
+    "exportButton": "Export CSV",
+    "exporting": "Exporting…",
+    "noDataTitle": "No data to export",
+    "noDataDescription": "There are no transactions in the selected period.",
+    "formatInfo": "The CSV file will be exported with column separators and UTF-8 encoding for Excel compatibility."
   },
   "landing": {
     "tagline": "Finance control without spreadsheets",

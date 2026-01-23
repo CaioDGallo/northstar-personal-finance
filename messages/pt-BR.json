@@ -93,7 +93,7 @@
   "navigation": {
     "fluxosh": "fluxo.sh",
     "navigation": "Navegação",
-    "dashboard": "Início",
+    "dashboard": "Meu Fluxo",
     "budgets": "Orçamentos",
     "expenses": "Despesas",
     "transfers": "Transferências",
@@ -108,6 +108,7 @@
     "tasks": "Tarefas",
     "reminders": "Lembretes",
     "preferences": "Preferências",
+    "export": "Exportar",
     "expandSidebar": "Expandir barra lateral",
     "logout": "Sair",
     "logoutConfirmTitle": "Sair da sua conta?",
@@ -972,6 +973,24 @@
     "dismiss": "Agora não",
     "iosStep1": "Toque em",
     "iosStep2": "\"Adicionar à Tela de Início\""
+  },
+  "export": {
+    "title": "Exportar Dados",
+    "exportType": "Tipo de Exportação",
+    "transactions": "Despesas e Receitas",
+    "transfers": "Transferências",
+    "timeRange": "Período",
+    "month": "Mês",
+    "year": "Ano",
+    "allTime": "Todo o período",
+    "selectMonth": "Selecione o mês",
+    "includeExpenses": "Incluir despesas",
+    "includeIncome": "Incluir receitas",
+    "exportButton": "Exportar CSV",
+    "exporting": "Exportando…",
+    "noDataTitle": "Nenhum dado para exportar",
+    "noDataDescription": "Não há transações no período selecionado.",
+    "formatInfo": "O arquivo CSV será exportado com separadores de coluna e codificação UTF-8 para compatibilidade com Excel."
   },
   "landing": {
     "tagline": "Controle financeiro sem planilha",
