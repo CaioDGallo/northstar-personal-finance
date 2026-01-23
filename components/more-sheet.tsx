@@ -17,6 +17,7 @@ import {
   Wallet01Icon,
   Calendar03Icon,
   Notification02Icon,
+  Message01Icon,
   Settings02Icon,
   FileDownloadIcon,
 } from '@hugeicons/core-free-icons';
@@ -122,7 +123,7 @@ export function MoreSheet({
                   'text-foreground hover:bg-muted transition-colors'
                 )}
               >
-                <HugeiconsIcon icon={Notification02Icon} className="size-5" />
+                <HugeiconsIcon icon={Message01Icon} className="size-5" />
                 <span>{tFeedback('button')}</span>
               </button>
               <LogoutButton variant="mobile" />

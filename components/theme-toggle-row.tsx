@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Sun03Icon, Moon02Icon } from '@hugeicons/core-free-icons';
+import { Sun03Icon, Moon02Icon, SunCloudLittleRain01Icon } from '@hugeicons/core-free-icons';
 import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 import { Button } from './ui/button';
@@ -13,6 +13,7 @@ type ThemeToggleRowProps = {
   className?: string;
   showLabel?: boolean;
   iconOnly?: boolean;
+  asButton?: boolean;
   labelClassName?: string;
 };
 
@@ -20,6 +21,7 @@ export function ThemeToggleRow({
   className,
   showLabel = true,
   iconOnly = false,
+  asButton = false,
   labelClassName,
 }: ThemeToggleRowProps) {
   const [theme, setTheme] = useState<Theme>(() => {
@@ -71,7 +73,7 @@ export function ThemeToggleRow({
     });
   };
 
-  return (
+  return (asButton ?
     <Button
       onClick={cycleTheme}
       suppressHydrationWarning
@@ -89,5 +91,22 @@ export function ThemeToggleRow({
         </span>
       )}
     </Button>
+    :
+    (
+      <button
+        onClick={cycleTheme}
+        suppressHydrationWarning
+        className={cn(
+          'flex items-center gap-3 px-4 py-3 rounded-md w-full',
+          'text-foreground hover:bg-muted transition-colors',
+          className
+        )}
+      >
+        <HugeiconsIcon icon={theme === 'light' ? Sun03Icon : SunCloudLittleRain01Icon} className="size-5" />
+        <span className={cn(labelClassName)}>
+          {showLabel ? `${label}: ${t(theme)}` : t(theme)}
+        </span >
+      </button>
+    )
   );
 }
