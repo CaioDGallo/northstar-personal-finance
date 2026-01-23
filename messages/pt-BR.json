@@ -504,7 +504,35 @@
     "unexpectedError": "Ocorreu um erro inesperado",
     "loading": "Carregando…",
     "emailPlaceholder": "seu@email.com",
-    "passwordPlaceholder": "••••••••"
+    "passwordPlaceholder": "••••••••",
+    "noAccount": "Não tem conta?",
+    "signUp": "Criar conta"
+  },
+  "signup": {
+    "title": "Criar conta",
+    "inviteRequired": "Você precisa de um convite para criar uma conta",
+    "inviteCode": "Código do convite",
+    "continue": "Continuar",
+    "invalidInvite": "Código inválido ou expirado",
+    "createAccount": "Criar conta",
+    "fillDetailsBelow": "Preencha seus dados abaixo",
+    "name": "Nome",
+    "email": "E-mail",
+    "password": "Senha",
+    "namePlaceholder": "Seu nome completo",
+    "emailPlaceholder": "seu@email.com",
+    "passwordPlaceholder": "••••••••",
+    "passwordRequirements": "Mín. 8 caracteres com letras e números",
+    "captchaRequired": "Por favor complete a verificação de captcha",
+    "creatingAccount": "Criando conta...",
+    "unexpectedError": "Ocorreu um erro inesperado",
+    "tooManyAttempts": "Muitas tentativas. Tente novamente em {retryAfter}s.",
+    "alreadyHaveAccount": "Já tem conta?",
+    "signIn": "Entrar",
+    "backToInvite": "← Voltar para código do convite"
+  },
+  "auth": {
+    "orContinueWith": "Ou continuar com"
   },
   "forgotPassword": {
     "title": "Redefinir senha",

@@ -494,7 +494,35 @@
     "unexpectedError": "An unexpected error occurred",
     "loading": "Loading…",
     "emailPlaceholder": "you@example.com",
-    "passwordPlaceholder": "••••••••"
+    "passwordPlaceholder": "••••••••",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign up"
+  },
+  "signup": {
+    "title": "Create account",
+    "inviteRequired": "You need an invite code to create an account",
+    "inviteCode": "Invite code",
+    "continue": "Continue",
+    "invalidInvite": "Invalid or expired code",
+    "createAccount": "Create account",
+    "fillDetailsBelow": "Fill in your details below",
+    "name": "Name",
+    "email": "Email",
+    "password": "Password",
+    "namePlaceholder": "Your full name",
+    "emailPlaceholder": "you@example.com",
+    "passwordPlaceholder": "••••••••",
+    "passwordRequirements": "Min 8 characters with letters and numbers",
+    "captchaRequired": "Please complete the captcha verification",
+    "creatingAccount": "Creating account...",
+    "unexpectedError": "An unexpected error occurred",
+    "tooManyAttempts": "Too many attempts. Try again in {retryAfter}s.",
+    "alreadyHaveAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "backToInvite": "← Back to invite code"
+  },
+  "auth": {
+    "orContinueWith": "Or continue with"
   },
   "forgotPassword": {
     "title": "Reset password",

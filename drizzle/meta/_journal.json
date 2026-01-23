@@ -211,6 +211,13 @@
       "when": 1769167837880,
       "tag": "0029_worthless_mephistopheles",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1769183560604,
+      "tag": "0030_slow_veda",
+      "breakpoints": true
     }
   ]
 }

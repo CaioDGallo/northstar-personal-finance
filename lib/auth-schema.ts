@@ -64,8 +64,24 @@ export const passwordResetTokens = pgTable('password_reset_tokens', {
   createdAt: timestamp('created_at', { mode: 'date', withTimezone: true }).defaultNow().notNull(),
 });
 
+// Invite codes table for invite-only signup
+export const invites = pgTable('invites', {
+  id: text('id').notNull().primaryKey(),
+  code: text('code').notNull().unique(),
+  email: text('email'), // Optional: restrict to specific email
+  createdBy: text('created_by').references(() => users.id),
+  expiresAt: timestamp('expires_at', { mode: 'date', withTimezone: true }),
+  usedAt: timestamp('used_at', { mode: 'date', withTimezone: true }),
+  usedBy: text('used_by').references(() => users.id),
+  maxUses: integer('max_uses').default(1),
+  useCount: integer('use_count').default(0).notNull(),
+  createdAt: timestamp('created_at', { mode: 'date', withTimezone: true }).defaultNow().notNull(),
+});
+
 // Type exports
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type Invite = typeof invites.$inferSelect;
+export type NewInvite = typeof invites.$inferInsert;

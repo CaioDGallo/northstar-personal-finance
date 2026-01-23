@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { validateLoginAttempt } from '@/lib/actions/auth';
 import { Turnstile } from '@marsidev/react-turnstile';
+import { OAuthButtons } from '@/components/auth/oauth-buttons';
 
 function LoginForm() {
   const router = useRouter();
@@ -142,6 +143,15 @@ function LoginForm() {
               {loading ? t('signingIn') : t('signIn')}
             </Button>
           </form>
+
+          <OAuthButtons className="mt-4" callbackUrl="/dashboard" />
+
+          <div className="mt-4 text-center text-sm text-muted-foreground">
+            {t('noAccount')}{' '}
+            <Link href="/signup" className="font-medium hover:underline">
+              {t('signUp')}
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>
