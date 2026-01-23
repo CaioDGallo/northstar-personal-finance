@@ -59,11 +59,11 @@ export function OnboardingWizard() {
     <Sheet open={isOpen} onOpenChange={(open) => !open && handleSkip()}>
       <SheetContent
         side="bottom"
-        className="max-h-[85vh] pb-[env(safe-area-inset-bottom)] overflow-y-auto"
+        className="max-h-[85vh] flex flex-col pb-[env(safe-area-inset-bottom)]"
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
-        <SheetHeader className="space-y-4">
+        <SheetHeader className="space-y-4 pb-0">
           <div className="flex items-center justify-between">
             <SheetTitle>{t('wizard.title')}</SheetTitle>
             {currentStep < TOTAL_STEPS - 1 && (
@@ -92,7 +92,7 @@ export function OnboardingWizard() {
           </div>
         </SheetHeader>
 
-        <div className="mt-6">
+        <div className="flex-1 overflow-y-auto px-4 pb-4">
           {renderStep()}
         </div>
       </SheetContent>

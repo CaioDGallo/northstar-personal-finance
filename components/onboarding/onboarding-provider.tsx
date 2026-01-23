@@ -27,6 +27,9 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   // Initialize hintsViewed from localStorage for instant PWA persistence
   const [hintsViewed, setHintsViewed] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') {
+      return new Set();
+    }
     const cachedHints = localStorage.getItem('onboarding-hints-viewed');
     if (cachedHints) {
       try {
