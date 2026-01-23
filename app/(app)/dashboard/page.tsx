@@ -9,6 +9,7 @@ import { NetWorthSummary } from '@/components/net-worth-summary';
 import { getDashboardData, getNetWorth } from '@/lib/actions/dashboard';
 import { getCurrentYearMonth } from '@/lib/utils';
 import { PWARedirectHandler } from '@/components/pwa-redirect-handler';
+import { OnboardingTooltip } from '@/components/onboarding/onboarding-tooltip';
 import Link from 'next/link';
 
 export default async function DashboardPage({
@@ -17,6 +18,7 @@ export default async function DashboardPage({
   searchParams: Promise<{ month?: string }>
 }) {
   const t = await getTranslations('dashboard');
+  const tOnboarding = await getTranslations('onboarding.hints');
   const { month } = await searchParams;
   const currentMonth = month || getCurrentYearMonth();
   const [data, netWorth] = await Promise.all([
@@ -29,6 +31,11 @@ export default async function DashboardPage({
   return (
     <div>
       <PWARedirectHandler />
+
+      <OnboardingTooltip hintKey="dashboard" className="mb-4">
+        {tOnboarding('dashboard')}
+      </OnboardingTooltip>
+
       <div className="mb-6 flex flex-col md:flex-row space-y-4 md:space-y-0 items-center justify-between">
         <h1 className="text-2xl font-bold hidden md:flex">{t('title')}</h1>
         <MonthPicker currentMonth={currentMonth} />

@@ -6,6 +6,7 @@ import { UnbudgetedSpending } from '@/components/unbudgeted-spending';
 import { CopyBudgetsButton } from '@/components/copy-budgets-button';
 import { getBudgetsWithSpending } from '@/lib/actions/budgets';
 import { getCurrentYearMonth } from '@/lib/utils';
+import { OnboardingTooltip } from '@/components/onboarding/onboarding-tooltip';
 import Link from 'next/link';
 
 export default async function BudgetsPage({
@@ -14,6 +15,7 @@ export default async function BudgetsPage({
   searchParams: Promise<{ month?: string }>
 }) {
   const t = await getTranslations('budgets');
+  const tOnboarding = await getTranslations('onboarding.hints');
   const { month } = await searchParams;
   const yearMonth = month || getCurrentYearMonth();
   const data = await getBudgetsWithSpending(yearMonth);
@@ -22,6 +24,10 @@ export default async function BudgetsPage({
 
   return (
     <div>
+      <OnboardingTooltip hintKey="budgets" className="mb-4">
+        {tOnboarding('budgets')}
+      </OnboardingTooltip>
+
       <div className="mb-6 flex flex-col md:flex-row space-y-4 md:space-y-0 items-center justify-between">
         <h1 className="text-2xl font-bold hidden md:flex">{t('title')}</h1>
         <MonthPicker currentMonth={yearMonth} />

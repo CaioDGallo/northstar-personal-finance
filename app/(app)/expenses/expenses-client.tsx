@@ -10,6 +10,7 @@ import { ExpenseFiltersWrapper } from '@/components/expense-filters-wrapper';
 import { ExpenseFilterSummary } from '@/components/expense-filter-summary';
 import { ImportModal } from '@/components/import/import-modal';
 import { AddExpenseButton } from '@/components/add-expense-button';
+import { OnboardingTooltip } from '@/components/onboarding/onboarding-tooltip';
 import type { Account, Category } from '@/lib/schema';
 import type { UnpaidFatura } from '@/lib/actions/faturas';
 import type { ExpenseEntry } from '@/lib/contexts/expense-context';
@@ -40,6 +41,7 @@ export function ExpensesClient({
   initialDialogOpen = false,
 }: ExpensesClientProps) {
   const t = useTranslations('expenses');
+  const tOnboarding = useTranslations('onboarding.hints');
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -107,6 +109,10 @@ export function ExpensesClient({
 
   return (
     <div>
+      <OnboardingTooltip hintKey="expenses" className="mb-4">
+        {tOnboarding('expenses')}
+      </OnboardingTooltip>
+
       <div className="mb-3 flex flex-col md:flex-row space-y-4 md:space-y-0 items-center justify-between">
         <h1 className="text-2xl font-bold hidden md:flex">{t('title')}</h1>
         <MonthPicker currentMonth={currentMonth} />

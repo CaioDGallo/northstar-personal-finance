@@ -9,6 +9,7 @@ import { IncomeFiltersWrapper } from '@/components/income-filters-wrapper';
 import { IncomeFilterSummary } from '@/components/income-filter-summary';
 import { ImportModal } from '@/components/import/import-modal';
 import { AddIncomeButton } from '@/components/add-income-button';
+import { OnboardingTooltip } from '@/components/onboarding/onboarding-tooltip';
 import type { Account, Category } from '@/lib/schema';
 import type { IncomeEntry } from '@/lib/contexts/income-context';
 import type { RecentAccount } from '@/lib/actions/accounts';
@@ -34,6 +35,7 @@ export function IncomeClient({
   currentMonth,
 }: IncomeClientProps) {
   const t = useTranslations('income');
+  const tOnboarding = useTranslations('onboarding.hints');
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -75,6 +77,10 @@ export function IncomeClient({
 
   return (
     <div>
+      <OnboardingTooltip hintKey="income" className="mb-4">
+        {tOnboarding('income')}
+      </OnboardingTooltip>
+
       <div className="mb-3 flex flex-col md:flex-row space-y-4 md:space-y-0 items-center justify-between">
         <h1 className="text-2xl font-bold hidden md:flex">{t('title')}</h1>
         <MonthPicker currentMonth={currentMonth} />
