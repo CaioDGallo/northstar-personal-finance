@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getTransactionsForExport, getTransfersForExport, type TimeRange } from '@/lib/actions/export';
+import { getTransactionsForExport, getTransfersForExport, trackDataExport, type TimeRange } from '@/lib/actions/export';
 import { generateTransactionsCsv, generateTransfersCsv, downloadCsv } from '@/lib/csv-generator';
 import { getCurrentYearMonth } from '@/lib/utils';
 
@@ -49,6 +49,15 @@ export function ExportForm() {
         // Download
         const filename = `transacoes_${timeRange === 'all' ? 'todas' : selectedMonth}.csv`;
         downloadCsv(csv, filename);
+
+        // Track export analytics
+        await trackDataExport({
+          timeRange,
+          includeExpenses,
+          includeIncome,
+          includeTransfers: false,
+          recordCount: data.length,
+        });
       } else {
         // Fetch transfers
         const data = await getTransfersForExport(
@@ -68,6 +77,15 @@ export function ExportForm() {
         // Download
         const filename = `transferencias_${timeRange === 'all' ? 'todas' : selectedMonth}.csv`;
         downloadCsv(csv, filename);
+
+        // Track export analytics
+        await trackDataExport({
+          timeRange,
+          includeExpenses: false,
+          includeIncome: false,
+          includeTransfers: true,
+          recordCount: data.length,
+        });
       }
     } catch (err) {
       console.error('Export error:', err);

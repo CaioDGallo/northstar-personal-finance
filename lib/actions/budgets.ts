@@ -10,6 +10,8 @@ import { t } from '@/lib/i18n/server-errors';
 import { handleDbError } from '@/lib/db-errors';
 import { activeTransactionCondition } from '@/lib/query-helpers';
 import { getPostHogClient } from '@/lib/posthog-server';
+import { trackFirstBudget, trackUserActivity } from '@/lib/analytics';
+import { users } from '@/lib/auth-schema';
 
 export const getBudgetsForMonth = cache(async (yearMonth: string) => {
   const userId = await getCurrentUserId();
@@ -77,6 +79,8 @@ export async function upsertBudget(
       ))
       .limit(1);
 
+    const isCreating = existing.length === 0;
+
     if (existing.length > 0) {
       await db
         .update(budgets)
@@ -84,6 +88,38 @@ export async function upsertBudget(
         .where(and(eq(budgets.id, existing[0].id), eq(budgets.userId, userId)));
     } else {
       await db.insert(budgets).values({ userId, categoryId, yearMonth, amount });
+    }
+
+    // Analytics: Track first budget creation
+    if (isCreating) {
+      const [budgetCount, entryCount, user] = await Promise.all([
+        db.select({ count: sql<number>`count(*)` }).from(budgets).where(eq(budgets.userId, userId)),
+        db.select({ count: sql<number>`count(*)` }).from(entries).where(eq(entries.userId, userId)),
+        db.select({ createdAt: users.createdAt }).from(users).where(eq(users.id, userId)).limit(1),
+      ]);
+
+      const totalBudgets = Number(budgetCount[0]?.count || 0);
+      const hasTransactions = Number(entryCount[0]?.count || 0) > 0;
+
+      if (totalBudgets === 1 && user[0]?.createdAt) {
+        await trackFirstBudget({
+          userId,
+          budgetType: 'category_budget',
+          budgetsCount: 1,
+          hasExistingTransactions: hasTransactions,
+          userCreatedAt: user[0].createdAt,
+        });
+      }
+
+      await trackUserActivity({
+        userId,
+        activityType: 'create_budget',
+      });
+    } else {
+      await trackUserActivity({
+        userId,
+        activityType: 'edit_budget',
+      });
     }
 
     // PostHog event tracking
@@ -153,6 +189,8 @@ export async function upsertMonthlyBudget(yearMonth: string, amount: number) {
       .where(and(eq(monthlyBudgets.userId, userId), eq(monthlyBudgets.yearMonth, yearMonth)))
       .limit(1);
 
+    const isCreating = existing.length === 0;
+
     if (existing.length > 0) {
       await db
         .update(monthlyBudgets)
@@ -160,6 +198,41 @@ export async function upsertMonthlyBudget(yearMonth: string, amount: number) {
         .where(and(eq(monthlyBudgets.id, existing[0].id), eq(monthlyBudgets.userId, userId)));
     } else {
       await db.insert(monthlyBudgets).values({ userId, yearMonth, amount });
+    }
+
+    // Analytics: Track first budget creation (monthly total budget)
+    if (isCreating) {
+      const [monthlyBudgetCount, categoryBudgetCount, entryCount, user] = await Promise.all([
+        db.select({ count: sql<number>`count(*)` }).from(monthlyBudgets).where(eq(monthlyBudgets.userId, userId)),
+        db.select({ count: sql<number>`count(*)` }).from(budgets).where(eq(budgets.userId, userId)),
+        db.select({ count: sql<number>`count(*)` }).from(entries).where(eq(entries.userId, userId)),
+        db.select({ createdAt: users.createdAt }).from(users).where(eq(users.id, userId)).limit(1),
+      ]);
+
+      const totalMonthlyBudgets = Number(monthlyBudgetCount[0]?.count || 0);
+      const totalCategoryBudgets = Number(categoryBudgetCount[0]?.count || 0);
+      const hasTransactions = Number(entryCount[0]?.count || 0) > 0;
+
+      // Track as first budget if this is user's first budget of any type
+      if (totalMonthlyBudgets === 1 && totalCategoryBudgets === 0 && user[0]?.createdAt) {
+        await trackFirstBudget({
+          userId,
+          budgetType: 'monthly_total_budget',
+          budgetsCount: 1,
+          hasExistingTransactions: hasTransactions,
+          userCreatedAt: user[0].createdAt,
+        });
+      }
+
+      await trackUserActivity({
+        userId,
+        activityType: 'create_budget',
+      });
+    } else {
+      await trackUserActivity({
+        userId,
+        activityType: 'edit_budget',
+      });
     }
 
     revalidateTag(`user-${userId}`, {});

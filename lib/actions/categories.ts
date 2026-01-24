@@ -10,6 +10,8 @@ import { guardCrudOperation } from '@/lib/rate-limit-guard';
 import { t } from '@/lib/i18n/server-errors';
 import { handleDbError } from '@/lib/db-errors';
 import { getPostHogClient } from '@/lib/posthog-server';
+import { trackFirstCustomCategory, trackUserActivity } from '@/lib/analytics';
+import { users } from '@/lib/auth-schema';
 
 type ActionResult<T = void> =
   | { success: true; data?: T }
@@ -85,6 +87,23 @@ export async function createCategory(data: Omit<NewCategory, 'id' | 'userId' | '
 
     const userId = await getCurrentUserId();
     const [created] = await db.insert(categories).values({ ...data, userId }).returning({ id: categories.id });
+
+    // Analytics: Track first custom category creation
+    const [user] = await db.select({ createdAt: users.createdAt }).from(users).where(eq(users.id, userId)).limit(1);
+
+    if (user?.createdAt) {
+      await trackFirstCustomCategory({
+        userId,
+        categoryType: data.type || 'expense',
+        isImportDefault: data.isImportDefault || false,
+        userCreatedAt: user.createdAt,
+      });
+    }
+
+    await trackUserActivity({
+      userId,
+      activityType: 'create_category',
+    });
 
     // PostHog event tracking
     const posthog = getPostHogClient();

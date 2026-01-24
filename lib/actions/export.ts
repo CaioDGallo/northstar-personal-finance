@@ -5,6 +5,8 @@ import { entries, transactions, categories, accounts, income, transfers } from '
 import { eq, and, gte, lte } from 'drizzle-orm';
 import { alias as aliasedTable } from 'drizzle-orm/pg-core';
 import { getCurrentUserId } from '@/lib/auth';
+import { trackExport } from '@/lib/analytics';
+import { users } from '@/lib/auth-schema';
 
 export type TimeRange = 'month' | 'year' | 'all';
 
@@ -235,4 +237,53 @@ export async function getTransfersForExport(
     type: transfer.type,
     description: transfer.description,
   }));
+}
+
+/**
+ * Track data export event
+ */
+export async function trackDataExport(params: {
+  timeRange: TimeRange;
+  includeExpenses: boolean;
+  includeIncome: boolean;
+  includeTransfers: boolean;
+  recordCount: number;
+}) {
+  try {
+    const userId = await getCurrentUserId();
+
+    // Get user creation date
+    const [user] = await db
+      .select({ createdAt: users.createdAt })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user?.createdAt) {
+      return; // Can't track without user creation date
+    }
+
+    // Check if this is the first export
+    const [userSettings] = await db.query.userSettings.findMany({
+      where: (settings, { eq }) => eq(settings.userId, userId),
+      limit: 1,
+    });
+
+    const isFirstExport = !userSettings?.firstExportCompletedAt;
+
+    await trackExport({
+      userId,
+      exportFormat: 'csv',
+      timeRange: params.timeRange,
+      includeExpenses: params.includeExpenses,
+      includeIncome: params.includeIncome,
+      includeTransfers: params.includeTransfers,
+      recordCount: params.recordCount,
+      userCreatedAt: user.createdAt,
+      isFirstExport,
+    });
+  } catch (error) {
+    console.error('Failed to track export:', error);
+    // Don't throw - analytics should never break user flows
+  }
 }

@@ -10,6 +10,7 @@ import { t } from '@/lib/i18n/server-errors';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { syncAccountBalance } from '@/lib/actions/accounts';
 import { getPostHogClient } from '@/lib/posthog-server';
+import { trackUserActivity } from '@/lib/analytics';
 
 export type CreateTransferData = {
   fromAccountId?: number | null;
@@ -108,6 +109,12 @@ export async function createTransfer(data: CreateTransferData) {
     });
   }
 
+  // Analytics: Track user activity
+  await trackUserActivity({
+    userId,
+    activityType: 'create_transfer',
+  });
+
   revalidatePath('/transfers');
   revalidatePath('/dashboard');
   revalidatePath('/settings/accounts');
@@ -200,6 +207,12 @@ export async function updateTransfer(transferId: number, data: CreateTransferDat
     }
   });
 
+  // Analytics: Track user activity
+  await trackUserActivity({
+    userId,
+    activityType: 'edit_transfer',
+  });
+
   revalidatePath('/transfers');
   revalidatePath('/dashboard');
   revalidatePath('/settings/accounts');
@@ -237,6 +250,12 @@ export async function deleteTransfer(transferId: number) {
     for (const accountId of affectedAccounts) {
       await syncAccountBalance(accountId, tx, userId);
     }
+  });
+
+  // Analytics: Track user activity
+  await trackUserActivity({
+    userId,
+    activityType: 'delete_transfer',
   });
 
   revalidatePath('/transfers');

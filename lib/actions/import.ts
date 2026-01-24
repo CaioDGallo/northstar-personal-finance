@@ -23,6 +23,8 @@ import { handleDbError } from '@/lib/db-errors';
 import { bulkIncrementCategoryFrequency } from '@/lib/actions/category-frequency';
 import { findRefundMatches } from '@/lib/import/refund-matcher';
 import { getPostHogClient } from '@/lib/posthog-server';
+import { trackFirstExpense, trackFirstBulkImport, trackUserActivity } from '@/lib/analytics';
+import { users } from '@/lib/auth-schema';
 
 type SuggestionsInput = {
   expenseDescriptions: string[];
@@ -320,6 +322,46 @@ export async function importExpenses(data: ImportExpenseData): Promise<ImportRes
     }
 
     await syncAccountBalance(accountId);
+
+    // Analytics: Track first expense and first bulk import
+    const [entryCountBefore, user] = await Promise.all([
+      db.select({ count: sql<number>`count(*)` }).from(entries).where(eq(entries.userId, userId)),
+      db.select({ createdAt: users.createdAt }).from(users).where(eq(users.id, userId)).limit(1),
+    ]);
+
+    const totalEntriesBefore = Number(entryCountBefore[0]?.count || 0) - rows.length;
+    const isFirstExpense = totalEntriesBefore === 0;
+
+    if (isFirstExpense && user[0]?.createdAt) {
+      await trackFirstExpense({
+        userId,
+        wasImported: true,
+        accountType: account[0].type,
+        userCreatedAt: user[0].createdAt,
+        hadCategorySuggestion: false,
+      });
+    }
+
+    // Track first bulk import (5+ rows)
+    if (user[0]?.createdAt) {
+      await trackFirstBulkImport({
+        userId,
+        importType: 'expenses',
+        expenseCount: rows.length,
+        incomeCount: 0,
+        rowCount: rows.length,
+        accountType: account[0].type,
+        bankSource: 'other', // TODO: Detect from parser metadata
+        hadDuplicates: false, // TODO: Track skipped duplicates
+        installmentsDetected: false, // Single-installment imports
+        userCreatedAt: user[0].createdAt,
+      });
+    }
+
+    await trackUserActivity({
+      userId,
+      activityType: 'create_expense',
+    });
 
     // PostHog event tracking
     const posthog = getPostHogClient();
@@ -1024,6 +1066,49 @@ export async function importMixed(data: ImportMixedData): Promise<ImportMixedRes
     if (frequencyItems.length > 0) {
       await bulkIncrementCategoryFrequency(userId, frequencyItems);
     }
+
+    // Analytics: Track first expense and first bulk import
+    const [entryCountBefore, user] = await Promise.all([
+      db.select({ count: sql<number>`count(*)` }).from(entries).where(eq(entries.userId, userId)),
+      db.select({ createdAt: users.createdAt }).from(users).where(eq(users.id, userId)).limit(1),
+    ]);
+
+    const totalEntriesBefore = Number(entryCountBefore[0]?.count || 0) - newExpenses.length;
+    const isFirstExpense = totalEntriesBefore === 0 && newExpenses.length > 0;
+
+    if (isFirstExpense && user[0]?.createdAt) {
+      await trackFirstExpense({
+        userId,
+        wasImported: true,
+        accountType: account[0].type,
+        userCreatedAt: user[0].createdAt,
+        hadCategorySuggestion: false,
+      });
+    }
+
+    // Track first bulk import (5+ rows)
+    const totalRows = newExpenses.length + newIncome.length;
+    const hasInstallments = newExpenses.some(e => e.installmentInfo);
+
+    if (user[0]?.createdAt) {
+      await trackFirstBulkImport({
+        userId,
+        importType: 'mixed',
+        expenseCount: newExpenses.length,
+        incomeCount: newIncome.length,
+        rowCount: totalRows,
+        accountType: account[0].type,
+        bankSource: 'other', // TODO: Detect from parser metadata
+        hadDuplicates: skippedDuplicates > 0,
+        installmentsDetected: hasInstallments,
+        userCreatedAt: user[0].createdAt,
+      });
+    }
+
+    await trackUserActivity({
+      userId,
+      activityType: 'create_expense',
+    });
 
     // PostHog event tracking
     const posthog = getPostHogClient();

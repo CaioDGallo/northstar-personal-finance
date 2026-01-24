@@ -324,6 +324,12 @@ export const userSettings = pgTable(
     onboardingCompletedAt: timestamp('onboarding_completed_at'),
     onboardingSkippedAt: timestamp('onboarding_skipped_at'),
     hintsViewed: text('hints_viewed'), // JSON array: ["dashboard", "expenses", ...]
+    // Analytics milestones
+    firstExpenseCreatedAt: timestamp('first_expense_created_at'),
+    firstImportCompletedAt: timestamp('first_import_completed_at'),
+    firstBudgetCreatedAt: timestamp('first_budget_created_at'),
+    firstCustomCategoryCreatedAt: timestamp('first_custom_category_created_at'),
+    firstExportCompletedAt: timestamp('first_export_completed_at'),
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
   },

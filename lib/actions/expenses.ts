@@ -16,6 +16,8 @@ import { t } from '@/lib/i18n/server-errors';
 import { handleDbError } from '@/lib/db-errors';
 import { incrementCategoryFrequency, transferCategoryFrequency } from '@/lib/actions/category-frequency';
 import { getPostHogClient } from '@/lib/posthog-server';
+import { trackFirstExpense, trackUserActivity } from '@/lib/analytics';
+import { users } from '@/lib/auth-schema';
 
 type CreateExpenseData = {
   description?: string;
@@ -157,6 +159,29 @@ export async function createExpense(data: CreateExpenseData) {
 
     // Track category frequency for auto-suggestions
     await incrementCategoryFrequency(userId, finalDescription, data.categoryId, 'expense');
+
+    // Analytics: Track first expense and user activity
+    const [entryCount, user] = await Promise.all([
+      db.select({ count: sql<number>`count(*)` }).from(entries).where(eq(entries.userId, userId)),
+      db.select({ createdAt: users.createdAt }).from(users).where(eq(users.id, userId)).limit(1),
+    ]);
+
+    const isFirstExpense = Number(entryCount[0]?.count || 0) <= data.installments;
+
+    if (isFirstExpense && user[0]?.createdAt) {
+      await trackFirstExpense({
+        userId,
+        wasImported: false,
+        accountType: account[0].type,
+        userCreatedAt: user[0].createdAt,
+        hadCategorySuggestion: false, // Manual creation, no suggestion
+      });
+    }
+
+    await trackUserActivity({
+      userId,
+      activityType: 'create_expense',
+    });
 
     // PostHog event tracking
     const posthog = getPostHogClient();
@@ -353,6 +378,12 @@ export async function updateExpense(transactionId: number, data: CreateExpenseDa
       await syncAccountBalance(accountId);
     }
 
+    // Analytics: Track user activity
+    await trackUserActivity({
+      userId,
+      activityType: 'edit_expense',
+    });
+
     revalidateTag(`user-${userId}`, {});
     revalidatePath('/expenses');
     revalidatePath('/dashboard');
@@ -403,6 +434,12 @@ export async function deleteExpense(transactionId: number) {
     for (const accountId of affectedAccountIds) {
       await syncAccountBalance(accountId);
     }
+
+    // Analytics: Track user activity
+    await trackUserActivity({
+      userId,
+      activityType: 'delete_expense',
+    });
 
     // PostHog event tracking
     const posthog = getPostHogClient();

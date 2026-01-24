@@ -11,6 +11,7 @@ import { unstable_cache, revalidatePath, revalidateTag } from 'next/cache';
 import { cache } from 'react';
 import { syncAccountBalance } from '@/lib/actions/accounts';
 import { getPostHogClient } from '@/lib/posthog-server';
+import { trackUserActivity } from '@/lib/analytics';
 
 export type UnpaidFatura = {
   id: number;
@@ -704,6 +705,12 @@ export async function payFatura(faturaId: number, fromAccountId: number): Promis
 
       await syncAccountBalance(fromAccountId, tx, userId);
       await syncAccountBalance(fatura[0].accountId, tx, userId);
+    });
+
+    // Analytics: Track user activity
+    await trackUserActivity({
+      userId,
+      activityType: 'pay_fatura',
     });
 
     // PostHog event tracking
