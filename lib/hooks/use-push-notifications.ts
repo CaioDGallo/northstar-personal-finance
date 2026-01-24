@@ -13,25 +13,34 @@ export function usePushNotifications() {
   const [currentToken, setCurrentToken] = useState<string | null>(null);
 
   const initializeMessagingImpl = useCallback(async () => {
+    console.log('[Push] Starting initialization...');
+
     // Initialize Firebase app
     let app: FirebaseApp;
     if (getApps().length === 0) {
       app = initializeApp(firebaseConfig);
+      console.log('[Push] Firebase app initialized');
     } else {
       app = getApps()[0];
+      console.log('[Push] Using existing Firebase app');
     }
 
     // Get messaging instance
     const messagingInstance = getMessaging(app);
+    console.log('[Push] Messaging instance created');
 
     // Wait for service worker to be ready
+    console.log('[Push] Waiting for service worker...');
     const registration = await navigator.serviceWorker.ready;
+    console.log('[Push] Service worker ready:', registration);
 
     // Get FCM token
+    console.log('[Push] Requesting FCM token...');
     const token = await getToken(messagingInstance, {
       vapidKey: VAPID_KEY,
       serviceWorkerRegistration: registration,
     });
+    console.log('[Push] Token received:', token ? 'Success' : 'Failed');
 
     if (token) {
       setCurrentToken(token);
