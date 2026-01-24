@@ -780,7 +780,8 @@
       "title": "Enable Notifications",
       "description": "Receive bill reminders and budget alerts",
       "enable": "Enable",
-      "enabling": "Enabling..."
+      "enabling": "Enabling...",
+      "dismiss": "Not now"
     }
   },
   "quickAdd": {

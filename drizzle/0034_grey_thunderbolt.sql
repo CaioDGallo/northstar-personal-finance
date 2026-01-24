@@ -1,0 +1,1 @@
+ALTER TABLE "user_settings" ADD COLUMN "push_notification_prompted_at" timestamp;

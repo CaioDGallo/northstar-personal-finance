@@ -27,13 +27,21 @@ export async function POST(request: NextRequest) {
         sent: result.sent,
         failed: result.failed,
       });
+    } else if (result.failed > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Failed to send notifications to all devices. They may be invalid or expired.',
+        },
+        { status: 500 }
+      );
     } else {
       return NextResponse.json(
         {
           success: false,
-          error: 'No devices to send notification to',
+          error: 'No devices registered. Please enable push notifications first in Settings.',
         },
-        { status: 400 }
+        { status: 404 }
       );
     }
   } catch (error) {

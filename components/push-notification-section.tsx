@@ -82,15 +82,16 @@ export function PushNotificationSection() {
       if (result.success) {
         setTestMessage({ type: 'success', text: t('testSuccess') });
       } else {
-        setTestMessage({ type: 'error', text: t('testError') });
+        // Show the specific error message from the API
+        setTestMessage({ type: 'error', text: result.error || t('testError') });
       }
 
-      // Clear message after 3 seconds
-      setTimeout(() => setTestMessage(null), 3000);
+      // Clear message after 5 seconds for errors (more time to read)
+      setTimeout(() => setTestMessage(null), result.success ? 3000 : 5000);
     } catch (error) {
       console.error('Error sending test notification:', error);
       setTestMessage({ type: 'error', text: t('testError') });
-      setTimeout(() => setTestMessage(null), 3000);
+      setTimeout(() => setTestMessage(null), 5000);
     } finally {
       setTestLoading(false);
     }

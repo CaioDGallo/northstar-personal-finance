@@ -320,6 +320,7 @@ export const userSettings = pgTable(
     notificationEmail: text('notification_email'),
     notificationsEnabled: boolean('notifications_enabled').default(true),
     pushNotificationsEnabled: boolean('push_notifications_enabled').default(false),
+    pushNotificationPromptedAt: timestamp('push_notification_prompted_at'),
     defaultEventOffsetMinutes: integer('default_event_offset_minutes').default(60),
     defaultTaskOffsetMinutes: integer('default_task_offset_minutes').default(60),
     onboardingCompletedAt: timestamp('onboarding_completed_at'),

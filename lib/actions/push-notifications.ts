@@ -129,3 +129,48 @@ export async function removeDevice(tokenId: number) {
     return { success: false, error: 'Failed to remove device' };
   }
 }
+
+export async function shouldPromptPushNotifications() {
+  const userId = await getCurrentUserId();
+
+  try {
+    const [settings] = await db
+      .select({
+        onboardingCompletedAt: userSettings.onboardingCompletedAt,
+        pushNotificationPromptedAt: userSettings.pushNotificationPromptedAt,
+      })
+      .from(userSettings)
+      .where(eq(userSettings.userId, userId))
+      .limit(1);
+
+    if (!settings) {
+      return { success: true, shouldPrompt: false };
+    }
+
+    // Only prompt if onboarding completed and not prompted before
+    const shouldPrompt =
+      !!settings.onboardingCompletedAt &&
+      !settings.pushNotificationPromptedAt;
+
+    return { success: true, shouldPrompt };
+  } catch (error) {
+    console.error('Error checking if should prompt:', error);
+    return { success: false, error: 'Failed to check prompt status', shouldPrompt: false };
+  }
+}
+
+export async function markPushNotificationPrompted() {
+  const userId = await getCurrentUserId();
+
+  try {
+    await db
+      .update(userSettings)
+      .set({ pushNotificationPromptedAt: new Date() })
+      .where(eq(userSettings.userId, userId));
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error marking push notification prompted:', error);
+    return { success: false, error: 'Failed to mark as prompted' };
+  }
+}

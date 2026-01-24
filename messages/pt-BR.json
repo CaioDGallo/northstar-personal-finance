@@ -792,7 +792,8 @@
       "title": "Ativar Notificações",
       "description": "Receba lembretes de contas e alertas de orçamento",
       "enable": "Ativar",
-      "enabling": "Ativando..."
+      "enabling": "Ativando...",
+      "dismiss": "Agora não"
     }
   },
   "quickAdd": {

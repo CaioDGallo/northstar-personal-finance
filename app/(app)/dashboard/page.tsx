@@ -10,6 +10,7 @@ import { getDashboardData, getNetWorth } from '@/lib/actions/dashboard';
 import { getCurrentYearMonth } from '@/lib/utils';
 import { PWARedirectHandler } from '@/components/pwa-redirect-handler';
 import { OnboardingTooltip } from '@/components/onboarding/onboarding-tooltip';
+import { PushNotificationPrompt } from '@/components/push-notification-prompt';
 import Link from 'next/link';
 
 export default async function DashboardPage({
@@ -35,6 +36,8 @@ export default async function DashboardPage({
       <OnboardingTooltip hintKey="dashboard" className="mb-4">
         {tOnboarding('dashboard')}
       </OnboardingTooltip>
+
+      <PushNotificationPrompt />
 
       <div className="mb-6 flex flex-col md:flex-row space-y-4 md:space-y-0 items-center justify-between">
         <h1 className="text-2xl font-bold hidden md:flex">{t('title')}</h1>
