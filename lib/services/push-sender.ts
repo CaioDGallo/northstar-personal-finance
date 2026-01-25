@@ -38,11 +38,9 @@ export async function sendPushToUser(
     try {
       await messaging.send({
         token: tokenRecord.token,
-        notification: {
+        data: {
           title: payload.title,
           body: payload.body,
-        },
-        data: {
           url: payload.url || '/dashboard',
           tag: payload.tag || 'default',
           type: payload.type || 'default',
@@ -115,11 +113,9 @@ export async function sendBroadcastPush(
     try {
       await messaging.send({
         token: tokenRecord.token,
-        notification: {
+        data: {
           title: payload.title,
           body: payload.body,
-        },
-        data: {
           url: payload.url || '/dashboard',
           tag: payload.tag || 'default',
           type: payload.type || 'default',

@@ -84,11 +84,11 @@ export function usePushNotifications() {
         console.log('Foreground message received:', payload);
 
         // Show notification manually in foreground
-        if (payload.notification) {
-          new Notification(payload.notification.title || 'fluxo.sh', {
-            body: payload.notification.body,
+        if (payload.data?.title) {
+          new Notification(payload.data.title || 'fluxo.sh', {
+            body: payload.data.body,
             icon: '/brand-kit/exports/icon-192-dark.png',
-            tag: payload.data?.tag || 'default',
+            tag: payload.data.tag || 'default',
           });
         }
       });
