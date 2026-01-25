@@ -194,7 +194,7 @@ export function AccountPicker({
 function AccountIcon({ type, bankLogo }: { type: Account['type']; bankLogo: string | null }) {
   if (bankLogo) {
     return (
-      <div className="size-10 rounded-full flex items-center justify-center bg-white p-1">
+      <div className="overflow-hidden size-10 rounded-full flex items-center justify-center bg-white p-1">
         <BankLogo logo={bankLogo} size={32} />
       </div>
     );

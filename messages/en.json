@@ -319,6 +319,8 @@
   },
   "categories": {
     "title": "Categories",
+    "expenses": "Expenses",
+    "income": "Income",
     "expenseCategories": "Expense Categories",
     "incomeCategories": "Income Categories",
     "add": "Add",

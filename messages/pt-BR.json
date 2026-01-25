@@ -328,6 +328,8 @@
   },
   "categories": {
     "title": "Categorias",
+    "expenses": "Despesas",
+    "income": "Receitas",
     "expenseCategories": "Categorias de Despesa",
     "incomeCategories": "Categorias de Receita",
     "add": "Adicionar",
