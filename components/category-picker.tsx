@@ -1,18 +1,18 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { ArrowDown01Icon, Tick02Icon } from '@hugeicons/core-free-icons';
 import type { Category } from '@/lib/schema';
 import type { RecentCategory } from '@/lib/actions/categories';
 import { CategoryIcon } from '@/components/icon-picker';
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 
 const RECENT_LIMIT = 3;
@@ -42,6 +42,7 @@ export function CategoryPicker({
   triggerId,
 }: CategoryPickerProps) {
   const t = useTranslations('form');
+  const [open, setOpen] = useState(false);
   const categoryOptions = useMemo(() => resolveCategoryOptions(categories), [categories]);
   const selectedCategory = categoryOptions.find((category) => category.id === value) || null;
 
@@ -65,72 +66,137 @@ export function CategoryPicker({
       }));
   }, [categories, recentCategories]);
 
-  const showSelectedLabel = !!selectedCategory && !recentOptions.some((category) => category.id === value);
+  const handleSelect = (categoryId: number) => {
+    onChange(categoryId);
+    setOpen(false);
+  };
 
   return (
-    <div className="space-y-2 flex flex-col">
-      <div className="flex flex-wrap items-center justify-between gap-2 min-h-8 w-full">
-        <Select
-          value={value ? value.toString() : ''}
-          onValueChange={(next) => onChange(parseInt(next, 10))}
-        >
-          <SelectTrigger id={triggerId} className="min-w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              {categoryOptions.length > 0 ? (
-                categoryOptions.map((category) => (
-                  <SelectItem key={category.id} value={category.id.toString()}>
-                    <div className="flex items-center gap-2">
-                      <CategoryIconDisplay color={category.color} icon={category.icon} />
-                      <span>{category.name}</span>
-                    </div>
-                  </SelectItem>
-                ))
-              ) : (
-                <SelectItem value="" disabled>
-                  {t('noCategoriesFound')}
-                </SelectItem>
-              )}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </div>
+    <>
+      <button
+        id={triggerId}
+        type="button"
+        onClick={() => setOpen(true)}
+        className={cn(
+          'flex items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-2',
+          'text-sm ring-offset-background transition-colors',
+          'hover:bg-accent hover:text-accent-foreground',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+          'disabled:cursor-not-allowed disabled:opacity-50',
+          'w-full'
+        )}
+      >
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          {selectedCategory ? (
+            <>
+              <CategoryIconDisplay color={selectedCategory.color} icon={selectedCategory.icon} />
+              <span className="truncate">{selectedCategory.name}</span>
+            </>
+          ) : (
+            <span className="text-muted-foreground">{t('selectCategory')}</span>
+          )}
+        </div>
+        <HugeiconsIcon icon={ArrowDown01Icon} className="size-4 opacity-50 shrink-0" />
+      </button>
 
-      {recentOptions.length > 0 ? (
-        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-          {recentOptions.map((category) => (
-            <button
-              key={category.id}
-              type="button"
-              onClick={() => onChange(category.id)}
-              className={cn(
-                'flex items-center gap-2 rounded-none border px-2.5 py-1 text-xs transition',
-                'bg-background hover:bg-muted',
-                value === category.id
-                  ? 'border-primary text-primary shadow-[2px_2px_0px_rgba(0,0,0,0.5)]'
-                  : 'border-border text-foreground'
-              )}
-              aria-pressed={value === category.id}
-            >
-              <CategoryIconDisplay color={category.color} icon={category.icon} />
-              <span className="truncate max-w-40">{category.name}</span>
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="text-xs text-muted-foreground">
-          {t('noRecentCategories')}
-        </div>
-      )}
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="bottom" className="max-h-[70vh] flex flex-col">
+          <SheetHeader>
+            <SheetTitle>{t('selectCategory')}</SheetTitle>
+          </SheetHeader>
 
-      {showSelectedLabel && (
-        <div className="text-xs text-muted-foreground">
-          {t('selectedCategory', { category: selectedCategory.name })}
-        </div>
-      )}
-    </div>
+          <div className="flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)]">
+            {recentOptions.length > 0 && (
+              <div className="mb-4">
+                <h3 className="text-sm font-medium text-muted-foreground px-4 py-2">
+                  {t('recent')}
+                </h3>
+                <div className="flex flex-col">
+                  {recentOptions.map((category) => {
+                    const isSelected = category.id === value;
+                    return (
+                      <button
+                        key={category.id}
+                        type="button"
+                        onClick={() => handleSelect(category.id)}
+                        className={cn(
+                          'flex items-center gap-3 px-4 py-3 transition-all',
+                          'hover:bg-muted touch-manipulation',
+                          isSelected && 'bg-muted'
+                        )}
+                      >
+                        <div
+                          className="size-10 rounded-full flex items-center justify-center text-white shrink-0"
+                          style={{ backgroundColor: category.color }}
+                        >
+                          <CategoryIcon icon={category.icon} />
+                        </div>
+                        <span className="flex-1 text-left text-sm">
+                          {category.name}
+                        </span>
+                        {isSelected && (
+                          <HugeiconsIcon
+                            icon={Tick02Icon}
+                            className="size-5 text-primary shrink-0"
+                            strokeWidth={2}
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground px-4 py-2">
+                {t('all')}
+              </h3>
+              <div className="flex flex-col">
+                {categoryOptions.length > 0 ? (
+                  categoryOptions.map((category) => {
+                    const isSelected = category.id === value;
+                    return (
+                      <button
+                        key={category.id}
+                        type="button"
+                        onClick={() => handleSelect(category.id)}
+                        className={cn(
+                          'flex items-center gap-3 px-4 py-3 transition-all',
+                          'hover:bg-muted touch-manipulation',
+                          isSelected && 'bg-muted'
+                        )}
+                      >
+                        <div
+                          className="size-10 rounded-full flex items-center justify-center text-white shrink-0"
+                          style={{ backgroundColor: category.color }}
+                        >
+                          <CategoryIcon icon={category.icon} />
+                        </div>
+                        <span className="flex-1 text-left text-sm">
+                          {category.name}
+                        </span>
+                        {isSelected && (
+                          <HugeiconsIcon
+                            icon={Tick02Icon}
+                            className="size-5 text-primary shrink-0"
+                            strokeWidth={2}
+                          />
+                        )}
+                      </button>
+                    );
+                  })
+                ) : (
+                  <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+                    {t('noCategoriesFound')}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
 
