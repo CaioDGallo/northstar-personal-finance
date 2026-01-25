@@ -133,7 +133,9 @@ export function ExpensesClient({
       <ExpenseListProvider
         initialExpenses={initialExpenses}
         accounts={accounts}
+        recentAccounts={recentAccounts}
         categories={categories}
+        recentCategories={recentCategories}
         filters={filters}
         unpaidFaturas={unpaidFaturas}
       >

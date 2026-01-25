@@ -21,6 +21,8 @@ import { SwipeActions } from '@/components/swipe-actions';
 import { useExpenseContextOptional } from '@/lib/contexts/expense-context';
 import type { Category, Account } from '@/lib/schema';
 import type { UnpaidFatura } from '@/lib/actions/faturas';
+import type { RecentAccount } from '@/lib/actions/accounts';
+import type { RecentCategory } from '@/lib/actions/categories';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -70,6 +72,8 @@ type ExpenseCardBaseProps = {
   };
   categories: Category[];
   accounts: Account[];
+  recentAccounts?: RecentAccount[];
+  recentCategories?: RecentCategory[];
   unpaidFaturas?: UnpaidFatura[];
   isOptimistic?: boolean;
 };
@@ -89,7 +93,7 @@ type ExpenseCardProps =
   });
 
 export function ExpenseCard(props: ExpenseCardProps) {
-  const { entry, categories, accounts, unpaidFaturas = [], isOptimistic = false } = props;
+  const { entry, categories, accounts, recentAccounts, recentCategories, unpaidFaturas = [], isOptimistic = false } = props;
   const isPaid = !!entry.paidAt;
   const [pickerOpen, setPickerOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -519,7 +523,9 @@ export function ExpenseCard(props: ExpenseCardProps) {
         mode="expense"
         transactionId={entry.transactionId}
         accounts={accounts}
+        recentAccounts={recentAccounts}
         categories={categories}
+        recentCategories={recentCategories}
         open={editOpen}
         onOpenChange={setEditOpen}
       />

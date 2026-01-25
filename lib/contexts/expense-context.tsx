@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import type { Account, Category } from '@/lib/schema';
 import type { UnpaidFatura } from '@/lib/actions/faturas';
+import type { RecentAccount } from '@/lib/actions/accounts';
+import type { RecentCategory } from '@/lib/actions/categories';
 import {
   createExpense as serverCreateExpense,
   deleteExpense as serverDeleteExpense,
@@ -116,7 +118,9 @@ type ExpenseContextValue = {
   expenses: OptimisticExpenseEntry[];
   filteredExpenses: OptimisticExpenseEntry[];
   accounts: Account[];
+  recentAccounts: RecentAccount[];
   categories: Category[];
+  recentCategories: RecentCategory[];
   unpaidFaturas: UnpaidFatura[];
   filters: ExpenseFilters;
 
@@ -151,7 +155,9 @@ type ExpenseListProviderProps = {
   children: React.ReactNode;
   initialExpenses: ExpenseEntry[];
   accounts: Account[];
+  recentAccounts: RecentAccount[];
   categories: Category[];
+  recentCategories: RecentCategory[];
   unpaidFaturas: UnpaidFatura[];
   filters: ExpenseFilters;
 };
@@ -212,7 +218,9 @@ export function ExpenseListProvider({
   children,
   initialExpenses,
   accounts,
+  recentAccounts,
   categories,
+  recentCategories,
   unpaidFaturas,
   filters,
 }: ExpenseListProviderProps) {
@@ -354,7 +362,9 @@ export function ExpenseListProvider({
     expenses: optimisticExpenses,
     filteredExpenses,
     accounts,
+    recentAccounts,
     categories,
+    recentCategories,
     unpaidFaturas,
     filters,
     searchQuery,

@@ -94,7 +94,9 @@ export function IncomeClient({
       <IncomeListProvider
         initialIncome={initialIncome}
         accounts={accounts}
+        recentAccounts={recentAccounts}
         categories={categories}
+        recentCategories={recentCategories}
         filters={filters}
       >
         <IncomeFiltersWrapper

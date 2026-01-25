@@ -4,6 +4,8 @@ import { createContext, useContext, useOptimistic, useCallback, startTransition,
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import type { Account, Category } from '@/lib/schema';
+import type { RecentAccount } from '@/lib/actions/accounts';
+import type { RecentCategory } from '@/lib/actions/categories';
 import {
   createIncome as serverCreateIncome,
   deleteIncome as serverDeleteIncome,
@@ -111,7 +113,9 @@ type IncomeContextValue = {
   income: OptimisticIncomeEntry[];
   filteredIncome: OptimisticIncomeEntry[];
   accounts: Account[];
+  recentAccounts: RecentAccount[];
   categories: Category[];
+  recentCategories: RecentCategory[];
   filters: IncomeFilters;
 
   // Search
@@ -145,7 +149,9 @@ type IncomeListProviderProps = {
   children: React.ReactNode;
   initialIncome: IncomeEntry[];
   accounts: Account[];
+  recentAccounts: RecentAccount[];
   categories: Category[];
+  recentCategories: RecentCategory[];
   filters: IncomeFilters;
 };
 
@@ -178,7 +184,9 @@ export function IncomeListProvider({
   children,
   initialIncome,
   accounts,
+  recentAccounts,
   categories,
+  recentCategories,
   filters,
 }: IncomeListProviderProps) {
   const router = useRouter();
@@ -318,7 +326,9 @@ export function IncomeListProvider({
     income: optimisticIncome,
     filteredIncome,
     accounts,
+    recentAccounts,
     categories,
+    recentCategories,
     filters,
     searchQuery,
     setSearchQuery,

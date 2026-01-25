@@ -18,7 +18,7 @@ export { IncomeListProvider };
 export function IncomeList() {
   const t = useTranslations('expenses');
   const context = useIncomeContext();
-  const { filteredIncome, accounts, categories, filters, searchQuery } = context;
+  const { filteredIncome, accounts, recentAccounts, categories, recentCategories, filters, searchQuery } = context;
   const selection = useSelection();
   const [bulkPickerOpen, setBulkPickerOpen] = useState(false);
   const router = useRouter();
@@ -131,6 +131,8 @@ export function IncomeList() {
                   income={inc}
                   categories={categories}
                   accounts={accounts}
+                  recentAccounts={recentAccounts}
+                  recentCategories={recentCategories}
                   isOptimistic={inc._optimistic}
                   selectionMode={true}
                   isSelected={selection.isSelected(inc.id)}
@@ -143,6 +145,8 @@ export function IncomeList() {
                   income={inc}
                   categories={categories}
                   accounts={accounts}
+                  recentAccounts={recentAccounts}
+                  recentCategories={recentCategories}
                   isOptimistic={inc._optimistic}
                   selectionMode={false}
                   onLongPress={() => selection.enterSelectionMode(inc.id)}

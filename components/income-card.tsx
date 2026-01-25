@@ -18,6 +18,8 @@ import { EditTransactionDialog } from '@/components/edit-transaction-dialog';
 import { SwipeActions } from '@/components/swipe-actions';
 import { useIncomeContextOptional } from '@/lib/contexts/income-context';
 import type { Category, Account } from '@/lib/schema';
+import type { RecentAccount } from '@/lib/actions/accounts';
+import type { RecentCategory } from '@/lib/actions/categories';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -63,6 +65,8 @@ type IncomeCardBaseProps = {
 
   categories: Category[];
   accounts: Account[];
+  recentAccounts?: RecentAccount[];
+  recentCategories?: RecentCategory[];
   isOptimistic?: boolean;
 };
 
@@ -81,7 +85,7 @@ type IncomeCardProps =
   });
 
 export function IncomeCard(props: IncomeCardProps) {
-  const { income, categories, accounts, isOptimistic = false } = props;
+  const { income, categories, accounts, recentAccounts, recentCategories, isOptimistic = false } = props;
   const isReceived = !!income.receivedAt;
   const [pickerOpen, setPickerOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -497,7 +501,9 @@ export function IncomeCard(props: IncomeCardProps) {
         mode="income"
         income={income}
         accounts={accounts}
+        recentAccounts={recentAccounts}
         categories={categories}
+        recentCategories={recentCategories}
         open={editOpen}
         onOpenChange={setEditOpen}
       />

@@ -118,13 +118,6 @@ export function ImportModal({ accounts, categories }: Props) {
   const handleImport = async () => {
     if (!parseResult || parseResult.rows.length === 0 || selectedRows.size === 0) return;
 
-    // Validate that credit card imports have a closing date from OFX
-    const account = accounts.find((a) => a.id === parseInt(accountId));
-    if (account?.type === 'credit_card' && !closingDate) {
-      toast.error('Data de fechamento do OFX é obrigatória para importação de cartão de crédito');
-      return;
-    }
-
     setIsImporting(true);
 
     try {

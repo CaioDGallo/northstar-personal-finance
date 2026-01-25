@@ -18,7 +18,7 @@ export { ExpenseListProvider };
 export function ExpenseList() {
   const t = useTranslations('expenses');
   const context = useExpenseContext();
-  const { expenses, filteredExpenses, accounts, categories, unpaidFaturas, filters, searchQuery } = context;
+  const { expenses, filteredExpenses, accounts, recentAccounts, categories, recentCategories, unpaidFaturas, filters, searchQuery } = context;
   const selection = useSelection();
   const [bulkPickerOpen, setBulkPickerOpen] = useState(false);
   const router = useRouter();
@@ -172,6 +172,8 @@ export function ExpenseList() {
                   entry={expense}
                   categories={categories}
                   accounts={accounts}
+                  recentAccounts={recentAccounts}
+                  recentCategories={recentCategories}
                   isOptimistic={expense._optimistic}
                   selectionMode={true}
                   isSelected={selection.isSelected(expense.id)}
@@ -185,6 +187,8 @@ export function ExpenseList() {
                   entry={expense}
                   categories={categories}
                   accounts={accounts}
+                  recentAccounts={recentAccounts}
+                  recentCategories={recentCategories}
                   isOptimistic={expense._optimistic}
                   selectionMode={false}
                   onLongPress={() => selection.enterSelectionMode(expense.id)}
