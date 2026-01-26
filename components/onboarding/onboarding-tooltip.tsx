@@ -39,9 +39,9 @@ export function OnboardingTooltip({
     await markHintViewed(hintKey);
   };
 
-  // if (!isVisible) {
-  //   return null;
-  // }
+  if (!isVisible) {
+    return null;
+  }
 
   return (
     <div
