@@ -18,8 +18,8 @@ export async function isCronContext(): Promise<boolean> {
   const h = await headers();
 
   // Check if called from our cron API route (which validates CRON_SECRET)
-  const cronHeader = h.get('x-cron-auth');
-  if (cronHeader === process.env.CRON_SECRET) {
+  const cronHeader = h.get('authorization');
+  if (cronHeader === `Bearer ${process.env.CRON_SECRET}`) {
     return true;
   }
 
