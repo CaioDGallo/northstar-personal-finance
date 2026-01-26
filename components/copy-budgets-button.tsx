@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import { copyBudgetsFromMonth } from '@/lib/actions/budgets';
 import { addMonths } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Loading03Icon } from '@hugeicons/core-free-icons';
 
 type CopyBudgetsButtonProps = {
   currentMonth: string;
@@ -66,9 +68,20 @@ export function CopyBudgetsButton({ currentMonth }: CopyBudgetsButtonProps) {
   return (
     <div className="flex items-center gap-3">
       <Button onClick={handleCopy} disabled={isLoading} variant="hollow">
-        {isLoading ? tCommon('copying') : t('copyFromPreviousMonth')}
+        {isLoading ? (
+          <span className="inline-flex items-center gap-2">
+            <HugeiconsIcon icon={Loading03Icon} className="size-4 animate-spin" aria-hidden="true" />
+            {tCommon('copying')}
+          </span>
+        ) : (
+          t('copyFromPreviousMonth')
+        )}
       </Button>
-      {message && <span className="text-sm text-neutral-600">{message}</span>}
+      {message && (
+        <span className="text-sm text-neutral-600" role="status" aria-live="polite">
+          {message}
+        </span>
+      )}
     </div>
   );
 }

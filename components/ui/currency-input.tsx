@@ -91,7 +91,6 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
     }
 
     const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-      e.preventDefault()
       const pastedText = e.clipboardData.getData("text")
       const parsedCents = parseCurrencyToCents(pastedText)
 
@@ -142,7 +141,7 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
         id={id}
         name={name}
         required={required}
-        placeholder={placeholder || "R$ 0,00"}
+        placeholder={placeholder || "R$ 0,00…"}
         autoComplete={autoComplete || "off"}
         data-slot="input"
         className={cn(

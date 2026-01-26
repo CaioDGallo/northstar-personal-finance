@@ -17,6 +17,8 @@
     "updating": "Updating...",
     "convert": "Convert",
     "converting": "Converting...",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
     "yes": "Yes",
     "no": "No",
     "undo": "Undo",
@@ -298,10 +300,10 @@
     "noIncomeCategories": "No income categories available. Create one in Settings first.",
     "noAccounts": "No accounts available. Create one in Settings first.",
     "descriptionPlaceholder": {
-      "expense": "Groceries at Walmart",
-      "income": "Monthly salary"
+      "expense": "Groceries at Walmart…",
+      "income": "Monthly salary…"
     },
-    "amountPlaceholder": "0.00",
+    "amountPlaceholder": "e.g. 100.00…",
     "dialogDescription": "Fill in the details below."
   },
   "accounts": {

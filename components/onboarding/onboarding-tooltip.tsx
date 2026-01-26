@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useOnboarding } from './onboarding-provider';
 import { Button } from '@/components/ui/button';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -20,6 +21,7 @@ export function OnboardingTooltip({
 }: OnboardingTooltipProps) {
   const { isHintViewed, markHintViewed, wizardStatus, hintsLoading } = useOnboarding();
   const [isVisible, setIsVisible] = useState(false);
+  const tCommon = useTranslations('common');
 
   useEffect(() => {
     // Only show hint after:
@@ -46,8 +48,8 @@ export function OnboardingTooltip({
   return (
     <div
       className={cn(
-        'animate-in fade-in slide-in-from-top-2 duration-300',
-        'rounded-none bg-card p-4 border-2 border-black transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none active:translate-x-0.5 active:translate-y-0.5 active:shadow-none shadow-gray-600 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]',
+        'animate-in fade-in slide-in-from-top-2 duration-300 motion-reduce:animate-none motion-reduce:transition-none',
+        'rounded-none bg-card p-4 border-2 border-black transition-transform transition-shadow hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none active:translate-x-0.5 active:translate-y-0.5 active:shadow-none shadow-gray-600 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]',
         className
       )}
     >
@@ -58,8 +60,9 @@ export function OnboardingTooltip({
           size="sm"
           className="size-6 p-0 hover:bg-muted"
           onClick={handleDismiss}
+          aria-label={tCommon('close')}
         >
-          <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
+          <HugeiconsIcon icon={Cancel01Icon} className="size-4" aria-hidden="true" />
         </Button>
       </div>
     </div>

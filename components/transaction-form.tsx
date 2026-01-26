@@ -7,6 +7,8 @@ import { createIncome, updateIncome } from '@/lib/actions/income';
 import { useExpenseContextOptional } from '@/lib/contexts/expense-context';
 import { useIncomeContextOptional } from '@/lib/contexts/income-context';
 import { formatCurrency } from '@/lib/utils';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Loading03Icon } from '@hugeicons/core-free-icons';
 import type { Account, Category, Transaction, Entry, Income } from '@/lib/schema';
 import type { RecentAccount } from '@/lib/actions/accounts';
 import type { RecentCategory } from '@/lib/actions/categories';
@@ -217,12 +219,14 @@ export function TransactionForm({
         showCloseButton={false}
         onOpenAutoFocus={(event) => {
           event.preventDefault();
-          amountInputRef.current?.focus();
+          if (typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches) {
+            amountInputRef.current?.focus();
+          }
         }}
       >
         <SheetHeader className="border-b border-border/60 bg-muted/70 dark:bg-muted/20 px-4 py-3">
           <div className="grid grid-cols-[1fr_auto_auto] items-center gap-3">
-            <SheetTitle className="text-start text-sm font-semibold">{title}</SheetTitle>
+            <SheetTitle className="text-start text-sm font-semibold text-balance">{title}</SheetTitle>
             <div className="flex items-center gap-2">
               <span
                 className="size-4 rounded-full border border-green-700 bg-green-500 shadow-[1px_1px_0px_rgba(0,0,0,0.6)]"
@@ -365,7 +369,16 @@ export function TransactionForm({
 
           <SheetFooter className="border-t border-border/60 bg-muted/70 pb-[calc(1rem+env(safe-area-inset-bottom))]">
             <Button type="submit" disabled={!canSubmit}>
-              {isSubmitting ? tCommon('saving') : existingData ? tCommon('update') : tCommon('create')}
+              {isSubmitting ? (
+                <span className="inline-flex items-center gap-2">
+                  <HugeiconsIcon icon={Loading03Icon} strokeWidth={2} className="size-4 animate-spin" aria-hidden="true" />
+                  {tCommon('saving')}
+                </span>
+              ) : existingData ? (
+                tCommon('update')
+              ) : (
+                tCommon('create')
+              )}
             </Button>
             <SheetClose asChild>
               <Button type="button" variant="outline">

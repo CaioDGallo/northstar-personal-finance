@@ -25,15 +25,17 @@ export function UnbudgetedSpending({
 
   return (
     <Card data-slot="unbudgeted-spending">
-      <CardContent className="flex items-center justify-between gap-3 p-3 md:p-4">
-        <div className="flex items-center gap-3">
+      <CardContent className="flex items-center justify-between gap-3 p-3 md:p-4 min-w-0">
+        <div className="flex items-center gap-3 min-w-0">
           <div
             className="flex size-10 md:size-12 shrink-0 items-center justify-center rounded-full text-white"
             style={{ backgroundColor: categoryColor }}
           >
-            <CategoryIcon icon={categoryIcon} />
+            <span aria-hidden="true">
+              <CategoryIcon icon={categoryIcon} />
+            </span>
           </div>
-          <span className="font-medium">{categoryName}</span>
+          <span className="font-medium truncate">{categoryName}</span>
         </div>
         <div className="flex items-center gap-3">
           <div className="text-right">
@@ -43,10 +45,11 @@ export function UnbudgetedSpending({
           </div>
           <Link
             href={`/settings/budgets?month=${yearMonth}`}
-            className="text-blue-600 hover:bg-blue-50 rounded-full p-1.5 transition-colors"
+            className="text-blue-600 hover:bg-blue-50 rounded-full p-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             title={t('addBudget')}
+            aria-label={t('addBudget')}
           >
-            <HugeiconsIcon icon={Add01Icon} className="size-5" />
+            <HugeiconsIcon icon={Add01Icon} className="size-5" aria-hidden="true" />
           </Link>
         </div>
       </CardContent>

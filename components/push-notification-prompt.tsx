@@ -6,7 +6,7 @@ import { shouldPromptPushNotifications, markPushNotificationPrompted } from '@/l
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Cancel01Icon, Notification03Icon } from '@hugeicons/core-free-icons';
+import { Cancel01Icon, Notification03Icon, Loading03Icon } from '@hugeicons/core-free-icons';
 
 /**
  * Auto-prompt component for push notifications after onboarding completion
@@ -76,7 +76,7 @@ export function PushNotificationPrompt() {
     <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950 p-4 shadow-sm">
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 mt-0.5">
-          <HugeiconsIcon icon={Notification03Icon} className="size-5 text-blue-600 dark:text-blue-400" />
+          <HugeiconsIcon icon={Notification03Icon} className="size-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">
@@ -92,7 +92,14 @@ export function PushNotificationPrompt() {
               size="sm"
               className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
             >
-              {isLoading ? t('enabling') : t('enable')}
+              {isLoading ? (
+                <span className="inline-flex items-center gap-2">
+                  <HugeiconsIcon icon={Loading03Icon} className="size-4 animate-spin" aria-hidden="true" />
+                  {t('enabling')}
+                </span>
+              ) : (
+                t('enable')
+              )}
             </Button>
             <Button
               onClick={handleDismiss}
@@ -101,7 +108,7 @@ export function PushNotificationPrompt() {
               size="sm"
               className="text-blue-700 hover:text-blue-900 hover:bg-blue-100 dark:text-blue-300 dark:hover:text-blue-100 dark:hover:bg-blue-900"
             >
-              <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
+              <HugeiconsIcon icon={Cancel01Icon} className="size-4" aria-hidden="true" />
               {t('dismiss')}
             </Button>
           </div>

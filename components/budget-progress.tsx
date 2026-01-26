@@ -43,17 +43,19 @@ export function BudgetProgress({
   return (
     <Card data-slot="budget-progress">
       <CardContent className="flex flex-col gap-2 md:gap-3 p-3 md:p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-4 min-w-0">
+          <div className="flex items-center gap-3 min-w-0">
             <div
               className="flex size-10 md:size-12 shrink-0 items-center justify-center rounded-full text-white"
               style={{ backgroundColor: categoryColor }}
             >
-              <CategoryIcon icon={categoryIcon} />
+              <span aria-hidden="true">
+                <CategoryIcon icon={categoryIcon} />
+              </span>
             </div>
-            <span className="font-medium">{categoryName}</span>
+            <span className="font-medium truncate">{categoryName}</span>
           </div>
-          <div className="text-right">
+          <div className="text-right shrink-0">
             <div className={`text-sm font-medium ${textColor}`}>
               {formatCurrency(netSpent)} / {formatCurrency(budget)}
             </div>
@@ -68,7 +70,7 @@ export function BudgetProgress({
 
         <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className={`h-full transition-all ${barColor}`}
+            className={`h-full transition-[width] duration-300 motion-reduce:transition-none ${barColor}`}
             style={{ width: `${Math.min(percentage, 100)}%` }}
           />
         </div>

@@ -29,7 +29,7 @@ export default async function BudgetsPage({
       </OnboardingTooltip>
 
       <div className="mb-6 flex flex-col md:flex-row space-y-4 md:space-y-0 items-center justify-between">
-        <h1 className="text-2xl font-bold hidden md:flex">{t('title')}</h1>
+        <h1 className="text-2xl font-bold hidden md:flex text-balance">{t('title')}</h1>
         <MonthPicker currentMonth={yearMonth} />
       </div>
 
@@ -38,7 +38,7 @@ export default async function BudgetsPage({
         <CopyBudgetsButton currentMonth={yearMonth} />
         <Link
           href="/settings/budgets"
-          className="text-sm text-blue-600 hover:underline"
+          className="text-sm text-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {t('editBudgets')}
         </Link>
@@ -46,14 +46,14 @@ export default async function BudgetsPage({
 
       {hasNoBudgets ? (
         <div className="rounded-none border border-gray-200 p-12 text-center">
-          <h2 className="mb-2 text-xl font-semibold">{t('noBudgets')}</h2>
+          <h2 className="mb-2 text-xl font-semibold text-balance">{t('noBudgets')}</h2>
           <p className="mb-6 text-gray-600">
             {t('copyFrom')}
           </p>
           <div className="flex justify-center gap-4">
             <Link
               href="/settings/budgets"
-              className="inline-block rounded-none bg-blue-600 px-6 py-3 text-sm text-white hover:bg-blue-700"
+              className="inline-block rounded-none bg-blue-600 px-6 py-3 text-sm text-white hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               {t('setBudgets')}
             </Link>
@@ -66,7 +66,7 @@ export default async function BudgetsPage({
 
           {/* Budget Progress List */}
           <div>
-            <h2 className="mb-4 text-lg font-semibold">{t('budgetByCategory')}</h2>
+            <h2 className="mb-4 text-lg font-semibold text-balance">{t('budgetByCategory')}</h2>
             <div className="space-y-4">
               {data.budgets.map((budget) => (
                 <BudgetProgress
@@ -85,7 +85,7 @@ export default async function BudgetsPage({
           {/* Unbudgeted Spending Section */}
           {data.unbudgeted.length > 0 && (
             <div>
-              <h2 className="mb-4 text-lg font-semibold text-gray-600">
+              <h2 className="mb-4 text-lg font-semibold text-gray-600 text-balance">
                 {t('expensesWithoutBudget')}
               </h2>
               <div className="space-y-4">

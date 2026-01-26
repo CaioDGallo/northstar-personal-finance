@@ -17,6 +17,8 @@
     "updating": "Atualizando...",
     "convert": "Converter",
     "converting": "Convertendo...",
+    "previousMonth": "Mês anterior",
+    "nextMonth": "Próximo mês",
     "yes": "Sim",
     "no": "Não",
     "undo": "Desfazer",
@@ -307,10 +309,10 @@
     "noIncomeCategories": "Nenhuma categoria de receita disponível. Crie uma em Configurações primeiro.",
     "noAccounts": "Nenhuma conta disponível. Crie uma em Configurações primeiro.",
     "descriptionPlaceholder": {
-      "expense": "Compras no mercado",
-      "income": "Salário mensal"
+      "expense": "Compras no mercado…",
+      "income": "Salário mensal…"
     },
-    "amountPlaceholder": "0,00",
+    "amountPlaceholder": "Ex: 100,00…",
     "dialogDescription": "Preencha os detalhes abaixo."
   },
   "accounts": {
