@@ -39,15 +39,15 @@ export function OnboardingTooltip({
     await markHintViewed(hintKey);
   };
 
-  if (!isVisible) {
-    return null;
-  }
+  // if (!isVisible) {
+  //   return null;
+  // }
 
   return (
     <div
       className={cn(
         'animate-in fade-in slide-in-from-top-2 duration-300',
-        'rounded-lg border bg-card p-4 shadow-lg',
+        'rounded-none bg-card p-4 border-2 border-black transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none active:translate-x-0.5 active:translate-y-0.5 active:shadow-none shadow-gray-600 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]',
         className
       )}
     >
