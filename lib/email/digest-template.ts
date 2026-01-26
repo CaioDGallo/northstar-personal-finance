@@ -1,33 +1,52 @@
 import { type Locale, defaultLocale } from '@/lib/i18n/config';
 import { translateWithLocale } from '@/lib/i18n/server-errors';
+import { centsToDisplay } from '@/lib/utils';
 
-export interface DigestEvent {
-  id: string;
-  title: string;
-  description: string | null;
-  location: string | null;
-  startAt: Date;
-  endAt: Date | null;
-  isAllDay: boolean;
-  priority: 'low' | 'medium' | 'high' | 'critical';
+export interface CategorySpending {
+  categoryName: string;
+  categoryIcon: string | null;
+  categoryColor: string;
+  amount: number; // in cents
 }
 
-export interface DigestTask {
-  id: string;
-  title: string;
-  description: string | null;
-  location: string | null;
-  dueAt: Date | null;
-  priority: 'low' | 'medium' | 'high' | 'critical';
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'overdue';
+export interface YesterdaySpending {
+  total: number; // in cents
+  isEmpty: boolean;
+  byCategory: CategorySpending[];
 }
 
-export interface DigestData {
-  userName?: string;
+export interface OverBudgetCategory {
+  category: string;
+  spent: number; // in cents
+  budget: number; // in cents
+  overAmount: number; // in cents
+}
+
+export interface CriticalBudgetCategory {
+  category: string;
+  spent: number; // in cents
+  budget: number; // in cents
+  percentage: number;
+  remaining: number; // in cents
+}
+
+export interface MonthlyBudgetOverview {
+  spent: number; // in cents
+  budget: number; // in cents
+  percentage: number;
+}
+
+export interface BudgetInsights {
+  overBudget: OverBudgetCategory[];
+  critical: CriticalBudgetCategory[];
+  healthyCount: number;
+  monthlyOverview: MonthlyBudgetOverview | null;
+}
+
+export interface FinancialDigestData {
   date: string;
-  events: DigestEvent[];
-  tasks: DigestTask[];
-  overdueTasks: DigestTask[];
+  yesterday: YesterdaySpending;
+  budgets: BudgetInsights;
   appUrl: string;
   timezone: string;
   locale?: Locale;
@@ -45,55 +64,6 @@ const COLORS = {
   low: '#888888',
 };
 
-function formatTime(
-  date: Date,
-  timezone: string,
-  locale: Locale,
-  isAllDay: boolean,
-  allDayLabel: string
-): string {
-  if (isAllDay) {
-    return allDayLabel;
-  }
-
-  try {
-    return new Intl.DateTimeFormat(locale, {
-      hour: 'numeric',
-      minute: '2-digit',
-      timeZone: timezone,
-    }).format(date);
-  } catch {
-    return date.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' });
-  }
-}
-
-function formatDateTime(date: Date, timezone: string, locale: Locale): string {
-  try {
-    return new Intl.DateTimeFormat(locale, {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      timeZone: timezone,
-    }).format(date);
-  } catch {
-    return date.toLocaleDateString(locale, { month: 'short', day: 'numeric' });
-  }
-}
-
-function getPriorityColor(priority: string): string {
-  switch (priority) {
-    case 'critical':
-      return COLORS.critical;
-    case 'high':
-      return COLORS.high;
-    case 'medium':
-      return COLORS.medium;
-    default:
-      return COLORS.low;
-  }
-}
-
 function escapeHtml(text: string | null | undefined): string {
   if (!text) return '';
   return text
@@ -104,88 +74,124 @@ function escapeHtml(text: string | null | undefined): string {
     .replace(/'/g, '&#039;');
 }
 
-export function generateDigestHtml(data: DigestData): string {
-  const { events, tasks, overdueTasks, date, appUrl, timezone } = data;
+function formatCurrency(cents: number, locale: Locale): string {
+  const value = Number(centsToDisplay(cents));
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value);
+}
+
+export function generateDigestHtml(data: FinancialDigestData): string {
+  const { yesterday, budgets, date, appUrl } = data;
   const locale = data.locale ?? defaultLocale;
   const t = (key: string, params?: Record<string, string | number>) =>
     translateWithLocale(locale, key, params);
 
-  const allDayLabel = t('emails.digest.allDay');
-  const dueLabel = t('emails.digest.due');
-  const wasDueLabel = t('emails.digest.wasDue');
-  const locationLabel = t('emails.digest.location');
-  const inProgressLabel = t('emails.digest.inProgress');
   const title = t('emails.digest.title');
-  const eventsTitle = t('emails.digest.eventsTitle', { count: events.length });
-  const tasksTitle = t('emails.digest.tasksTitle', { count: tasks.length });
-  const overdueTitle = t('emails.digest.overdueTitle', { count: overdueTasks.length });
-  const viewCalendarLabel = t('emails.digest.viewCalendar');
   const footerText = t('emails.digest.footer');
+  const viewBudgetsLabel = t('emails.digest.viewBudgets');
 
-  const eventsHtml = events.map(event => {
-    const time = formatTime(event.startAt, timezone, locale, event.isAllDay, allDayLabel);
-    const priorityColor = getPriorityColor(event.priority);
-
-    return `
-      <div style="background: ${COLORS.card}; border: 1px solid ${COLORS.border}; padding: 12px; margin: 8px 0;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
-          <strong style="color: ${COLORS.fg}; font-size: 14px;">${escapeHtml(event.title)}</strong>
-          <span style="color: ${COLORS.muted}; font-size: 12px; white-space: nowrap; margin-left: 8px;">${time}</span>
-        </div>
-        ${event.description ? `<p style="color: ${COLORS.muted}; font-size: 12px; margin: 4px 0 0 0;">${escapeHtml(event.description)}</p>` : ''}
-        ${event.location ? `<p style="color: ${COLORS.muted}; font-size: 12px; margin: 4px 0 0 0;">📍 ${locationLabel}: ${escapeHtml(event.location)}</p>` : ''}
-        <div style="margin-top: 4px;">
-          <span style="display: inline-block; background: ${priorityColor}; color: white; font-size: 10px; padding: 2px 6px; font-weight: bold;">${event.priority.toUpperCase()}</span>
-        </div>
+  // Yesterday's Spending Section
+  let yesterdayHtml = '';
+  if (yesterday.isEmpty) {
+    yesterdayHtml = `
+      <div style="background: ${COLORS.card}; border: 1px solid ${COLORS.border}; padding: 16px; margin: 8px 0; text-align: center;">
+        <p style="margin: 0; color: ${COLORS.fg}; font-size: 14px;">${t('emails.digest.noExpenses')}</p>
       </div>
     `;
-  }).join('');
+  } else {
+    const categoryItems = yesterday.byCategory
+      .slice(0, 7) // Top 7 categories
+      .map(cat => {
+        const icon = cat.categoryIcon || '💰';
+        const amount = formatCurrency(cat.amount, locale);
+        return `
+          <div style="background: ${COLORS.card}; border-left: 3px solid ${cat.categoryColor}; padding: 10px 12px; margin: 6px 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="color: ${COLORS.fg}; font-size: 13px;">${icon} ${escapeHtml(cat.categoryName)}</span>
+              <strong style="color: ${COLORS.fg}; font-size: 14px;">${amount}</strong>
+            </div>
+          </div>
+        `;
+      })
+      .join('');
 
-  const tasksHtml = tasks.map(task => {
-    const dueTime = task.dueAt
-      ? formatTime(task.dueAt, timezone, locale, false, allDayLabel)
-      : t('emails.digest.noTime');
-    const priorityColor = getPriorityColor(task.priority);
-
-    return `
-      <div style="background: ${COLORS.card}; border: 1px solid ${COLORS.border}; padding: 12px; margin: 8px 0;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
-          <strong style="color: ${COLORS.fg}; font-size: 14px;">${escapeHtml(task.title)}</strong>
-          <span style="color: ${COLORS.muted}; font-size: 12px; white-space: nowrap; margin-left: 8px;">${dueLabel}: ${dueTime}</span>
+    const total = formatCurrency(yesterday.total, locale);
+    yesterdayHtml = `
+      <div style="margin-bottom: 12px;">
+        <div style="background: ${COLORS.fg}; color: ${COLORS.bg}; padding: 12px; margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 14px; font-weight: bold;">${t('emails.digest.total')}</span>
+            <span style="font-size: 18px; font-weight: bold;">${total}</span>
+          </div>
         </div>
-        ${task.description ? `<p style="color: ${COLORS.muted}; font-size: 12px; margin: 4px 0 0 0;">${escapeHtml(task.description)}</p>` : ''}
-        ${task.location ? `<p style="color: ${COLORS.muted}; font-size: 12px; margin: 4px 0 0 0;">📍 ${locationLabel}: ${escapeHtml(task.location)}</p>` : ''}
-        <div style="margin-top: 4px;">
-          <span style="display: inline-block; background: ${priorityColor}; color: white; font-size: 10px; padding: 2px 6px; font-weight: bold;">${task.priority.toUpperCase()}</span>
-          ${task.status === 'in_progress' ? `<span style="display: inline-block; background: #3b82f6; color: white; font-size: 10px; padding: 2px 6px; font-weight: bold; margin-left: 4px;">${inProgressLabel}</span>` : ''}
-        </div>
+        ${categoryItems}
       </div>
     `;
-  }).join('');
+  }
 
-  const overdueHtml = overdueTasks.map(task => {
-    const dueDate = task.dueAt
-      ? formatDateTime(task.dueAt, timezone, locale)
-      : t('emails.digest.noDate');
-    const priorityColor = getPriorityColor(task.priority);
+  // Budget Insights Section
+  let budgetHtml = '';
+  const hasOverBudget = budgets.overBudget.length > 0;
+  const hasCritical = budgets.critical.length > 0;
+  const hasMonthly = budgets.monthlyOverview !== null;
 
-    return `
-      <div style="background: ${COLORS.card}; border: 1px solid ${COLORS.border}; padding: 12px; margin: 8px 0;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
-          <strong style="color: ${COLORS.fg}; font-size: 14px;">${escapeHtml(task.title)}</strong>
-          <span style="color: ${COLORS.critical}; font-size: 12px; white-space: nowrap; margin-left: 8px;">${wasDueLabel}: ${dueDate}</span>
-        </div>
-        ${task.description ? `<p style="color: ${COLORS.muted}; font-size: 12px; margin: 4px 0 0 0;">${escapeHtml(task.description)}</p>` : ''}
-        <div style="margin-top: 4px;">
-          <span style="display: inline-block; background: ${priorityColor}; color: white; font-size: 10px; padding: 2px 6px; font-weight: bold;">${task.priority.toUpperCase()}</span>
-        </div>
-      </div>
-    `;
-  }).join('');
+  if (hasOverBudget || hasCritical || hasMonthly) {
+    // Over Budget (>100%)
+    const overBudgetHtml = budgets.overBudget
+      .map(cat => {
+        const over = formatCurrency(cat.overAmount, locale);
+        return `
+          <div style="background: ${COLORS.card}; border-left: 4px solid ${COLORS.critical}; padding: 10px 12px; margin: 6px 0;">
+            <p style="margin: 0; color: ${COLORS.fg}; font-size: 13px;">⚠️ ${t('emails.digest.overBudget', { category: cat.category, amount: over })}</p>
+          </div>
+        `;
+      })
+      .join('');
 
-  const hasEvents = events.length > 0;
-  const hasTasks = tasks.length > 0;
-  const hasOverdue = overdueTasks.length > 0;
+    // Critical (80-100%)
+    const criticalHtml = budgets.critical
+      .map(cat => {
+        const remaining = formatCurrency(cat.remaining, locale);
+        const percent = Math.round(cat.percentage);
+        return `
+          <div style="background: ${COLORS.card}; border-left: 4px solid ${COLORS.high}; padding: 10px 12px; margin: 6px 0;">
+            <p style="margin: 0; color: ${COLORS.fg}; font-size: 13px;">📢 ${t('emails.digest.criticalWarning', { category: cat.category, percent, remaining })}</p>
+          </div>
+        `;
+      })
+      .join('');
+
+    // Healthy summary
+    const healthyHtml =
+      budgets.healthyCount > 0
+        ? `
+          <div style="background: ${COLORS.card}; border: 1px solid ${COLORS.border}; padding: 10px 12px; margin: 6px 0;">
+            <p style="margin: 0; color: ${COLORS.muted}; font-size: 13px;">✓ ${t('emails.digest.healthySummary', { count: budgets.healthyCount })}</p>
+          </div>
+        `
+        : '';
+
+    // Monthly overview
+    const monthlyHtml = hasMonthly
+      ? (() => {
+          const spent = formatCurrency(budgets.monthlyOverview!.spent, locale);
+          const budget = formatCurrency(budgets.monthlyOverview!.budget, locale);
+          const percent = Math.round(budgets.monthlyOverview!.percentage);
+          return `
+            <div style="background: ${COLORS.fg}; color: ${COLORS.bg}; padding: 12px; margin-top: 12px;">
+              <p style="margin: 0; font-size: 13px;">${t('emails.digest.monthlyOverview', { spent, budget, percent })}</p>
+            </div>
+          `;
+        })()
+      : '';
+
+    budgetHtml = overBudgetHtml + criticalHtml + healthyHtml + monthlyHtml;
+  }
+
+  const hasYesterdayData = !yesterday.isEmpty;
+  const hasBudgetData = hasOverBudget || hasCritical || hasMonthly;
 
   return `
 <!DOCTYPE html>
@@ -203,34 +209,32 @@ export function generateDigestHtml(data: DigestData): string {
       <p style="margin: 0; color: ${COLORS.muted}; font-size: 14px;">${escapeHtml(date)}</p>
     </div>
 
-    ${hasEvents ? `
-    <!-- Events Section -->
+    ${hasYesterdayData ? `
+    <!-- Yesterday's Spending Section -->
     <div style="margin-bottom: 32px;">
-      <h2 style="margin: 0 0 12px 0; color: ${COLORS.fg}; font-size: 18px; font-weight: bold;">${eventsTitle}</h2>
-      ${eventsHtml}
+      <h2 style="margin: 0 0 12px 0; color: ${COLORS.fg}; font-size: 18px; font-weight: bold;">${t('emails.digest.yesterdaySpending')}</h2>
+      ${yesterdayHtml}
     </div>
-    ` : ''}
-
-    ${hasTasks ? `
-    <!-- Tasks Section -->
+    ` : `
+    <!-- No Expenses Yesterday -->
     <div style="margin-bottom: 32px;">
-      <h2 style="margin: 0 0 12px 0; color: ${COLORS.fg}; font-size: 18px; font-weight: bold;">${tasksTitle}</h2>
-      ${tasksHtml}
+      <h2 style="margin: 0 0 12px 0; color: ${COLORS.fg}; font-size: 18px; font-weight: bold;">${t('emails.digest.yesterdaySpending')}</h2>
+      ${yesterdayHtml}
     </div>
-    ` : ''}
+    `}
 
-    ${hasOverdue ? `
-    <!-- Overdue Section -->
-    <div style="margin-bottom: 32px; border-left: 4px solid ${COLORS.critical}; padding-left: 16px;">
-      <h2 style="margin: 0 0 12px 0; color: ${COLORS.critical}; font-size: 18px; font-weight: bold;">${overdueTitle}</h2>
-      ${overdueHtml}
+    ${hasBudgetData ? `
+    <!-- Budget Insights Section -->
+    <div style="margin-bottom: 32px;">
+      <h2 style="margin: 0 0 12px 0; color: ${COLORS.fg}; font-size: 18px; font-weight: bold;">${t('emails.digest.budgetInsights')}</h2>
+      ${budgetHtml}
     </div>
     ` : ''}
 
     <!-- CTA Button -->
     <div style="margin-top: 32px; text-align: center;">
-      <a href="${appUrl}/calendar" style="display: inline-block; background: ${COLORS.fg}; color: ${COLORS.bg}; padding: 12px 24px; text-decoration: none; font-weight: bold; font-size: 14px; box-shadow: 4px 4px 0 ${COLORS.border};">
-        ${viewCalendarLabel}
+      <a href="${appUrl}/budgets" style="display: inline-block; background: ${COLORS.fg}; color: ${COLORS.bg}; padding: 12px 24px; text-decoration: none; font-weight: bold; font-size: 14px; box-shadow: 4px 4px 0 ${COLORS.border};">
+        ${viewBudgetsLabel}
       </a>
     </div>
 
@@ -246,64 +250,67 @@ export function generateDigestHtml(data: DigestData): string {
   `.trim();
 }
 
-export function generateDigestText(data: DigestData): string {
-  const { events, tasks, overdueTasks, date, appUrl, timezone } = data;
+export function generateDigestText(data: FinancialDigestData): string {
+  const { yesterday, budgets, date, appUrl } = data;
   const locale = data.locale ?? defaultLocale;
   const t = (key: string, params?: Record<string, string | number>) =>
     translateWithLocale(locale, key, params);
 
-  const allDayLabel = t('emails.digest.allDay');
-  const dueLabel = t('emails.digest.due');
-  const wasDueLabel = t('emails.digest.wasDue');
-  const locationLabel = t('emails.digest.location');
-  const priorityLabel = t('emails.digest.priority');
-  const inProgressLabel = t('emails.digest.inProgress');
-  const timeLabel = t('emails.digest.time');
-
   let text = `${t('emails.digest.textTitle')}\n${date}\n\n`;
 
-  if (events.length > 0) {
-    text += `${t('emails.digest.textEventsTitle', { count: events.length })}\n${'='.repeat(40)}\n\n`;
-    events.forEach(event => {
-      const time = formatTime(event.startAt, timezone, locale, event.isAllDay, allDayLabel);
-      text += `${event.title}\n`;
-      text += `${timeLabel}: ${time}\n`;
-      if (event.description) text += `${event.description}\n`;
-      if (event.location) text += `${locationLabel}: ${event.location}\n`;
-      text += `${priorityLabel}: ${event.priority.toUpperCase()}\n\n`;
+  // Yesterday's Spending
+  text += `${t('emails.digest.yesterdaySpending')}\n${'='.repeat(40)}\n\n`;
+
+  if (yesterday.isEmpty) {
+    text += `${t('emails.digest.noExpenses')}\n\n`;
+  } else {
+    text += `${t('emails.digest.total')}: ${formatCurrency(yesterday.total, locale)}\n\n`;
+    yesterday.byCategory.slice(0, 7).forEach(cat => {
+      const icon = cat.categoryIcon || '💰';
+      const amount = formatCurrency(cat.amount, locale);
+      text += `${icon} ${cat.categoryName}: ${amount}\n`;
     });
+    text += `\n`;
   }
 
-  if (tasks.length > 0) {
-    text += `${t('emails.digest.textTasksTitle', { count: tasks.length })}\n${'='.repeat(40)}\n\n`;
-    tasks.forEach(task => {
-      const dueTime = task.dueAt
-        ? formatTime(task.dueAt, timezone, locale, false, allDayLabel)
-        : t('emails.digest.noTime');
-      text += `${task.title}\n`;
-      text += `${dueLabel}: ${dueTime}\n`;
-      if (task.description) text += `${task.description}\n`;
-      if (task.location) text += `${locationLabel}: ${task.location}\n`;
-      text += `${priorityLabel}: ${task.priority.toUpperCase()}\n`;
-      if (task.status === 'in_progress') text += `${t('emails.digest.status')}: ${inProgressLabel}\n`;
-      text += `\n`;
+  // Budget Insights
+  const hasOverBudget = budgets.overBudget.length > 0;
+  const hasCritical = budgets.critical.length > 0;
+  const hasMonthly = budgets.monthlyOverview !== null;
+
+  if (hasOverBudget || hasCritical || hasMonthly) {
+    text += `${t('emails.digest.budgetInsights')}\n${'='.repeat(40)}\n\n`;
+
+    // Over budget
+    budgets.overBudget.forEach(cat => {
+      const over = formatCurrency(cat.overAmount, locale);
+      text += `⚠️ ${t('emails.digest.overBudget', { category: cat.category, amount: over })}\n`;
     });
+
+    // Critical
+    budgets.critical.forEach(cat => {
+      const remaining = formatCurrency(cat.remaining, locale);
+      const percent = Math.round(cat.percentage);
+      text += `📢 ${t('emails.digest.criticalWarning', { category: cat.category, percent, remaining })}\n`;
+    });
+
+    // Healthy summary
+    if (budgets.healthyCount > 0) {
+      text += `✓ ${t('emails.digest.healthySummary', { count: budgets.healthyCount })}\n`;
+    }
+
+    // Monthly overview
+    if (hasMonthly) {
+      const spent = formatCurrency(budgets.monthlyOverview!.spent, locale);
+      const budget = formatCurrency(budgets.monthlyOverview!.budget, locale);
+      const percent = Math.round(budgets.monthlyOverview!.percentage);
+      text += `\n${t('emails.digest.monthlyOverview', { spent, budget, percent })}\n`;
+    }
+
+    text += `\n`;
   }
 
-  if (overdueTasks.length > 0) {
-    text += `${t('emails.digest.textOverdueTitle', { count: overdueTasks.length })}\n${'='.repeat(40)}\n\n`;
-    overdueTasks.forEach(task => {
-      const dueDate = task.dueAt
-        ? formatDateTime(task.dueAt, timezone, locale)
-        : t('emails.digest.noDate');
-      text += `${task.title}\n`;
-      text += `${wasDueLabel}: ${dueDate}\n`;
-      if (task.description) text += `${task.description}\n`;
-      text += `${priorityLabel}: ${task.priority.toUpperCase()}\n\n`;
-    });
-  }
-
-  text += `\n${t('emails.digest.viewCalendarText')} ${appUrl}/calendar\n`;
+  text += `\n${t('emails.digest.viewBudgetsText')} ${appUrl}/budgets\n`;
   text += `\n${t('emails.digest.footer')}`;
 
   return text;

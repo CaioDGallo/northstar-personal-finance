@@ -1,16 +1,25 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { events, tasks, userSettings, recurrenceRules } from '@/lib/schema';
-import { eq, and, lte, inArray } from 'drizzle-orm';
+import { entries, transactions, categories, userSettings, budgets } from '@/lib/schema';
+import { eq, and, sql, gte, lte } from 'drizzle-orm';
 import { sendEmail } from '@/lib/email/send';
-import { generateDigestHtml, generateDigestText, type DigestEvent, type DigestTask } from '@/lib/email/digest-template';
-import { getAllOccurrencesBetween } from '@/lib/recurrence';
+import {
+  generateDigestHtml,
+  generateDigestText,
+  type YesterdaySpending,
+  type BudgetInsights,
+  type FinancialDigestData,
+  type OverBudgetCategory,
+  type CriticalBudgetCategory,
+  type MonthlyBudgetOverview
+} from '@/lib/email/digest-template';
 import { logError, logForDebugging } from '@/lib/logger';
 import { ErrorIds } from '@/constants/errorIds';
 import { defaultLocale, type Locale } from '@/lib/i18n/config';
 import { translateWithLocale } from '@/lib/i18n/server-errors';
 import { requireCronAuth } from '@/lib/cron-auth';
+import { activeTransactionCondition } from '@/lib/query-helpers';
 
 export interface DigestResult {
   success: boolean;
@@ -20,13 +29,7 @@ export interface DigestResult {
   errors: Array<{ userId: string; error: string }>;
 }
 
-interface UserTodayRange {
-  start: Date;
-  end: Date;
-  localDateStr: string;
-}
-
-function getUserTodayRange(timezone: string): UserTodayRange {
+function getUserYesterdayDateStr(timezone: string): string {
   const now = new Date();
 
   // Format current UTC time in user's timezone to get local date
@@ -37,249 +40,199 @@ function getUserTodayRange(timezone: string): UserTodayRange {
     day: '2-digit',
   });
 
-  const localDateStr = formatter.format(now); // "2026-01-12"
+  const todayLocalStr = formatter.format(now); // "2026-01-26"
+  const [year, month, day] = todayLocalStr.split('-').map(Number);
 
-  // Parse the local date
-  const [year, month, day] = localDateStr.split('-').map(Number);
+  // Calculate yesterday
+  const todayDate = new Date(year, month - 1, day);
+  const yesterdayDate = new Date(todayDate);
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
 
-  // Calculate timezone offset by comparing UTC noon with formatted time
-  // This avoids parsing dates in local machine timezone
-  const refUtc = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-  const tzFormatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: timezone,
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
-  const [tzHour, tzMin] = tzFormatter.format(refUtc).split(':').map(Number);
-  const offsetMs = (12 - tzHour) * 60 * 60 * 1000 - tzMin * 60 * 1000;
+  // Format as YYYY-MM-DD
+  const yYear = yesterdayDate.getFullYear();
+  const yMonth = String(yesterdayDate.getMonth() + 1).padStart(2, '0');
+  const yDay = String(yesterdayDate.getDate()).padStart(2, '0');
 
-  // Calculate day boundaries in UTC
-  const dayStartUTC = new Date(Date.UTC(year, month - 1, day, 0, 0, 0) + offsetMs);
-  const dayEndUTC = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999) + offsetMs);
-
-  return {
-    start: dayStartUTC,
-    end: dayEndUTC,
-    localDateStr,
-  };
+  return `${yYear}-${yMonth}-${yDay}`;
 }
 
-async function getTodaysEventsForUser(
+function getCurrentYearMonth(timezone: string): string {
+  const now = new Date();
+
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+  });
+
+  const parts = formatter.formatToParts(now);
+  const year = parts.find(p => p.type === 'year')?.value;
+  const month = parts.find(p => p.type === 'month')?.value;
+
+  return `${year}-${month}`;
+}
+
+async function getYesterdaySpending(
   userId: string,
-  dayStart: Date,
-  dayEnd: Date
-): Promise<DigestEvent[]> {
+  yesterdayDateStr: string
+): Promise<YesterdaySpending> {
   try {
-    // Query events that start today (or could recur today)
-    const eventsWithRecurrence = await db
+    // Query entries for yesterday, grouped by category
+    const spendingByCategory = await db
       .select({
-        event: events,
-        recurrence: recurrenceRules,
+        categoryName: categories.name,
+        categoryIcon: categories.icon,
+        categoryColor: categories.color,
+        amount: sql<number>`CAST(SUM(${entries.amount}) AS INTEGER)`,
       })
-      .from(events)
-      .leftJoin(
-        recurrenceRules,
-        and(
-          eq(recurrenceRules.itemType, 'event'),
-          eq(recurrenceRules.itemId, events.id)
-        )
-      )
+      .from(entries)
+      .innerJoin(transactions, eq(entries.transactionId, transactions.id))
+      .innerJoin(categories, eq(transactions.categoryId, categories.id))
       .where(
         and(
-          eq(events.userId, userId),
-          eq(events.status, 'scheduled'),
-          // Include events that start today OR recurring events that could occur today
-          lte(events.startAt, dayEnd)
+          eq(entries.userId, userId),
+          eq(entries.purchaseDate, yesterdayDateStr),
+          activeTransactionCondition()
         )
-      );
+      )
+      .groupBy(categories.id, categories.name, categories.icon, categories.color)
+      .orderBy(sql`SUM(${entries.amount}) DESC`);
 
-    const digestEvents: DigestEvent[] = [];
-
-    for (const { event, recurrence } of eventsWithRecurrence) {
-      if (recurrence?.rrule) {
-        // Recurring event - check if it occurs today
-        try {
-          const occurrences = getAllOccurrencesBetween(
-            recurrence.rrule,
-            dayStart,
-            dayEnd,
-            event.startAt
-          );
-
-          if (occurrences.length > 0) {
-            // Use the first occurrence for today
-            const occurrenceStart = occurrences[0];
-            const duration = event.endAt.getTime() - event.startAt.getTime();
-            const occurrenceEnd = new Date(occurrenceStart.getTime() + duration);
-
-            digestEvents.push({
-              id: String(event.id),
-              title: event.title,
-              description: event.description,
-              location: event.location,
-              startAt: occurrenceStart,
-              endAt: occurrenceEnd,
-              isAllDay: event.isAllDay,
-              priority: event.priority,
-            });
-          }
-        } catch (error) {
-          logForDebugging('digest', 'Failed to expand event recurrence', {
-            eventId: event.id,
-            error,
-          });
-        }
-      } else {
-        // Non-recurring event - check if it starts today
-        if (event.startAt >= dayStart && event.startAt < dayEnd) {
-          digestEvents.push({
-            id: String(event.id),
-            title: event.title,
-            description: event.description,
-            location: event.location,
-            startAt: event.startAt,
-            endAt: event.endAt,
-            isAllDay: event.isAllDay,
-            priority: event.priority,
-          });
-        }
-      }
+    if (spendingByCategory.length === 0) {
+      return {
+        total: 0,
+        isEmpty: true,
+        byCategory: [],
+      };
     }
 
-    // Sort by start time
-    digestEvents.sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
+    const total = spendingByCategory.reduce((sum, cat) => sum + cat.amount, 0);
 
-    return digestEvents;
+    return {
+      total,
+      isEmpty: false,
+      byCategory: spendingByCategory.map(cat => ({
+        categoryName: cat.categoryName,
+        categoryIcon: cat.categoryIcon,
+        categoryColor: cat.categoryColor,
+        amount: cat.amount,
+      })),
+    };
   } catch (error) {
-    logError(ErrorIds.DIGEST_QUERY_FAILED, 'Failed to query today\'s events', error, { userId });
-    return [];
+    logError(ErrorIds.DIGEST_QUERY_FAILED, "Failed to query yesterday's spending", error, { userId });
+    return {
+      total: 0,
+      isEmpty: true,
+      byCategory: [],
+    };
   }
 }
 
-async function getTodaysTasksForUser(
+async function getBudgetInsightsForUser(
   userId: string,
-  dayStart: Date,
-  dayEnd: Date
-): Promise<DigestTask[]> {
+  yearMonth: string
+): Promise<BudgetInsights> {
   try {
-    // Query tasks due today (pending or in_progress only)
-    const tasksWithRecurrence = await db
+    // Replicate getBudgetsWithSpending logic but with explicit userId
+    const [year, month] = yearMonth.split('-').map(Number);
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+    const endOfMonth = new Date(year, month, 0).getDate();
+    const endDate = `${year}-${String(month).padStart(2, '0')}-${endOfMonth}`;
+
+    // Get budgets for this month
+    const monthBudgets = await db
       .select({
-        task: tasks,
-        recurrence: recurrenceRules,
+        categoryId: budgets.categoryId,
+        categoryName: categories.name,
+        budget: budgets.amount,
       })
-      .from(tasks)
-      .leftJoin(
-        recurrenceRules,
-        and(
-          eq(recurrenceRules.itemType, 'task'),
-          eq(recurrenceRules.itemId, tasks.id)
-        )
-      )
+      .from(budgets)
+      .innerJoin(categories, eq(budgets.categoryId, categories.id))
+      .where(and(eq(budgets.userId, userId), eq(budgets.yearMonth, yearMonth)));
+
+    // Get spending by category
+    const spending = await db
+      .select({
+        categoryId: transactions.categoryId,
+        spent: sql<number>`CAST(SUM(${entries.amount}) AS INTEGER)`,
+      })
+      .from(entries)
+      .innerJoin(transactions, eq(entries.transactionId, transactions.id))
       .where(
         and(
-          eq(tasks.userId, userId),
-          inArray(tasks.status, ['pending', 'in_progress']),
-          // Include tasks due today OR recurring tasks that could occur today
-          lte(tasks.dueAt, dayEnd)
+          eq(entries.userId, userId),
+          gte(entries.purchaseDate, startDate),
+          lte(entries.purchaseDate, endDate),
+          activeTransactionCondition()
         )
-      );
+      )
+      .groupBy(transactions.categoryId);
 
-    const digestTasks: DigestTask[] = [];
+    const overBudget: OverBudgetCategory[] = [];
+    const critical: CriticalBudgetCategory[] = [];
+    let healthyCount = 0;
+    let totalBudget = 0;
+    let totalSpent = 0;
 
-    for (const { task, recurrence } of tasksWithRecurrence) {
-      if (recurrence?.rrule) {
-        // Recurring task - check if it occurs today
-        try {
-          const occurrences = getAllOccurrencesBetween(
-            recurrence.rrule,
-            dayStart,
-            dayEnd,
-            task.dueAt
-          );
+    // Create a map of spending by category
+    const spendingMap = new Map(spending.map(s => [s.categoryId, s.spent]));
 
-          if (occurrences.length > 0) {
-            // Use the first occurrence for today
-            const occurrenceDue = occurrences[0];
+    monthBudgets.forEach(budget => {
+      if (!budget.budget || budget.budget === 0) return; // Skip categories without budgets
 
-            digestTasks.push({
-              id: String(task.id),
-              title: task.title,
-              description: task.description,
-              location: task.location,
-              dueAt: occurrenceDue,
-              priority: task.priority,
-              status: task.status,
-            });
-          }
-        } catch (error) {
-          logForDebugging('digest', 'Failed to expand task recurrence', {
-            taskId: task.id,
-            error,
-          });
-        }
+      const spent = spendingMap.get(budget.categoryId) || 0;
+      const percentage = (spent / budget.budget) * 100;
+
+      totalBudget += budget.budget;
+      totalSpent += spent;
+
+      if (percentage > 100) {
+        // Over budget
+        overBudget.push({
+          category: budget.categoryName,
+          spent,
+          budget: budget.budget,
+          overAmount: spent - budget.budget,
+        });
+      } else if (percentage >= 80) {
+        // Critical (80-100%)
+        critical.push({
+          category: budget.categoryName,
+          spent,
+          budget: budget.budget,
+          percentage,
+          remaining: budget.budget - spent,
+        });
       } else {
-        // Non-recurring task - check if it's due today
-        if (task.dueAt >= dayStart && task.dueAt < dayEnd) {
-          digestTasks.push({
-            id: String(task.id),
-            title: task.title,
-            description: task.description,
-            location: task.location,
-            dueAt: task.dueAt,
-            priority: task.priority,
-            status: task.status,
-          });
-        }
+        // Healthy (<80%)
+        healthyCount++;
       }
-    }
-
-    // Sort by due time
-    digestTasks.sort((a, b) => {
-      if (!a.dueAt) return 1;
-      if (!b.dueAt) return -1;
-      return a.dueAt.getTime() - b.dueAt.getTime();
     });
 
-    return digestTasks;
-  } catch (error) {
-    logError(ErrorIds.DIGEST_QUERY_FAILED, 'Failed to query today\'s tasks', error, { userId });
-    return [];
-  }
-}
+    // Monthly overview
+    const monthlyOverview: MonthlyBudgetOverview | null =
+      totalBudget > 0
+        ? {
+            spent: totalSpent,
+            budget: totalBudget,
+            percentage: (totalSpent / totalBudget) * 100,
+          }
+        : null;
 
-async function getOverdueTasksForUser(
-  userId: string,
-  beforeDate: Date
-): Promise<DigestTask[]> {
-  try {
-    // Query overdue tasks (limited to 10)
-    const overdueTasks = await db
-      .select()
-      .from(tasks)
-      .where(
-        and(
-          eq(tasks.userId, userId),
-          eq(tasks.status, 'overdue'),
-          lte(tasks.dueAt, beforeDate)
-        )
-      )
-      .orderBy(tasks.dueAt)
-      .limit(10);
-
-    return overdueTasks.map(task => ({
-      id: String(task.id),
-      title: task.title,
-      description: task.description,
-      location: task.location,
-      dueAt: task.dueAt,
-      priority: task.priority,
-      status: task.status,
-    }));
+    return {
+      overBudget,
+      critical,
+      healthyCount,
+      monthlyOverview,
+    };
   } catch (error) {
-    logError(ErrorIds.DIGEST_QUERY_FAILED, 'Failed to query overdue tasks', error, { userId });
-    return [];
+    logError(ErrorIds.DIGEST_QUERY_FAILED, 'Failed to query budget insights', error, { userId });
+    return {
+      overBudget: [],
+      critical: [],
+      healthyCount: 0,
+      monthlyOverview: null,
+    };
   }
 }
 
@@ -290,30 +243,35 @@ async function sendUserDigest(
   try {
     const timezone = settings.timezone || 'UTC';
     const locale: Locale = (settings.locale as Locale) || defaultLocale;
-    const { start, end, localDateStr } = getUserTodayRange(timezone);
+    const yesterdayDateStr = getUserYesterdayDateStr(timezone);
+    const currentYearMonth = getCurrentYearMonth(timezone);
 
     logForDebugging('digest', 'Calculating digest for user', {
       userId,
       timezone,
-      dayStart: start.toISOString(),
-      dayEnd: end.toISOString(),
-      localDate: localDateStr,
+      yesterdayDate: yesterdayDateStr,
+      currentMonth: currentYearMonth,
     });
 
-    // Fetch data
-    const [events, tasks, overdueTasks] = await Promise.all([
-      getTodaysEventsForUser(userId, start, end),
-      getTodaysTasksForUser(userId, start, end),
-      getOverdueTasksForUser(userId, start),
+    // Fetch financial data
+    const [yesterday, budgets] = await Promise.all([
+      getYesterdaySpending(userId, yesterdayDateStr),
+      getBudgetInsightsForUser(userId, currentYearMonth),
     ]);
 
-    // Skip if no items (empty state)
-    if (events.length === 0 && tasks.length === 0 && overdueTasks.length === 0) {
-      logForDebugging('digest', 'Skipping user - no items for today', { userId });
+    // Skip if no data (no spending AND no budget alerts)
+    const hasBudgetAlerts =
+      budgets.overBudget.length > 0 ||
+      budgets.critical.length > 0 ||
+      (budgets.monthlyOverview !== null && budgets.monthlyOverview.percentage >= 80);
+
+    if (yesterday.isEmpty && !hasBudgetAlerts) {
+      logForDebugging('digest', 'Skipping user - no spending and no budget alerts', { userId });
       return true; // Consider this a success (just nothing to send)
     }
 
     // Format date for display
+    const yesterdayDate = new Date(yesterdayDateStr + 'T12:00:00Z'); // Use noon UTC to avoid timezone issues
     const dateFormatter = new Intl.DateTimeFormat(locale, {
       timeZone: timezone,
       weekday: 'long',
@@ -321,15 +279,14 @@ async function sendUserDigest(
       month: 'long',
       day: 'numeric',
     });
-    const formattedDate = dateFormatter.format(new Date(localDateStr));
+    const formattedDate = dateFormatter.format(yesterdayDate);
 
     // Generate email content
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://fluxo.sh';
-    const digestData = {
+    const digestData: FinancialDigestData = {
       date: formattedDate,
-      events,
-      tasks,
-      overdueTasks,
+      yesterday,
+      budgets,
       appUrl,
       timezone,
       locale,
@@ -353,9 +310,10 @@ async function sendUserDigest(
       if (result.success) {
         logForDebugging('digest', 'Successfully sent digest', {
           userId,
-          events: events.length,
-          tasks: tasks.length,
-          overdue: overdueTasks.length,
+          yesterdayTotal: yesterday.total,
+          categoriesCount: yesterday.byCategory.length,
+          overBudgetCount: budgets.overBudget.length,
+          criticalCount: budgets.critical.length,
         });
         return true;
       }
