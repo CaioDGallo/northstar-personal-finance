@@ -1,5 +1,6 @@
 #!/usr/bin/env tsx
 
+import 'dotenv/config';
 import { createInviteWithoutAuth } from '@/lib/actions/invite';
 import { parseArgs } from 'node:util';
 
