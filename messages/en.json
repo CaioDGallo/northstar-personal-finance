@@ -783,6 +783,10 @@
         "body": "{{category}}: {{percentage}}% of budget used"
       }
     },
+    "test": {
+      "title": "Test Notification",
+      "body": "If you can see this, push notifications are working!"
+    },
     "prompt": {
       "title": "Enable Notifications",
       "description": "Receive bill reminders and budget alerts",

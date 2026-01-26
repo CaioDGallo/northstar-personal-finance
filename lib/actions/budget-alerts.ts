@@ -5,7 +5,7 @@ import { budgets, entries, userSettings, categories, budgetAlerts } from '@/lib/
 import { eq, and } from 'drizzle-orm';
 import { sendPushToUser } from '@/lib/services/push-sender';
 import { getCurrentYearMonth } from '@/lib/utils';
-import { defaultLocale, type Locale } from '@/lib/i18n/config';
+import { defaultLocale, locales, type Locale } from '@/lib/i18n/config';
 import { translateWithLocale } from '@/lib/i18n/server-errors';
 import { buildBudgetsUrl } from '@/lib/notifications/push-links';
 
@@ -33,7 +33,9 @@ export async function checkBudgetAlerts(
       return { sent: false, error: 'Push notifications not enabled' };
     }
 
-    const locale: Locale = (settings.locale as Locale) || defaultLocale;
+    const locale = locales.includes(settings.locale as Locale)
+      ? (settings.locale as Locale)
+      : defaultLocale;
     const currentMonth = getCurrentYearMonth();
 
     // Get budget for this category and month

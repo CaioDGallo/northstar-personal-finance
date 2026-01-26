@@ -68,7 +68,7 @@ export default async function RootLayout({
       </head>
       <body suppressHydrationWarning>
         <ServiceWorkerRegister />
-        <NextIntlClientProvider messages={messages}>
+        <NextIntlClientProvider messages={messages} locale={locale}>
           <Providers>
             {children}
           </Providers>

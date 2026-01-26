@@ -821,6 +821,10 @@
         "body": "Mês: {{spent}}. Definir orçamentos?"
       }
     },
+    "test": {
+      "title": "Teste de Notificação",
+      "body": "Se você está vendo isso, as notificações push estão funcionando!"
+    },
     "prompt": {
       "title": "Ativar Notificações",
       "description": "Receba lembretes de contas e alertas de orçamento",

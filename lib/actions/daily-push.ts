@@ -6,7 +6,7 @@ import { eq, and, gte, lte, sql } from 'drizzle-orm';
 import { activeTransactionCondition } from '@/lib/query-helpers';
 import { sendPushToUser } from '@/lib/services/push-sender';
 import { formatCurrencyWithLocale } from '@/lib/utils';
-import { defaultLocale, type Locale } from '@/lib/i18n/config';
+import { defaultLocale, locales, type Locale } from '@/lib/i18n/config';
 import { translateWithLocale } from '@/lib/i18n/server-errors';
 import { requireCronAuth } from '@/lib/cron-auth';
 import { buildBudgetsSettingsUrl, buildBudgetsUrl, buildDashboardUrl } from '@/lib/notifications/push-links';
@@ -189,7 +189,9 @@ async function sendUserDailyPush(
   settings: typeof userSettings.$inferSelect
 ): Promise<{ sent: boolean; skipped: boolean; error?: string }> {
   const timezone = settings.timezone || 'UTC';
-  const locale: Locale = (settings.locale as Locale) || defaultLocale;
+  const locale = locales.includes(settings.locale as Locale)
+    ? (settings.locale as Locale)
+    : defaultLocale;
   const yesterdayDateStr = getUserYesterdayDateStr(timezone);
   const currentYearMonth = getCurrentYearMonth(timezone);
 

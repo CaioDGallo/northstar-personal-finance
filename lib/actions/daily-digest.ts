@@ -16,7 +16,7 @@ import {
 } from '@/lib/email/digest-template';
 import { logError, logForDebugging } from '@/lib/logger';
 import { ErrorIds } from '@/constants/errorIds';
-import { defaultLocale, type Locale } from '@/lib/i18n/config';
+import { defaultLocale, locales, type Locale } from '@/lib/i18n/config';
 import { translateWithLocale } from '@/lib/i18n/server-errors';
 import { requireCronAuth } from '@/lib/cron-auth';
 import { activeTransactionCondition } from '@/lib/query-helpers';
@@ -242,7 +242,9 @@ async function sendUserDigest(
 ): Promise<boolean> {
   try {
     const timezone = settings.timezone || 'UTC';
-    const locale: Locale = (settings.locale as Locale) || defaultLocale;
+    const locale = locales.includes(settings.locale as Locale)
+      ? (settings.locale as Locale)
+      : defaultLocale;
     const yesterdayDateStr = getUserYesterdayDateStr(timezone);
     const currentYearMonth = getCurrentYearMonth(timezone);
 
