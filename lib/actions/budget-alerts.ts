@@ -7,6 +7,7 @@ import { sendPushToUser } from '@/lib/services/push-sender';
 import { getCurrentYearMonth } from '@/lib/utils';
 import { defaultLocale, type Locale } from '@/lib/i18n/config';
 import { translateWithLocale } from '@/lib/i18n/server-errors';
+import { buildBudgetsUrl } from '@/lib/notifications/push-links';
 
 interface BudgetAlertResult {
   sent: boolean;
@@ -152,7 +153,7 @@ export async function checkBudgetAlerts(
     const result = await sendPushToUser(userId, {
       title,
       body,
-      url: '/dashboard',
+      url: buildBudgetsUrl({ yearMonth: currentMonth, categoryId }),
       tag: `budget-alert-${categoryId}-${currentMonth}-${threshold}`,
       type: 'budget_alert',
     });

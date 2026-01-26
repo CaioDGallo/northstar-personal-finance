@@ -5,6 +5,7 @@ import { updatePastItemStatuses } from '@/lib/actions/status-updates';
 import { syncAllUsersCalendars } from '@/lib/actions/calendar-sync';
 import { sendAllDailyDigests } from '@/lib/actions/daily-digest';
 import { scheduleBillReminderNotifications } from '@/lib/actions/bill-reminder-jobs';
+import { sendAllDailyPushes } from '@/lib/actions/daily-push';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,16 +31,18 @@ export async function GET(request: Request) {
   const runStatusUpdates = !jobOverride || jobOverride === 'status-updates' || jobOverride === 'all';
   const runCalendarSync = !jobOverride || jobOverride === 'calendar-sync' || jobOverride === 'all';
   const runDailyDigest = !jobOverride || jobOverride === 'daily-digest' || jobOverride === 'all';
+  const runDailyPush = !jobOverride || jobOverride === 'daily-push' || jobOverride === 'all';
 
   try {
     const billReminderResult = runBillReminders ? await scheduleBillReminderNotifications() : null;
     const notificationResult = runNotifications ? await processPendingNotificationJobs() : null;
 
-    const [balanceResult, statusResult, calendarSyncResult, dailyDigestResult] = await Promise.all([
+    const [balanceResult, statusResult, calendarSyncResult, dailyDigestResult, dailyPushResult] = await Promise.all([
       runBalanceReconciliation ? reconcileAllAccountBalances() : Promise.resolve(null),
       runStatusUpdates ? updatePastItemStatuses() : Promise.resolve(null),
       runCalendarSync ? syncAllUsersCalendars() : Promise.resolve(null),
       runDailyDigest ? sendAllDailyDigests() : Promise.resolve(null),
+      runDailyPush ? sendAllDailyPushes() : Promise.resolve(null),
     ]);
 
     console.log('[cron:daily] All jobs completed');
@@ -52,6 +55,7 @@ export async function GET(request: Request) {
       statusUpdates: statusResult,
       calendarSync: calendarSyncResult,
       dailyDigest: dailyDigestResult,
+      dailyPush: dailyPushResult,
     });
   } catch (error) {
     console.error('[cron:daily] Failed:', error);

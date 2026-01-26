@@ -767,20 +767,20 @@
     "billReminder": {
       "todayTitle": "Bill due today!",
       "tomorrowTitle": "Bill due tomorrow",
-      "upcomingTitle": "Bill due in {days} days"
+      "upcomingTitle": "Bill due in {{days}} days"
     },
     "budgetAlert": {
       "80": {
         "title": "Budget Alert",
-        "body": "{category}: {percentage}% of budget used"
+        "body": "{{category}}: {{percentage}}% of budget used"
       },
       "100": {
         "title": "Budget Reached!",
-        "body": "{category}: budget fully used"
+        "body": "{{category}}: budget fully used"
       },
       "120": {
         "title": "Budget Exceeded!",
-        "body": "{category}: {percentage}% of budget used"
+        "body": "{{category}}: {{percentage}}% of budget used"
       }
     },
     "prompt": {

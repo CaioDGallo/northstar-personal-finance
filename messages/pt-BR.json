@@ -779,20 +779,46 @@
     "billReminder": {
       "todayTitle": "Conta vence hoje!",
       "tomorrowTitle": "Conta vence amanhã",
-      "upcomingTitle": "Conta vence em {days} dias"
+      "upcomingTitle": "Conta vence em {{days}} dias"
     },
     "budgetAlert": {
       "80": {
         "title": "Alerta de Orçamento",
-        "body": "{category}: {percentage}% do orçamento usado"
+        "body": "{{category}}: {{percentage}}% do orçamento usado"
       },
       "100": {
         "title": "Orçamento Atingido!",
-        "body": "{category}: orçamento completamente utilizado"
+        "body": "{{category}}: orçamento completamente utilizado"
       },
       "120": {
         "title": "Orçamento Excedido!",
-        "body": "{category}: {percentage}% do orçamento usado"
+        "body": "{{category}}: {{percentage}}% do orçamento usado"
+      }
+    },
+    "dailyDigest": {
+      "overBudget": {
+        "title": "Orçamento estourado",
+        "body": "{{category}} passou de {{percentage}}%. Ver agora?"
+      },
+      "nearLimit": {
+        "title": "Orçamento no limite",
+        "body": "{{category}} em {{percentage}}%. Ajustar?"
+      },
+      "spending": {
+        "title": "Resumo diário",
+        "body": "Ontem: {{yesterday}}. Mês: {{spent}}. Ver agora?"
+      },
+      "summary": {
+        "title": "Resumo do mês",
+        "body": "Mês: {{spent}} de {{budget}}. Ver detalhes?"
+      },
+      "noSpend": {
+        "title": "Dia sem gasto",
+        "body": "Ontem foi zero. Quer ver o mês?"
+      },
+      "noBudget": {
+        "title": "Sem orçamento",
+        "body": "Mês: {{spent}}. Definir orçamentos?"
       }
     },
     "prompt": {
