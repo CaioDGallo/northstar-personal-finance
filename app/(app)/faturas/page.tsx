@@ -5,6 +5,7 @@ import { getCurrentYearMonth } from '@/lib/utils';
 import { MonthPicker } from '@/components/month-picker';
 import { FaturaList } from '@/components/fatura-list';
 import { OnboardingTooltip } from '@/components/onboarding/onboarding-tooltip';
+import { PullToRefreshWrapper } from '@/components/pull-to-refresh-wrapper';
 
 export default async function FaturasPage({
   searchParams,
@@ -26,20 +27,22 @@ export default async function FaturasPage({
   const checkingAccounts = accounts.filter(a => a.type !== 'credit_card');
 
   return (
-    <div>
-      <OnboardingTooltip hintKey="faturas" className="mb-4">
-        {tOnboarding('faturas')}
-      </OnboardingTooltip>
+    <PullToRefreshWrapper>
+      <div>
+        <OnboardingTooltip hintKey="faturas" className="mb-4">
+          {tOnboarding('faturas')}
+        </OnboardingTooltip>
 
-      <div className="mb-6 flex flex-col md:flex-row space-y-4 md:space-y-0 items-center justify-between">
-        <h1 className="text-2xl font-bold hidden md:flex">{t('title')}</h1>
-        <MonthPicker currentMonth={yearMonth} />
+        <div className="mb-6 flex flex-col md:flex-row space-y-4 md:space-y-0 items-center justify-between">
+          <h1 className="text-2xl font-bold hidden md:flex">{t('title')}</h1>
+          <MonthPicker currentMonth={yearMonth} />
+        </div>
+
+        <FaturaList
+          faturas={faturas}
+          checkingAccounts={checkingAccounts}
+        />
       </div>
-
-      <FaturaList
-        faturas={faturas}
-        checkingAccounts={checkingAccounts}
-      />
-    </div>
+    </PullToRefreshWrapper>
   );
 }

@@ -10,13 +10,15 @@ import { CategoryQuickPicker } from '@/components/category-quick-picker';
 import { toast } from 'sonner';
 import { triggerHaptic, HapticPatterns } from '@/lib/utils/haptics';
 import { usePullToRefresh } from '@/lib/hooks/use-pull-to-refresh';
+import { refreshUserData } from '@/lib/actions/refresh';
+import { PullToRefreshIndicator } from '@/components/pull-to-refresh-indicator';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 export { IncomeListProvider };
 
 export function IncomeList() {
-  const t = useTranslations('expenses');
+  const tCommon = useTranslations('common');
   const context = useIncomeContext();
   const { filteredIncome, accounts, recentAccounts, categories, recentCategories, filters, searchQuery } = context;
   const selection = useSelection();
@@ -26,8 +28,9 @@ export function IncomeList() {
   const pullToRefresh = usePullToRefresh({
     onRefresh: async () => {
       triggerHaptic(HapticPatterns.light);
+      await refreshUserData();
       router.refresh();
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 300));
     },
     disabled: selection.isSelectionMode,
   });
@@ -82,36 +85,44 @@ export function IncomeList() {
     // Show different message when searching vs no data
     if (searchQuery.trim()) {
       return (
-        <div className="py-12 text-center">
-          <p className="text-gray-500">No income found matching &ldquo;{searchQuery}&rdquo;</p>
-          <p className="mt-2 text-sm text-gray-400">Try a different search term</p>
+        <div className="space-y-4">
+          <PullToRefreshIndicator
+            isRefreshing={pullToRefresh.isRefreshing}
+            pullDistance={pullToRefresh.pullDistance}
+            label={tCommon('pullToRefresh')}
+            refreshingLabel={tCommon('refreshing')}
+          />
+          <div className="py-12 text-center">
+            <p className="text-gray-500">No income found matching &ldquo;{searchQuery}&rdquo;</p>
+            <p className="mt-2 text-sm text-gray-400">Try a different search term</p>
+          </div>
         </div>
       );
     }
     return (
-      <div className="py-12 text-center">
-        <p className="text-gray-500">No income found for this period.</p>
-        <p className="mt-2 text-sm text-gray-400">Use the + button to add income</p>
+      <div className="space-y-4">
+        <PullToRefreshIndicator
+          isRefreshing={pullToRefresh.isRefreshing}
+          pullDistance={pullToRefresh.pullDistance}
+          label={tCommon('pullToRefresh')}
+          refreshingLabel={tCommon('refreshing')}
+        />
+        <div className="py-12 text-center">
+          <p className="text-gray-500">No income found for this period.</p>
+          <p className="mt-2 text-sm text-gray-400">Use the + button to add income</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      {/* Pull-to-refresh indicator */}
-      {(pullToRefresh.isRefreshing || pullToRefresh.pullDistance > 0) && (
-        <div
-          className="fixed top-0 left-0 right-0 z-50 flex justify-center"
-          style={{
-            transform: `translateY(${Math.min(pullToRefresh.pullDistance, 80)}px)`,
-            transition: pullToRefresh.isRefreshing ? 'transform 0.3s ease-out' : 'none',
-          }}
-        >
-          <div className="bg-gray-900/90 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm">
-            {pullToRefresh.isRefreshing ? t('refreshing') : t('pullToRefresh')}
-          </div>
-        </div>
-      )}
+      <PullToRefreshIndicator
+        isRefreshing={pullToRefresh.isRefreshing}
+        pullDistance={pullToRefresh.pullDistance}
+        label={tCommon('pullToRefresh')}
+        refreshingLabel={tCommon('refreshing')}
+      />
 
       {dates.map((date) => (
         <div key={date}>

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useOptimistic, useCallback, startTransition, useState, useMemo } from 'react';
+import { createContext, useContext, useOptimistic, useCallback, startTransition, useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import type { Account, Category } from '@/lib/schema';
@@ -64,6 +64,7 @@ export type CreateIncomeInput = {
 
 // Reducer actions
 type ReducerAction =
+  | { type: 'reset'; items: OptimisticIncomeEntry[] }
   | { type: 'add'; item: OptimisticIncomeEntry }
   | { type: 'toggle'; id: number; receivedAt: string | null }
   | { type: 'remove'; id: number }
@@ -76,6 +77,8 @@ function incomeReducer(
   action: ReducerAction
 ): OptimisticIncomeEntry[] {
   switch (action.type) {
+    case 'reset':
+      return action.items;
     case 'add':
       return [action.item, ...state];
     case 'toggle':
@@ -192,6 +195,10 @@ export function IncomeListProvider({
   const router = useRouter();
   const [optimisticIncome, dispatch] = useOptimistic(initialIncome, incomeReducer);
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    dispatch({ type: 'reset', items: initialIncome });
+  }, [dispatch, initialIncome]);
 
   // Filter income based on search query
   const filteredIncome = useMemo(() => {

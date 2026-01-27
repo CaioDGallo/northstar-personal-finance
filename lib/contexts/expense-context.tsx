@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useOptimistic, useCallback, startTransition, useState, useMemo } from 'react';
+import { createContext, useContext, useOptimistic, useCallback, startTransition, useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import type { Account, Category } from '@/lib/schema';
@@ -69,6 +69,7 @@ export type CreateExpenseInput = {
 
 // Reducer actions
 type ReducerAction =
+  | { type: 'reset'; items: OptimisticExpenseEntry[] }
   | { type: 'add'; items: OptimisticExpenseEntry[] }
   | { type: 'toggle'; id: number; paidAt: string | null }
   | { type: 'remove'; transactionId: number }
@@ -81,6 +82,8 @@ function expenseReducer(
   action: ReducerAction
 ): OptimisticExpenseEntry[] {
   switch (action.type) {
+    case 'reset':
+      return action.items;
     case 'add':
       return [...action.items, ...state];
     case 'toggle':
@@ -227,6 +230,10 @@ export function ExpenseListProvider({
   const router = useRouter();
   const [optimisticExpenses, dispatch] = useOptimistic(initialExpenses, expenseReducer);
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    dispatch({ type: 'reset', items: initialExpenses });
+  }, [dispatch, initialExpenses]);
 
   // Filter expenses based on search query
   const filteredExpenses = useMemo(() => {
