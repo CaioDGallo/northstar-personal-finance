@@ -18,7 +18,7 @@ export type ValidatedImportRow = {
   rowIndex: number;
   externalId?: string; // UUID from bank statement for idempotency
   rawFitId?: string; // Original FITID from OFX (for refund matching)
-  type?: 'expense' | 'income'; // Determined from amount sign
+  type?: 'expense' | 'income' | 'payment'; // Determined from amount sign and description patterns
   installmentInfo?: InstallmentInfo; // Parsed installment data if present
   isRefundCandidate?: boolean; // True if description matches refund patterns
   refundMatchInfo?: RefundMatchInfo; // Information about matched refund transaction

@@ -107,7 +107,7 @@ export async function updateFaturaTotal(accountId: number, yearMonth: string): P
 
   const entriesTotal = entriesResult[0]?.total || 0;
 
-  // Sum all refunds for this fatura (all income records for this account and month)
+  // Sum all refunds for this fatura (only income records with refundOfTransactionId)
   // Refunds are stored with the month they credit the fatura
   const refundsResult = await db
     .select({ total: sql<number>`COALESCE(SUM(${income.amount}), 0)` })
@@ -116,7 +116,8 @@ export async function updateFaturaTotal(accountId: number, yearMonth: string): P
       and(
         eq(income.userId, userId),
         eq(income.accountId, accountId),
-        eq(income.faturaMonth, yearMonth)
+        eq(income.faturaMonth, yearMonth),
+        sql`${income.refundOfTransactionId} IS NOT NULL`
       )
     );
 
@@ -404,6 +405,7 @@ export async function batchUpdateFaturaTotals(
       WHERE i.user_id = ${userId}
         AND i.account_id = ${accountId}
         AND i.fatura_month = ANY(${months})
+        AND i.refund_of_transaction_id IS NOT NULL
       GROUP BY i.user_id, i.account_id, i.fatura_month
     ) AS refunds_agg
     ON entries_agg.user_id = refunds_agg.user_id

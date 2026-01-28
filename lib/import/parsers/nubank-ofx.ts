@@ -15,6 +15,13 @@ const REFUND_PATTERNS = [
   /^reembolso/i,
 ];
 
+// Patterns that indicate a transaction is a payment (not a refund)
+const PAYMENT_PATTERNS = [
+  /^pagamento\s+recebido$/i,
+  /^pagamento\s+(?:de\s+)?fatura/i,
+  /^cr[eé]dito\s+autom[aá]tico/i,
+];
+
 function parseInstallmentInfo(description: string): InstallmentInfo | null {
   const match = description.match(PARCELA_REGEX);
   if (!match) return null;
@@ -37,6 +44,10 @@ function isRefundCandidate(description: string): boolean {
   return REFUND_PATTERNS.some(pattern => pattern.test(description));
 }
 
+function isPayment(description: string): boolean {
+  return PAYMENT_PATTERNS.some(pattern => pattern.test(description));
+}
+
 export const nubankOfxParser: ImportTemplate = {
   id: 'nubank-ofx',
   name: 'Nubank Cartão de Crédito (OFX)',
@@ -53,22 +64,26 @@ export const nubankOfxParser: ImportTemplate = {
       const { transactions, statementStart, statementEnd } = parseOFX(content);
 
       transactions.forEach((txn, index) => {
-        // For credit card: negative amount = expense (charge), positive = income (refund)
+        // For credit card: negative amount = expense (charge), positive = income (refund or payment)
         const isIncome = txn.amount > 0;
         const normalizedCents = Math.abs(txn.amount);
 
         const installmentInfo = parseInstallmentInfo(txn.description);
+
+        // Determine transaction type: payment, refund (income), or expense
+        const isPaymentTx = isIncome && isPayment(txn.description);
+        const transactionType = isPaymentTx ? 'payment' : (isIncome ? 'income' : 'expense');
 
         rows.push({
           date: txn.date,
           description: txn.description,
           amountCents: normalizedCents,
           rowIndex: index + 1,
-          type: isIncome ? 'income' : 'expense',
+          type: transactionType,
           externalId: txn.externalId,
           rawFitId: txn.rawFitId,
           installmentInfo: installmentInfo ?? undefined,
-          isRefundCandidate: isIncome ? isRefundCandidate(txn.description) : undefined,
+          isRefundCandidate: isIncome && !isPaymentTx ? isRefundCandidate(txn.description) : undefined,
         });
       });
 
