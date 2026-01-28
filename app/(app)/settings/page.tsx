@@ -9,6 +9,13 @@ export default async function SettingsPage() {
       <h1 className="text-2xl font-bold mb-6">{t('title')}</h1>
       <div className="grid gap-4">
         <Link
+          href="/settings/plan"
+          className="block border border-gray-300 p-4 hover:border-gray-400"
+        >
+          <h2 className="font-semibold">{t('plan')}</h2>
+          <p className="text-sm text-gray-600">{t('planDescription')}</p>
+        </Link>
+        <Link
           href="/settings/preferences"
           className="block border border-gray-300 p-4 hover:border-gray-400"
         >

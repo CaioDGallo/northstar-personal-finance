@@ -1,4 +1,4 @@
-export const PLAN_KEYS = ['free', 'pro'] as const;
+export const PLAN_KEYS = ['free', 'saver', 'founder', 'pro'] as const;
 export const PLAN_INTERVALS = ['monthly', 'yearly'] as const;
 
 export type PlanKey = typeof PLAN_KEYS[number];
@@ -35,14 +35,38 @@ export const PLANS: Record<PlanKey, PlanDefinition> = {
       customBudgetAlerts: false,
     },
   },
+  saver: {
+    key: 'saver',
+    name: 'Saver',
+    limits: {
+      maxCategories: 50,
+      maxAccounts: 20,
+      maxCreditCards: 20,
+      importWeekly: 50,
+      budgetAlertThresholds: [80, 100, 120],
+      customBudgetAlerts: true,
+    },
+  },
+  founder: {
+    key: 'founder',
+    name: 'Founder',
+    limits: {
+      maxCategories: 50,
+      maxAccounts: 20,
+      maxCreditCards: 20,
+      importWeekly: 50,
+      budgetAlertThresholds: [80, 100, 120],
+      customBudgetAlerts: true,
+    },
+  },
   pro: {
     key: 'pro',
     name: 'Pro',
     limits: {
-      maxCategories: 200,
-      maxAccounts: 50,
+      maxCategories: 50,
+      maxAccounts: 20,
       maxCreditCards: 20,
-      importWeekly: 100,
+      importWeekly: 50,
       budgetAlertThresholds: [80, 100, 120],
       customBudgetAlerts: true,
     },

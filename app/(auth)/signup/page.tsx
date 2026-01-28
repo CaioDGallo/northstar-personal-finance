@@ -20,6 +20,7 @@ export default function SignupPage() {
   const tAuth = useTranslations('auth');
   const tCommon = useTranslations('common');
   const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get('redirect') || '/dashboard';
 
   const [step, setStep] = useState<Step>('invite');
   const [inviteCode, setInviteCode] = useState('');
@@ -95,7 +96,7 @@ export default function SignupPage() {
           email,
           password,
           captchaToken,
-          callbackUrl: '/dashboard',
+          callbackUrl: redirectUrl,
         });
       }
     } catch {
@@ -123,7 +124,7 @@ export default function SignupPage() {
       posthog.capture('signup_oauth_attempt', { provider });
 
       // Redirect to OAuth
-      await signIn(provider, { callbackUrl: '/dashboard' });
+      await signIn(provider, { callbackUrl: redirectUrl });
     } catch {
       setError(t('unexpectedError'));
       setLoading(false);

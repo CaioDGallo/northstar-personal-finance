@@ -3,9 +3,18 @@ import { type PlanInterval, type PlanKey } from '@/lib/plans';
 export type PaidPlanKey = Exclude<PlanKey, 'free'>;
 
 const STRIPE_PRICE_IDS: Record<PaidPlanKey, Record<PlanInterval, string | undefined>> = {
+  saver: {
+    monthly: process.env.STRIPE_PRICE_SAVER_MONTHLY,
+    yearly: process.env.STRIPE_PRICE_SAVER_YEARLY,
+  },
+  founder: {
+    monthly: undefined, // Founder only available yearly
+    yearly: process.env.STRIPE_PRICE_FOUNDER_YEARLY,
+  },
   pro: {
-    monthly: process.env.STRIPE_PRICE_PRO_MONTHLY,
-    yearly: process.env.STRIPE_PRICE_PRO_YEARLY,
+    // Pro (Liberdade) plan not available yet - still in waitlist
+    monthly: undefined,
+    yearly: undefined,
   },
 };
 

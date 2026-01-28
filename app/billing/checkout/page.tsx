@@ -15,7 +15,9 @@ const ACTIVE_STATUSES = ['active', 'trialing', 'past_due'] as const;
 type SearchParams = Record<string, string | string[] | undefined>;
 
 function resolvePlan(value?: string): PaidPlanKey | null {
-  if (value === 'pro') return 'pro';
+  // Only allow saver and founder - pro is waitlist only
+  if (value === 'saver') return 'saver';
+  if (value === 'founder') return 'founder';
   return null;
 }
 
@@ -45,7 +47,7 @@ export default async function BillingCheckoutPage({
 
   const planKey = resolvePlan(planParam);
   if (!planKey) {
-    redirect('/#planos');
+    redirect('/dashboard');
   }
 
   const planInterval = resolveInterval(intervalParam);
@@ -84,7 +86,7 @@ export default async function BillingCheckoutPage({
     mode: 'subscription',
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${baseUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${baseUrl}/#planos`,
+    cancel_url: `${baseUrl}/dashboard`,
     client_reference_id: userId,
     customer: existingCustomer?.stripeCustomerId,
     customer_email: existingCustomer?.stripeCustomerId ? undefined : session.user.email || undefined,
@@ -103,7 +105,7 @@ export default async function BillingCheckoutPage({
   });
 
   if (!checkoutSession.url) {
-    redirect('/#planos');
+    redirect('/dashboard');
   }
 
   redirect(checkoutSession.url);

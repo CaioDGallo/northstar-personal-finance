@@ -46,7 +46,8 @@ export function PricingSection() {
     interval === 'monthly' ? t('pricingIntervalSuffixMonthly') : t('pricingIntervalSuffixYearly');
   const yearlyDiscountLabel = t('pricingYearlyDiscountLabel');
   const yearlyDiscountValue = t('pricingYearlyDiscountValue', { months: YEARLY_DISCOUNT_MONTHS });
-  const checkoutDestination = `/billing/checkout?plan=pro&interval=${interval}`;
+  const saverCheckoutUrl = `/billing/checkout?plan=saver&interval=${interval}`;
+  const proCheckoutUrl = `/billing/checkout?plan=pro&interval=${interval}`;
 
   const formatPrice = (cents: number) => formatter.format(cents / 100);
   const founderPrice = formatPrice(FOUNDER_PRICE_CENTS);
@@ -120,21 +121,21 @@ export function PricingSection() {
                     ctaType="primary"
                     ctaText={t('pricingFounderCta')}
                     ctaLocation="pricing"
-                    destination="#espera"
+                    destination="/billing/checkout?plan=founder&interval=yearly"
                   >
                     <Button
                       variant="popout"
                       className="border-2 border-background bg-background text-foreground hover:bg-background hover:text-background"
                       asChild
                     >
-                      <a href="#espera">{t('pricingFounderCta')}</a>
+                      <a href="/billing/checkout?plan=founder&interval=yearly">{t('pricingFounderCta')}</a>
                     </Button>
                   </LandingCtaTracker>
                 </CardContent>
               </Card>
             </div>
             <div className="grid gap-6 md:grid-cols-3">
-              <Card className="flex h-full flex-col border-2 border-foreground shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+              <Card className="flex h-full flex-col border-2 border-foreground shadow-[6px_6px_0px_0px_rgba(100,100,100,1)]">
                 <CardHeader className="border-b border-border">
                   <div className="flex items-center justify-between">
                     <CardTitle>{t('pricingFreeName')}</CardTitle>
@@ -164,15 +165,15 @@ export function PricingSection() {
                     ctaType="secondary"
                     ctaText={t('pricingFreeCta')}
                     ctaLocation="pricing"
-                    destination="#espera"
+                    destination="/signup"
                   >
                     <Button variant="hollow" className="mt-auto" asChild>
-                      <a href="#espera">{t('pricingFreeCta')}</a>
+                      <a href="/signup">{t('pricingFreeCta')}</a>
                     </Button>
                   </LandingCtaTracker>
                 </CardContent>
               </Card>
-              <Card className="flex h-full flex-col border-2 border-foreground bg-background shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+              <Card className="flex h-full flex-col border-2 border-foreground bg-background shadow-[8px_8px_0px_0px_rgba(100,100,100,1)]">
                 <CardHeader className="border-b border-border">
                   <div className="flex items-center justify-between">
                     <CardTitle>{t('pricingSaverName')}</CardTitle>
@@ -204,15 +205,15 @@ export function PricingSection() {
                     ctaType="secondary"
                     ctaText={t('pricingSaverCta')}
                     ctaLocation="pricing"
-                    destination={checkoutDestination}
+                    destination={saverCheckoutUrl}
                   >
                     <Button variant="hollow" className="mt-auto" asChild>
-                      <a href={checkoutDestination}>{t('pricingSaverCta')}</a>
+                      <a href={saverCheckoutUrl}>{t('pricingSaverCta')}</a>
                     </Button>
                   </LandingCtaTracker>
                 </CardContent>
               </Card>
-              <Card className="flex h-full flex-col border-2 border-foreground shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+              <Card className="flex h-full flex-col border-2 border-foreground shadow-[6px_6px_0px_0px_rgba(100,100,100,1)]">
                 <CardHeader className="border-b border-border">
                   <div className="flex items-center justify-between">
                     <CardTitle>{t('pricingProName')}</CardTitle>
