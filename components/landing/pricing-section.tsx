@@ -63,7 +63,7 @@ export function PricingSection() {
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-foreground/70">
                 {t('pricingBillingLabel')}
               </p>
-              <div className="inline-flex border-2 border-foreground bg-background shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <div className="w-fit inline-flex border-2 border-foreground bg-background shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                 <button
                   type="button"
                   onClick={() => setInterval('monthly')}
@@ -95,7 +95,7 @@ export function PricingSection() {
           </div>
           <div className="grid gap-8">
             <div className="border border-amber-200/60 bg-background dark:border-amber-200/20 dark:bg-amber-950/20">
-              <Card className="border-2 border-foreground bg-foreground text-background shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+              <Card className="border-2 border-foreground bg-foreground text-background shadow-[8px_8px_0px_0px_rgba(100,100,100,1)]">
                 <CardHeader className="border-b border-background/20">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <Badge className="bg-background text-foreground">{t('pricingFounderTitle')}</Badge>
