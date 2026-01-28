@@ -46,6 +46,7 @@ export function PricingSection() {
     interval === 'monthly' ? t('pricingIntervalSuffixMonthly') : t('pricingIntervalSuffixYearly');
   const yearlyDiscountLabel = t('pricingYearlyDiscountLabel');
   const yearlyDiscountValue = t('pricingYearlyDiscountValue', { months: YEARLY_DISCOUNT_MONTHS });
+  const checkoutDestination = `/billing/checkout?plan=pro&interval=${interval}`;
 
   const formatPrice = (cents: number) => formatter.format(cents / 100);
   const founderPrice = formatPrice(FOUNDER_PRICE_CENTS);
@@ -203,10 +204,10 @@ export function PricingSection() {
                     ctaType="secondary"
                     ctaText={t('pricingSaverCta')}
                     ctaLocation="pricing"
-                    destination="#espera"
+                    destination={checkoutDestination}
                   >
                     <Button variant="hollow" className="mt-auto" asChild>
-                      <a href="#espera">{t('pricingSaverCta')}</a>
+                      <a href={checkoutDestination}>{t('pricingSaverCta')}</a>
                     </Button>
                   </LandingCtaTracker>
                 </CardContent>

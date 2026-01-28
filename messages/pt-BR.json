@@ -1187,7 +1187,7 @@
     "pricingSaverBulletThree": "Até 50 contas e 20 cartões",
     "pricingSaverBulletFour": "100 importações por semana (CSV e OFX)",
     "pricingSaverBulletFive": "Alertas a 80% + personalizados",
-    "pricingSaverCta": "Entrar na lista",
+    "pricingSaverCta": "Assinar agora",
     "pricingProName": "Liberdade",
     "pricingProLabel": "Em breve",
     "pricingProDesc": "Para quem quer automação total",
@@ -1260,6 +1260,11 @@
     "waitlistErrorRateLimit": "Muitas tentativas. Aguarde um momento.",
     "waitlistErrorInvalid": "Por favor, insira um e-mail válido.",
     "waitlistErrorGeneric": "Algo deu errado. Tente novamente."
+  },
+  "billing": {
+    "successTitle": "Pagamento confirmado",
+    "successDescription": "Sua assinatura foi ativada com sucesso.",
+    "successNote": "Redirecionando para o painel..."
   },
   "onboarding": {
     "wizard": {

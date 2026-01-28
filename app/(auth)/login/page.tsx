@@ -24,6 +24,8 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaKey, setCaptchaKey] = useState(0);
+  const redirectParam = searchParams.get('redirect');
+  const redirectTo = redirectParam && redirectParam.startsWith('/') ? redirectParam : '/dashboard';
 
   // Check for error parameter from OAuth callback
   useEffect(() => {
@@ -70,7 +72,7 @@ function LoginForm() {
         // Identify user and capture login event
         posthog.identify(email, { email });
         posthog.capture('login_success', { email });
-        router.push('/dashboard');
+        router.push(redirectTo);
         router.refresh();
       }
     } catch {
@@ -149,7 +151,7 @@ function LoginForm() {
             </Button>
           </form>
 
-          <OAuthButtons className="mt-4" callbackUrl="/dashboard" />
+          <OAuthButtons className="mt-4" callbackUrl={redirectTo} />
 
           <div className="mt-4 text-center text-sm text-muted-foreground">
             {t('noAccount')}{' '}

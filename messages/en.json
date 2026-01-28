@@ -1149,7 +1149,7 @@
     "pricingSaverBulletThree": "Up to 50 accounts and 20 cards",
     "pricingSaverBulletFour": "100 imports per week (CSV and OFX)",
     "pricingSaverBulletFive": "80% alerts + custom alerts",
-    "pricingSaverCta": "Join the waitlist",
+    "pricingSaverCta": "Subscribe now",
     "pricingProName": "Pro",
     "pricingProLabel": "Coming soon",
     "pricingProDesc": "For full automation",
@@ -1222,6 +1222,11 @@
     "waitlistErrorRateLimit": "Too many attempts. Please wait a moment.",
     "waitlistErrorInvalid": "Please enter a valid email.",
     "waitlistErrorGeneric": "Something went wrong. Please try again."
+  },
+  "billing": {
+    "successTitle": "Payment confirmed",
+    "successDescription": "Your subscription is active.",
+    "successNote": "Redirecting to the dashboard..."
   },
   "onboarding": {
     "wizard": {
