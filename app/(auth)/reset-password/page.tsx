@@ -76,7 +76,7 @@ function ResetPasswordForm() {
 
   if (!tokenValid) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
+      <div className="flex min-h-dvh items-center justify-center bg-muted/50 p-4">
         <Card className="w-full max-w-md">
           <CardContent className="p-6">
             <div className="mb-6">
@@ -91,7 +91,7 @@ function ResetPasswordForm() {
 
   if (success) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
+      <div className="flex min-h-dvh items-center justify-center bg-muted/50 p-4">
         <Card className="w-full max-w-md">
           <CardContent className="p-6">
             <div className="mb-6">
@@ -110,7 +110,7 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
+    <div className="flex min-h-dvh items-center justify-center bg-muted/50 p-4">
       <Card className="w-full max-w-md">
         <CardContent className="p-6">
           <div className="mb-6">
@@ -174,7 +174,7 @@ function ResetPasswordFallback() {
   const t = useTranslations('resetPassword');
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
+    <div className="flex min-h-dvh items-center justify-center bg-muted/50 p-4">
       <Card className="w-full max-w-md">
         <CardContent className="p-6">
           <div className="mb-6">

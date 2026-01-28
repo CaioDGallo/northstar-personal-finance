@@ -39,7 +39,7 @@ function ForgotPasswordForm() {
 
   if (success) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
+      <div className="flex min-h-dvh items-center justify-center bg-muted/50 p-4">
         <Card className="w-full max-w-md">
           <CardContent className="p-6">
             <div className="mb-6">
@@ -60,7 +60,7 @@ function ForgotPasswordForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
+    <div className="flex min-h-dvh items-center justify-center bg-muted/50 p-4">
       <Card className="w-full max-w-md">
         <CardContent className="p-6">
           <div className="mb-6">
@@ -118,7 +118,7 @@ function ForgotPasswordFallback() {
   const t = useTranslations('forgotPassword');
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
+    <div className="flex min-h-dvh items-center justify-center bg-muted/50 p-4">
       <Card className="w-full max-w-md">
         <CardContent className="p-6">
           <div className="mb-6">

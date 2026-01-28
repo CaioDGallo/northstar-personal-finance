@@ -87,7 +87,7 @@ export function PwaInstallBanner() {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 md:bottom-4 md:left-auto md:right-4 md:max-w-md">
+    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:pb-4 md:bottom-4 md:left-auto md:right-4 md:max-w-md">
       <div className="relative border-2 border-foreground bg-background shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)]">
         {/* Close button */}
         <button

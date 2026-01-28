@@ -83,7 +83,7 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
+    <div className="flex min-h-dvh items-center justify-center bg-muted/50 p-4">
       <Card className="w-full max-w-md">
         <CardContent className="p-6">
           <div className="mb-6">
@@ -175,7 +175,7 @@ function LoginFallback() {
   const t = useTranslations('login');
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
+    <div className="flex min-h-dvh items-center justify-center bg-muted/50 p-4">
       <Card className="w-full max-w-md">
         <CardContent className="p-6">
           <div className="mb-6">

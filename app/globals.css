@@ -128,6 +128,9 @@
   body {
     @apply bg-background text-foreground;
   }
+  button, a, [role="button"] {
+    touch-action: manipulation;
+  }
 }
 
 /* schedule-x calendar classes override */
