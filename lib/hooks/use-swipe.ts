@@ -20,7 +20,7 @@ export function useSwipe({
   const startYRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
   const currentXRef = useRef<number>(0);
-  const verticalThreshold = 20; // pixels of Y drift allowed
+  const verticalThreshold = 200; // pixels of Y drift allowed
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     if (disabled) return;
