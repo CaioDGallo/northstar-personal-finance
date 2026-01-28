@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { createExpense, updateExpense } from '@/lib/actions/expenses';
 import { createIncome, updateIncome } from '@/lib/actions/income';
 import { useExpenseContextOptional } from '@/lib/contexts/expense-context';
@@ -25,7 +26,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { Slider } from '@/components/ui/slider';
 import { CurrencyInputGroupInput } from '@/components/ui/currency-input';
 import { CategoryPicker } from '@/components/category-picker';
 import { AccountPicker } from '@/components/account-picker';
@@ -96,12 +96,21 @@ export function TransactionForm({
   const [installments, setInstallments] = useState(
     transaction?.totalInstallments || 1
   );
+  const [installmentsInput, setInstallmentsInput] = useState(String(transaction?.totalInstallments || 1));
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const amountInputRef = useRef<HTMLInputElement>(null);
 
   const totalCents = amountCents;
   const perInstallment = installments > 0 ? totalCents / installments : 0;
+  const minInstallments = 1;
+  const maxInstallments = 24;
+  const installmentPresets = [1, 3, 6, 9, 12, 24];
+  const updateInstallments = (value: number) => {
+    const clamped = Math.min(maxInstallments, Math.max(minInstallments, value));
+    setInstallments(clamped);
+    setInstallmentsInput(String(clamped));
+  };
 
   const hasCategories = categories.length > 0;
   const hasAccounts = accounts.length > 0;
@@ -123,7 +132,17 @@ export function TransactionForm({
         };
 
         if (transaction) {
-          await updateExpense(transaction.id, data);
+          // Close dialog immediately for better perceived performance
+          setOpen(false);
+
+          try {
+            await updateExpense(transaction.id, data);
+            // router.refresh() is called by server action's revalidation
+          } catch {
+            toast.error('Falha ao atualizar despesa');
+            // User can re-open dialog to retry
+          }
+          return; // Skip the normal flow
         } else {
           // Use optimistic context if available (on expense page)
           if (expenseContext) {
@@ -153,7 +172,11 @@ export function TransactionForm({
         };
 
         if (income) {
-          await updateIncome(income.id, data);
+          if (incomeContext) {
+            await incomeContext.updateIncome(income.id, data);
+          } else {
+            await updateIncome(income.id, data);
+          }
         } else {
           // Use optimistic context if available (on income page)
           if (incomeContext) {
@@ -186,7 +209,7 @@ export function TransactionForm({
         setAccountId(recentAccounts[0]?.id || accounts[0]?.id || 0);
         setDate(new Date().toISOString().split('T')[0]);
         if (mode === 'expense') {
-          setInstallments(1);
+          updateInstallments(1);
         }
       }
     } finally {
@@ -346,21 +369,85 @@ export function TransactionForm({
                     <FieldLabel htmlFor="installments">{t('installments')}</FieldLabel>
                     {installments > 1 && (
                       <span className="text-xs text-neutral-500">
-                        {installments}x de {formatCurrency(perInstallment)}
+                        {t('installmentsSummary', {
+                          count: installments,
+                          amount: formatCurrency(perInstallment),
+                        })}
                       </span>
                     )}
                   </div>
-                  <Slider
-                    id="installments"
-                    min={1}
-                    max={24}
-                    step={1}
-                    value={[installments]}
-                    onValueChange={(value) => setInstallments(value[0])}
-                  />
-                  <div className="flex justify-between text-xs text-neutral-500 mt-1">
-                    <span>{installments}x</span>
-                    <span>24x</span>
+                  <div className="grid gap-2">
+                    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="size-11 text-base touch-manipulation"
+                        aria-label={t('installmentsDecrease')}
+                        onClick={() => updateInstallments(installments - 1)}
+                        disabled={installments <= minInstallments}
+                      >
+                        -
+                      </Button>
+                      <Input
+                        id="installments"
+                        name="installments"
+                        type="number"
+                        inputMode="numeric"
+                        min={minInstallments}
+                        max={maxInstallments}
+                        step={1}
+                        value={installmentsInput}
+                        onChange={(event) => {
+                          const raw = event.target.value;
+                          if (raw === '') {
+                            setInstallmentsInput('');
+                            return;
+                          }
+
+                          const parsed = Number.parseInt(raw, 10);
+                          if (Number.isNaN(parsed)) {
+                            return;
+                          }
+
+                          updateInstallments(parsed);
+                        }}
+                        onBlur={() => {
+                          const raw = installmentsInput.trim();
+                          if (!raw) {
+                            updateInstallments(minInstallments);
+                            return;
+                          }
+
+                          const parsed = Number.parseInt(raw, 10);
+                          updateInstallments(Number.isNaN(parsed) ? minInstallments : parsed);
+                        }}
+                        className="h-11 px-3 text-center text-base tabular-nums touch-manipulation"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="size-11 text-base touch-manipulation"
+                        aria-label={t('installmentsIncrease')}
+                        onClick={() => updateInstallments(installments + 1)}
+                        disabled={installments >= maxInstallments}
+                      >
+                        +
+                      </Button>
+                    </div>
+                    <div className="flex gap-2 justify-between overflow-x-auto py-1 -mx-1 px-1">
+                      {installmentPresets.map((preset) => (
+                        <Button
+                          key={preset}
+                          type="button"
+                          variant={installments === preset ? 'default' : 'outline'}
+                          className="h-10 px-3 text-xs touch-manipulation"
+                          aria-pressed={installments === preset}
+                          onClick={() => updateInstallments(preset)}
+                        >
+                          {preset}x
+                        </Button>
+                      ))}
+                    </div>
                   </div>
                 </Field>
               )}

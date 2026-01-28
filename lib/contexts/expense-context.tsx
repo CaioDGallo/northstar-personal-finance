@@ -197,7 +197,7 @@ function generateOptimisticEntries(
       paidAt: null,
       installmentNumber: i + 1,
       transactionId: tempTransactionId,
-      description: input.description ?? null,
+      description: input.description || input.categoryName, // Fallback to category like server does
       totalInstallments: input.installments,
       totalAmount: input.totalAmount,
       categoryId: input.categoryId,
@@ -232,7 +232,9 @@ export function ExpenseListProvider({
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    dispatch({ type: 'reset', items: initialExpenses });
+    startTransition(() => {
+      dispatch({ type: 'reset', items: initialExpenses });
+    });
   }, [dispatch, initialExpenses]);
 
   // Filter expenses based on search query

@@ -13,6 +13,7 @@ import {
   markIncomePending as serverMarkIncomePending,
   bulkUpdateIncomeCategories as serverBulkUpdateIncomeCategories,
   toggleIgnoreIncome as serverToggleIgnoreIncome,
+  updateIncome as serverUpdateIncome,
   type IncomeFilters,
 } from '@/lib/actions/income';
 import { centsToDisplay } from '@/lib/utils';
@@ -62,6 +63,15 @@ export type CreateIncomeInput = {
   bankLogo: string | null;
 };
 
+// Input for updating income
+export type UpdateIncomeInput = {
+  description?: string;
+  amount: number;
+  categoryId: number;
+  accountId: number;
+  receivedDate: string;
+};
+
 // Reducer actions
 type ReducerAction =
   | { type: 'reset'; items: OptimisticIncomeEntry[] }
@@ -69,7 +79,8 @@ type ReducerAction =
   | { type: 'toggle'; id: number; receivedAt: string | null }
   | { type: 'remove'; id: number }
   | { type: 'bulkUpdateCategory'; incomeIds: number[]; category: Category }
-  | { type: 'toggleIgnore'; id: number };
+  | { type: 'toggleIgnore'; id: number }
+  | { type: 'update'; id: number; data: Partial<OptimisticIncomeEntry> };
 
 // Reducer for useOptimistic
 function incomeReducer(
@@ -106,6 +117,12 @@ function incomeReducer(
           ? { ...item, ignored: !item.ignored, _optimistic: true }
           : item
       );
+    case 'update':
+      return state.map((item) =>
+        item.id === action.id
+          ? { ...item, ...action.data, _optimistic: true }
+          : item
+      );
     default:
       return state;
   }
@@ -131,6 +148,7 @@ type IncomeContextValue = {
   removeIncome: (id: number) => Promise<void>;
   bulkUpdateCategory: (incomeIds: number[], categoryId: number) => Promise<void>;
   toggleIgnore: (id: number) => Promise<void>;
+  updateIncome: (id: number, data: UpdateIncomeInput) => Promise<void>;
 };
 
 const IncomeContext = createContext<IncomeContextValue | null>(null);
@@ -162,7 +180,7 @@ type IncomeListProviderProps = {
 function generateOptimisticIncome(input: CreateIncomeInput, tempId: string): OptimisticIncomeEntry {
   return {
     id: -Date.now(), // Negative temp ID
-    description: input.description ?? null,
+    description: input.description || input.categoryName, // Fallback to category like server does
     amount: input.amount,
     receivedDate: input.receivedDate,
     receivedAt: null,
@@ -197,7 +215,9 @@ export function IncomeListProvider({
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    dispatch({ type: 'reset', items: initialIncome });
+    startTransition(() => {
+      dispatch({ type: 'reset', items: initialIncome });
+    });
   }, [dispatch, initialIncome]);
 
   // Filter income based on search query
@@ -329,6 +349,43 @@ export function IncomeListProvider({
     [dispatch, router]
   );
 
+  // Update income (edit)
+  const updateIncomeOptimistic = useCallback(
+    async (id: number, data: UpdateIncomeInput) => {
+      const category = categories.find((c) => c.id === data.categoryId);
+      const account = accounts.find((a) => a.id === data.accountId);
+
+      startTransition(() => {
+        dispatch({
+          type: 'update',
+          id,
+          data: {
+            description: data.description ?? null,
+            amount: data.amount,
+            receivedDate: data.receivedDate,
+            categoryId: data.categoryId,
+            categoryName: category?.name || '',
+            categoryColor: category?.color || '#000000',
+            categoryIcon: category?.icon || null,
+            accountId: data.accountId,
+            accountName: account?.name || '',
+            accountType: account?.type || 'checking',
+            bankLogo: account?.bankLogo || null,
+          },
+        });
+      });
+
+      try {
+        await serverUpdateIncome(id, data);
+        router.refresh();
+      } catch {
+        toast.error('Falha ao atualizar receita');
+        router.refresh(); // Revert
+      }
+    },
+    [categories, accounts, dispatch, router]
+  );
+
   const value: IncomeContextValue = {
     income: optimisticIncome,
     filteredIncome,
@@ -344,6 +401,7 @@ export function IncomeListProvider({
     removeIncome,
     bulkUpdateCategory,
     toggleIgnore,
+    updateIncome: updateIncomeOptimistic,
   };
 
   return <IncomeContext.Provider value={value}>{children}</IncomeContext.Provider>;

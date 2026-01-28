@@ -86,11 +86,6 @@ export function IncomeClient({
         <MonthPicker currentMonth={currentMonth} />
       </div>
 
-      <div className="mb-3 flex gap-2 justify-end">
-        <ImportModal accounts={accounts} categories={categories} />
-        <AddIncomeButton accounts={accounts} categories={categories} recentAccounts={recentAccounts} recentCategories={recentCategories} />
-      </div>
-
       <IncomeListProvider
         initialIncome={initialIncome}
         accounts={accounts}
@@ -99,6 +94,11 @@ export function IncomeClient({
         recentCategories={recentCategories}
         filters={filters}
       >
+        <div className="mb-3 flex gap-2 justify-end">
+          <ImportModal accounts={accounts} categories={categories} />
+          <AddIncomeButton accounts={accounts} categories={categories} recentAccounts={recentAccounts} recentCategories={recentCategories} />
+        </div>
+
         <IncomeFiltersWrapper
           accounts={accounts}
           categories={categories}

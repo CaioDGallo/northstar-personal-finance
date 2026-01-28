@@ -120,7 +120,7 @@ async function main() {
     process.exit(1);
   }
 
-  let pendingQuery = db
+  const pendingQuery = db
     .select({
       id: waitlist.id,
       email: waitlist.email,
@@ -132,11 +132,7 @@ async function main() {
     .where(eq(waitlist.status, 'pending'))
     .orderBy(asc(waitlist.createdAt));
 
-  if (limit) {
-    pendingQuery = pendingQuery.limit(limit);
-  }
-
-  const pending = await pendingQuery;
+  const pending = await (limit ? pendingQuery.limit(limit) : pendingQuery);
 
   if (pending.length === 0) {
     console.log('No pending waitlist entries.');

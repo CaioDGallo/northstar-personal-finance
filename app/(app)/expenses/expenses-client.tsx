@@ -118,18 +118,6 @@ export function ExpensesClient({
         <MonthPicker currentMonth={currentMonth} />
       </div>
 
-      <div className="mb-3 flex gap-2 justify-end">
-        <ImportModal accounts={accounts} categories={categories} />
-        <AddExpenseButton
-          accounts={accounts}
-          categories={categories}
-          recentAccounts={recentAccounts}
-          recentCategories={recentCategories}
-          open={isAddExpenseOpen}
-          onOpenChange={handleAddExpenseChange}
-        />
-      </div>
-
       <ExpenseListProvider
         initialExpenses={initialExpenses}
         accounts={accounts}
@@ -139,6 +127,18 @@ export function ExpensesClient({
         filters={filters}
         unpaidFaturas={unpaidFaturas}
       >
+        <div className="mb-3 flex gap-2 justify-end">
+          <ImportModal accounts={accounts} categories={categories} />
+          <AddExpenseButton
+            accounts={accounts}
+            categories={categories}
+            recentAccounts={recentAccounts}
+            recentCategories={recentCategories}
+            open={isAddExpenseOpen}
+            onOpenChange={handleAddExpenseChange}
+          />
+        </div>
+
         <ExpenseFiltersWrapper
           accounts={accounts}
           categories={categories}

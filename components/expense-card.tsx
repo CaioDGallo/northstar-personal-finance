@@ -266,7 +266,7 @@ export function ExpenseCard(props: ExpenseCardProps) {
     <>
       <Card className={cn(
         "py-0 relative overflow-hidden",
-        isOptimistic && "opacity-70 animate-pulse",
+        isOptimistic && "animate-pulse",
         entry.ignored && "opacity-50",
         props.selectionMode && "cursor-pointer",
         props.selectionMode && props.isSelected && "ring-2 ring-primary ring-offset-2"
