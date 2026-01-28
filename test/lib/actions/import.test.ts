@@ -1227,5 +1227,80 @@ describe('Import Actions', () => {
       expect(entries.map((e) => e.installmentNumber).sort()).toEqual([1, 2, 3]);
       expect(entries.every((e) => e.amount === 80000)).toBe(true);
     });
+
+    it('imports two separate purchases from same store with same installment number', async () => {
+      const creditCard = await seedAccount(testAccounts.creditCardWithBilling);
+      await seedCategory('expense');
+      await seedCategory('income');
+
+      // Import two different purchases from "Hering Ourinhos", both on parcela 2/5
+      const result = await importMixed({
+        accountId: creditCard.id,
+        rows: [
+          {
+            date: '2025-01-15',
+            description: 'Hering Ourinhos - Parcela 2/5',
+            amountCents: 14318, // R$143.18
+            rowIndex: 0,
+            type: 'expense',
+            installmentInfo: {
+              current: 2,
+              total: 5,
+              baseDescription: 'Hering Ourinhos',
+            },
+          },
+          {
+            date: '2025-01-15',
+            description: 'Hering Ourinhos - Parcela 2/5',
+            amountCents: 19998, // R$199.98
+            rowIndex: 1,
+            type: 'expense',
+            installmentInfo: {
+              current: 2,
+              total: 5,
+              baseDescription: 'Hering Ourinhos',
+            },
+          },
+        ],
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.importedExpenses).toBe(2);
+      }
+
+      // Should create TWO separate transactions
+      const transactions = await db.select().from(schema.transactions);
+      expect(transactions).toHaveLength(2);
+
+      // Both should be 5-installment purchases
+      expect(transactions.every((t) => t.totalInstallments === 5)).toBe(true);
+
+      // Total amounts should be different
+      const amounts = transactions.map((t) => t.totalAmount).sort();
+      expect(amounts).toEqual([71590, 99990]); // 14318*5=71590, 19998*5=99990
+
+      // Each transaction should have 4 entries (missing installments 1, 3, 4, 5)
+      for (const transaction of transactions) {
+        const entries = await db
+          .select()
+          .from(schema.entries)
+          .where(eq(schema.entries.transactionId, transaction.id));
+
+        expect(entries).toHaveLength(4);
+        expect(entries.map((e) => e.installmentNumber).sort()).toEqual([2, 3, 4, 5]);
+
+        // All entries in same transaction should have same amount
+        const entryAmount = entries[0].amount;
+        expect(entries.every((e) => e.amount === entryAmount)).toBe(true);
+      }
+
+      // Verify faturas: 4 months (parcela 2, 3, 4, 5), each containing entries from both transactions
+      const faturas = await db.select().from(schema.faturas).orderBy(schema.faturas.yearMonth);
+      expect(faturas).toHaveLength(4);
+
+      // First fatura (parcela 2) should contain both first installment entries
+      expect(faturas[0].totalAmount).toBe(14318 + 19998);
+    });
   });
 });

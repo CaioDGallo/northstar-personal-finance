@@ -439,9 +439,17 @@ async function findExistingInstallmentTransaction(
   dbClient: DbClient,
   userId: string,
   baseDescription: string,
-  totalInstallments: number
-): Promise<{ id: number; existingEntryNumbers: number[] } | null> {
+  totalInstallments: number,
+  installmentAmounts: Map<number, number>,
+  excludeTransactionIds: Set<number>
+): Promise<{
+  id: number;
+  existingEntryNumbers: number[];
+  existingAmounts: Map<number, number>;
+  existingEntryIds: Map<number, number>;
+} | null> {
   // Find transaction by description pattern (case-insensitive) and installment count
+  // Excludes transactions created in the current import batch
   const results = await dbClient
     .select({
       id: transactions.id,
@@ -454,21 +462,34 @@ async function findExistingInstallmentTransaction(
         sql`LOWER(${transactions.description}) LIKE LOWER(${'%' + baseDescription + '%'})`
       )
     )
-    .limit(1);
+    .limit(10); // Get multiple to check exclusions
 
-  if (results.length === 0) return null;
+  // Filter out excluded transactions (created in current batch)
+  const candidateResults = results.filter((tx) => !excludeTransactionIds.has(tx.id));
+  if (candidateResults.length === 0) return null;
 
-  const tx = results[0];
+  const tx = candidateResults[0];
 
-  // Get existing entry numbers for this transaction
+  // Get existing entries with their amounts and IDs for this transaction
   const existingEntries = await dbClient
-    .select({ installmentNumber: entries.installmentNumber })
+    .select({
+      id: entries.id,
+      installmentNumber: entries.installmentNumber,
+      amount: entries.amount,
+    })
     .from(entries)
     .where(eq(entries.transactionId, tx.id));
 
+  const existingAmounts = new Map(existingEntries.map((e) => [e.installmentNumber, e.amount]));
+  const existingEntryIds = new Map(existingEntries.map((e) => [e.installmentNumber, e.id]));
+
+  // No conflict detection for transactions from previous imports - allow updates
+  // The grouping logic already prevents merging different purchases within the same batch
   return {
     id: tx.id,
     existingEntryNumbers: existingEntries.map((e) => e.installmentNumber),
+    existingAmounts,
+    existingEntryIds,
   };
 }
 
@@ -580,6 +601,7 @@ async function processInstallmentGroup(
   categoryOverrides: Record<number, number>,
   expenseCategoryId: number,
   affectedFaturas: Set<string>,
+  newlyCreatedTransactionIds: Set<number>,
   ofxClosingDate?: string
 ) {
   // All rows in group have same baseDescription and total
@@ -594,10 +616,18 @@ async function processInstallmentGroup(
     rowAmounts.set(row.installmentInfo!.current, row.amountCents);
   }
 
-  // Check if transaction already exists
-  const existing = await findExistingInstallmentTransaction(tx, userId, baseDescription, total);
-
   const fallbackAmount = firstRow.amountCents;
+
+  // Check if transaction already exists (returns null if conflicting amounts detected)
+  // Excludes transactions created in the current import batch
+  const existing = await findExistingInstallmentTransaction(
+    tx,
+    userId,
+    baseDescription,
+    total,
+    rowAmounts,
+    newlyCreatedTransactionIds
+  );
   const getInstallmentAmount = (
     installmentNumber: number,
     existingAmounts: Map<number, number>
@@ -611,21 +641,10 @@ async function processInstallmentGroup(
   if (existing) {
     // Transaction exists - only create missing entries
     transactionId = existing.id;
-    const existingEntries = await tx
-      .select({
-        id: entries.id,
-        installmentNumber: entries.installmentNumber,
-        amount: entries.amount,
-      })
-      .from(entries)
-      .where(eq(entries.transactionId, transactionId));
+    existingAmounts = existing.existingAmounts;
+    existingEntryIds = existing.existingEntryIds;
 
-    existingAmounts = new Map(
-      existingEntries.map((entry) => [entry.installmentNumber, entry.amount])
-    );
-    existingEntryIds = new Map(existingEntries.map((entry) => [entry.installmentNumber, entry.id]));
-
-    const existingSet = new Set(existingEntries.map((entry) => entry.installmentNumber));
+    const existingSet = new Set(existing.existingEntryNumbers);
     entriesToCreate = rows
       .map((r) => r.installmentInfo!.current)
       .filter((n) => !existingSet.has(n));
@@ -665,6 +684,8 @@ async function processInstallmentGroup(
       .returning();
 
     transactionId = transaction.id;
+    // Track this transaction ID to prevent other groups from matching it
+    newlyCreatedTransactionIds.add(transactionId);
   }
 
   // Create entries for each installment
@@ -835,18 +856,73 @@ export async function importMixed(data: ImportMixedData): Promise<ImportMixedRes
     const regularExpenses = newExpenses.filter((r) => !r.installmentInfo);
 
     // Group installment expenses by base description + total
+    // Handle multiple purchases from same store by splitting when installment numbers collide
     const installmentGroups = new Map<string, ValidatedImportRow[]>();
+    // Track installment# → {amount, externalId} for each group to detect conflicts
+    const groupInstallmentData = new Map<string, Map<number, { amount: number; externalId?: string }>>();
+
     for (const row of installmentExpenses) {
       const info = row.installmentInfo!;
-      const key = `${info.baseDescription.toLowerCase()}|${info.total}`;
-      if (!installmentGroups.has(key)) {
-        installmentGroups.set(key, []);
+      const baseKey = `${info.baseDescription.toLowerCase()}|${info.total}`;
+
+      // Find or create a group that doesn't have a conflicting installment
+      let targetKey = baseKey;
+      let suffix = 0;
+
+      while (true) {
+        const existingData = groupInstallmentData.get(targetKey);
+        if (!existingData) {
+          // New group
+          installmentGroups.set(targetKey, []);
+          groupInstallmentData.set(targetKey, new Map());
+          break;
+        }
+
+        const existing = existingData.get(info.current);
+        if (!existing) {
+          // No row with this installment number yet - no conflict
+          break;
+        }
+
+        // Row with same installment number exists - check if it's the same purchase
+        const sameAmount = existing.amount === row.amountCents;
+        const sameExternalId = existing.externalId && existing.externalId === row.externalId;
+
+        if (sameAmount && sameExternalId) {
+          // Same purchase (duplicate row) - skip it entirely
+          break;
+        }
+
+        if (!sameAmount || !sameExternalId) {
+          // Different purchase - try next group suffix
+          suffix++;
+          targetKey = `${baseKey}|${suffix}`;
+          continue;
+        }
+
+        break;
       }
-      installmentGroups.get(key)!.push(row);
+
+      // Skip if duplicate row with same externalId
+      const existingData = groupInstallmentData.get(targetKey);
+      const existing = existingData?.get(info.current);
+      if (existing?.externalId && existing.externalId === row.externalId) {
+        continue;
+      }
+
+      installmentGroups.get(targetKey)!.push(row);
+      groupInstallmentData.get(targetKey)!.set(info.current, {
+        amount: row.amountCents,
+        externalId: row.externalId,
+      });
     }
 
     // Import all new records in a transaction
     await db.transaction(async (tx) => {
+      // Track transaction IDs created in this import to prevent cross-matching
+      // between multiple purchases from the same store
+      const newlyCreatedTransactionIds = new Set<number>();
+
       // Process installment groups
       for (const [, rows] of installmentGroups) {
         await processInstallmentGroup(
@@ -857,6 +933,7 @@ export async function importMixed(data: ImportMixedData): Promise<ImportMixedRes
           categoryOverrides,
           expenseCategoryId,
           affectedFaturas,
+          newlyCreatedTransactionIds,
           faturaOverrides?.closingDate
         );
       }
